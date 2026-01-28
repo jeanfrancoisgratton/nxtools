@@ -1,0 +1,7 @@
+#!/usr/bin/env ash
+
+cd /opt/bin
+chgrp -R devops .
+chmod 775 /opt/bin/nxtools
+
+exit 0
