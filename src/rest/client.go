@@ -33,7 +33,7 @@ func NewClient(cfg Config) (*Client, error) {
 
 	isUnix := strings.HasPrefix(host, "unix://")
 
-	// Allow bare host[:port] (e.g. "vps:2475") and treat it as tcp://.
+	// Allow bare host[:port] (e.g. "nexus:9820") and treat it as tcp://.
 	if !isUnix && !strings.Contains(host, "://") {
 		host = "tcp://" + host
 	}
