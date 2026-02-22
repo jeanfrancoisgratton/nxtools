@@ -7,16 +7,12 @@ package rest
 
 import (
 	"context"
-	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"time"
-
-	hftx "github.com/jeanfrancoisgratton/helperFunctions/v4/terminalfx"
 )
 
 // NewClient builds a Client from Config.
@@ -24,21 +20,11 @@ import (
 func NewClient(cfg Config) (*Client, error) {
 	host := cfg.Host
 	if host == "" {
-		host = os.Getenv("DOCKER_HOST")
-		if host == "" {
-			// Standard default for local Docker.
-			host = "unix:///var/run/docker.sock"
-		}
-	}
-
-	isUnix := strings.HasPrefix(host, "unix://")
-
-	// Allow bare host[:port] (e.g. "vps:2475") and treat it as tcp://.
-	if !isUnix && !strings.Contains(host, "://") {
-		host = "tcp://" + host
-	}
-	if !QuietOutput && ConnectURI != "" {
-		fmt.Println(fmt.Sprintf("%s: %s\n", hftx.InfoSign("Connected to"), hftx.Blue(host)))
+		host = os.Getenv("NEXUS_HOST")
+		//if host == "" {
+		//	// Standard default for local Docker.
+		//	host = "unix:///var/run/docker.sock"
+		//}
 	}
 
 	fastFail := cfg.FastFailTimeout
@@ -61,79 +47,6 @@ func NewClient(cfg Config) (*Client, error) {
 		unixPath  string
 	)
 
-	if isUnix {
-		// Strip unix:// prefix and keep the socket path.
-		unixPath = strings.TrimPrefix(host, "unix://")
-		if unixPath == "" {
-			return nil, fmt.Errorf("unix host %q has empty socket path", host)
-		}
-
-		dialer := &net.Dialer{Timeout: fastFail}
-		transport = &http.Transport{
-			Proxy: nil,
-			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-				return dialer.DialContext(ctx, "unix", unixPath)
-			},
-			// This matters even for unix sockets: it prevents hanging forever
-			// while waiting for the first headers.
-			ResponseHeaderTimeout: fastFail,
-			TLSHandshakeTimeout:   fastFail,
-			DisableCompression:    false,
-			MaxIdleConns:          100,
-			MaxIdleConnsPerHost:   10,
-			IdleConnTimeout:       90 * time.Second,
-		}
-
-		// Fake URL; only the path is used when we build requests.
-		baseURL, _ = url.Parse("http://d")
-	} else {
-		u, err := url.Parse(host)
-		if err != nil {
-			return nil, fmt.Errorf("invalid host %q: %w", host, err)
-		}
-		if u.Host == "" {
-			return nil, fmt.Errorf("host %q is missing hostname", host)
-		}
-
-		scheme := u.Scheme
-		switch scheme {
-		case "tcp":
-			if cfg.UseTLS {
-				scheme = "https"
-			} else {
-				scheme = "http"
-			}
-		case "http", "https":
-			// Respect explicit scheme, UseTLS only controls TLS config.
-		default:
-			return nil, fmt.Errorf("unsupported scheme %q in host %q", scheme, host)
-		}
-		u.Scheme = scheme
-
-		tlsConfig, err := buildTLSConfig(cfg)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build TLS config: %w", err)
-		}
-
-		dialer := &net.Dialer{Timeout: fastFail, KeepAlive: 30 * time.Second}
-		transport = &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				return dialer.DialContext(ctx, network, addr)
-			},
-			TLSClientConfig:       tlsConfig,
-			MaxIdleConns:          100,
-			MaxIdleConnsPerHost:   10,
-			IdleConnTimeout:       90 * time.Second,
-			TLSHandshakeTimeout:   fastFail,
-			ResponseHeaderTimeout: fastFail,
-			ExpectContinueTimeout: 1 * time.Second,
-			DisableCompression:    false,
-		}
-
-		baseURL = u
-	}
-
 	// IMPORTANT: http.Client.Timeout is deliberately disabled.
 	// We enforce timeouts per request with contexts so streaming operations
 	// (pull/build/cp/save/load) are not killed mid-transfer.
@@ -145,7 +58,6 @@ func NewClient(cfg Config) (*Client, error) {
 		apiVersion:      strings.TrimSpace(cfg.APIVersion),
 		fastFailTimeout: fastFail,
 		sessionTimeout:  sessionTimeout,
-		isUnix:          isUnix,
 		unixPath:        unixPath,
 	}, nil
 }
