@@ -6,6 +6,8 @@
 package rest
 
 import (
+	"context"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -62,4 +64,12 @@ type Config struct {
 	// are expected to complete.
 	// If 0, session timeouts are disabled (caller can still cancel via context).
 	SessionTimeout time.Duration
+}
+
+// cancelOnClose wraps a response body so we can cancel the associated context
+// once the caller closes the body.
+// This avoids leaking timers for context.WithTimeout() used inside Do().
+type cancelOnClose struct {
+	io.ReadCloser
+	cancel context.CancelFunc
 }

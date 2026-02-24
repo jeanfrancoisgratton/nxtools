@@ -115,14 +115,6 @@ func NewClient(cfg Config) (*Client, error) {
 	}, nil
 }
 
-// cancelOnClose wraps a response body so we can cancel the associated context
-// once the caller closes the body.
-// This avoids leaking timers for context.WithTimeout() used inside Do().
-type cancelOnClose struct {
-	io.ReadCloser
-	cancel context.CancelFunc
-}
-
 func (c cancelOnClose) Close() error {
 	if c.cancel != nil {
 		c.cancel()
