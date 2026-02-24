@@ -1,5 +1,7 @@
 // nxtools
-// Small helper functions for the REST client.
+// Written by J.F. Gratton <jean-francois@famillegratton.net>
+// Original timestamp: 2026/02/24 14:20
+// Original filename: src/rest/helpers.go
 
 package rest
 

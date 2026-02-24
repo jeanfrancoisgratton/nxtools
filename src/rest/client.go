@@ -1,5 +1,7 @@
 // nxtools
-// Minimal HTTP(S) REST client for Nexus Repository Manager 3.
+// Written by J.F. Gratton <jean-francois@famillegratton.net>
+// Original timestamp: 2026/02/24 14:18
+// Original filename: src/rest/client.go
 
 package rest
 
