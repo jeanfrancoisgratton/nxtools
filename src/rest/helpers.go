@@ -1,7 +1,5 @@
-// dtools2
-// Written by J.F. Gratton <jean-francois@famillegratton.net>
-// Original timestamp: 2025/12/02 02:51
-// Original filename: src/rest/helpers.go
+// nxtools
+// Small helper functions for the REST client.
 
 package rest
 
@@ -12,17 +10,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	hftx "github.com/jeanfrancoisgratton/helperFunctions/v4/terminalfx"
 )
 
 // buildTLSConfig constructs a *tls.Config from the given settings.
-// For Unix sockets, this is ignored by NewClient.
+// Callers should only use it when the target scheme is https.
 func buildTLSConfig(cfg Config) (*tls.Config, error) {
-	if !cfg.UseTLS {
-		return nil, nil
-	}
-
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: cfg.InsecureSkipVerify,
 		MinVersion:         tls.VersionTLS12,
@@ -41,12 +33,12 @@ func buildTLSConfig(cfg Config) (*tls.Config, error) {
 		}
 		tlsConfig.RootCAs = pool
 	} else {
-		// Use extras roots if available.
+		// Use system roots if available.
 		sysPool, _ := x509.SystemCertPool()
 		tlsConfig.RootCAs = sysPool
 	}
 
-	// Client certificate
+	// Client certificate (mTLS)
 	if cfg.CertPath != "" && cfg.KeyPath != "" {
 		cert, err := tls.LoadX509KeyPair(cfg.CertPath, cfg.KeyPath)
 		if err != nil {
@@ -72,7 +64,7 @@ func (c *Client) DumpURL(path string) string {
 	return u.String()
 }
 
-// NormalizePath is a helper to clean a host path (e.g. for certs).
+// NormalizePath expands ~ to $HOME and cleans the path.
 func NormalizePath(p string) string {
 	if p == "" {
 		return ""
@@ -86,16 +78,7 @@ func NormalizePath(p string) string {
 	return p
 }
 
-// Shows where the client is connecting at (unix/localhost or remote daemon)
-func ShowHost(uri string, showNow bool) string {
-	//if uri == "" {
-	//	uri = BuildConnectURI()
-	//}
-	if strings.HasPrefix(uri, "unix://") {
-		uri = "localhost (unix socket)"
-	}
-	if showNow {
-		fmt.Printf("\nDocker host is: %s.\n", hftx.White(uri))
-	}
-	return uri
+func isTruthy(s string) bool {
+	s = strings.TrimSpace(strings.ToLower(s))
+	return s == "1" || s == "true" || s == "yes" || s == "y" || s == "on"
 }

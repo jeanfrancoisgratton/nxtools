@@ -1,13 +1,14 @@
-// dtools2
-// Written by J.F. Gratton <jean-francois@famillegratton.net>
-// Original timestamp: 2025/11/14 08:11
-// Original filename: src/rest/client.go
+// nxtools
+// Minimal HTTP(S) REST client for Nexus Repository Manager 3.
 
 package rest
 
 import (
 	"context"
+	"crypto/tls"
+	"errors"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,15 +17,34 @@ import (
 )
 
 // NewClient builds a Client from Config.
-// If Host is empty, DOCKER_HOST or the standard Docker default is used.
+// If cfg.Host is empty, it falls back to NEXUS_HOST.
 func NewClient(cfg Config) (*Client, error) {
-	host := cfg.Host
+	host := strings.TrimSpace(cfg.Host)
 	if host == "" {
-		host = os.Getenv("NEXUS_HOST")
-		//if host == "" {
-		//	// Standard default for local Docker.
-		//	host = "unix:///var/run/docker.sock"
-		//}
+		host = strings.TrimSpace(os.Getenv("NEXUS_HOST"))
+	}
+	if host == "" {
+		return nil, errors.New("nexus host is empty (set cfg.Host or NEXUS_HOST)")
+	}
+
+	// If no scheme is provided, assume http:// unless the caller opted into TLS.
+	if !strings.Contains(host, "://") {
+		if cfg.UseTLS {
+			host = "https://" + host
+		} else {
+			host = "http://" + host
+		}
+	}
+
+	baseURL, err := url.Parse(host)
+	if err != nil {
+		return nil, err
+	}
+	if baseURL.Scheme != "http" && baseURL.Scheme != "https" {
+		return nil, errors.New("unsupported scheme in NEXUS_HOST (use http or https)")
+	}
+	if baseURL.Host == "" {
+		return nil, errors.New("invalid nexus host (missing host:port)")
 	}
 
 	fastFail := cfg.FastFailTimeout
@@ -41,49 +61,78 @@ func NewClient(cfg Config) (*Client, error) {
 		sessionTimeout = 0
 	}
 
-	var (
-		transport *http.Transport
-		baseURL   *url.URL
-		unixPath  string
-	)
+	// TLS
+	//
+	// We build TLS config if:
+	//   - the base URL is https, OR
+	//   - the caller provided TLS-related settings (to support http->https redirects).
+	var tlsCfg *tls.Config
+	if strings.EqualFold(baseURL.Scheme, "https") || cfg.CACertPath != "" || cfg.CertPath != "" || cfg.KeyPath != "" || cfg.InsecureSkipVerify {
+		cfg.CACertPath = NormalizePath(cfg.CACertPath)
+		cfg.CertPath = NormalizePath(cfg.CertPath)
+		cfg.KeyPath = NormalizePath(cfg.KeyPath)
+
+		tlsCfg, err = buildTLSConfig(cfg)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	dialer := &net.Dialer{Timeout: fastFail, KeepAlive: 30 * time.Second}
+	transport := &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           dialer.DialContext,
+		ForceAttemptHTTP2:     true,
+		TLSClientConfig:       tlsCfg,
+		TLSHandshakeTimeout:   fastFail,
+		ResponseHeaderTimeout: fastFail,
+		ExpectContinueTimeout: 1 * time.Second,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+	}
 
 	// IMPORTANT: http.Client.Timeout is deliberately disabled.
-	// We enforce timeouts per request with contexts so streaming operations
-	// (pull/build/cp/save/load) are not killed mid-transfer.
+	// We enforce timeouts per request with contexts so large uploads/downloads
+	// are not killed mid-transfer.
 	httpClient := &http.Client{Transport: transport, Timeout: 0}
+
+	ua := strings.TrimSpace(cfg.UserAgent)
+	if ua == "" {
+		ua = "nxtools"
+	}
 
 	return &Client{
 		httpClient:      httpClient,
 		baseURL:         baseURL,
-		apiVersion:      strings.TrimSpace(cfg.APIVersion),
 		fastFailTimeout: fastFail,
 		sessionTimeout:  sessionTimeout,
-		unixPath:        unixPath,
+		username:        cfg.Username,
+		password:        cfg.Password,
+		bearerToken:     cfg.BearerToken,
+		userAgent:       ua,
 	}, nil
 }
 
 // cancelOnClose wraps a response body so we can cancel the associated context
 // once the caller closes the body.
 // This avoids leaking timers for context.WithTimeout() used inside Do().
-//
-// NOTE: Do() only uses this wrapper when it creates its own timeout context.
 type cancelOnClose struct {
 	io.ReadCloser
 	cancel context.CancelFunc
 }
 
 func (c cancelOnClose) Close() error {
-	// Cancel first to stop timers and allow any pending reads to unblock.
 	if c.cancel != nil {
 		c.cancel()
 	}
 	return c.ReadCloser.Close()
 }
 
-// Do issues an HTTP request to the daemon.
-// `path` should be the API path, e.g. "/containers/json" or "/version".
-// For most endpoints, a "/v<version>" prefix is automatically added.
-// `/version` is called without a version prefix for negotiation.
+// Do issues an HTTP request to the Nexus server.
+//
+// `path` is relative to cfg.Host and may include a base path if you run Nexus
+// behind a reverse proxy (e.g. cfg.Host="https://host/nexus").
+// Example path: "/service/rest/v1/repositories".
 func (c *Client) Do(
 	ctx context.Context,
 	method string,
@@ -96,21 +145,13 @@ func (c *Client) Do(
 		path = "/" + path
 	}
 
-	// /version is unversioned; everything else gets /v<APIVersion>.
-	finalPath := path
-	if path != "/version" && c.apiVersion != "" {
-		finalPath = "/v" + c.apiVersion + path
-	}
-
 	u := *c.baseURL
-	u.Path = joinURLPath(c.baseURL.Path, finalPath)
-	// Always clear query; url.URL is a struct copy so this is safe.
+	u.Path = joinURLPath(c.baseURL.Path, path)
 	u.RawQuery = ""
 	if len(query) > 0 {
 		u.RawQuery = query.Encode()
 	}
 
-	// Apply a per-request timeout if the caller did not set a deadline.
 	reqCtx := ctx
 	if reqCtx == nil {
 		reqCtx = context.Background()
@@ -118,14 +159,8 @@ func (c *Client) Do(
 
 	var cancel context.CancelFunc
 	if _, hasDeadline := reqCtx.Deadline(); !hasDeadline {
-		// Fast-fail for /version negotiation.
-		if path == "/version" {
-			reqCtx, cancel = context.WithTimeout(reqCtx, c.fastFailTimeout)
-		} else if !c.isNoTimeoutEndpoint(path, query) {
-			// Session timeout for finite operations.
-			if c.sessionTimeout > 0 {
-				reqCtx, cancel = context.WithTimeout(reqCtx, c.sessionTimeout)
-			}
+		if c.sessionTimeout > 0 {
+			reqCtx, cancel = context.WithTimeout(reqCtx, c.sessionTimeout)
 		}
 	}
 
@@ -137,9 +172,24 @@ func (c *Client) Do(
 		return nil, err
 	}
 
+	// Default headers
+	if c.userAgent != "" && req.Header.Get("User-Agent") == "" {
+		req.Header.Set("User-Agent", c.userAgent)
+	}
+
+	// Caller headers
 	for k, vs := range headers {
 		for _, v := range vs {
 			req.Header.Add(k, v)
+		}
+	}
+
+	// Optional auth (caller can override by setting Authorization explicitly).
+	if req.Header.Get("Authorization") == "" {
+		if strings.TrimSpace(c.bearerToken) != "" {
+			req.Header.Set("Authorization", "Bearer "+strings.TrimSpace(c.bearerToken))
+		} else if c.username != "" {
+			req.SetBasicAuth(c.username, c.password)
 		}
 	}
 
@@ -151,56 +201,16 @@ func (c *Client) Do(
 		return nil, err
 	}
 
-	// If we created a timeout context, ensure it gets canceled when the caller
-	// is done with the body.
 	if cancel != nil {
 		resp.Body = cancelOnClose{ReadCloser: resp.Body, cancel: cancel}
 	}
 	return resp, nil
 }
 
-// isNoTimeoutEndpoint returns true for operations that are expected to stream
-// indefinitely under normal usage, so applying a session timeout would be wrong.
-func (c *Client) isNoTimeoutEndpoint(path string, query url.Values) bool {
-	// Events stream.
-	if path == "/events" {
-		return true
-	}
-
-	// Container logs: if follow=1|true, the request is intentionally unbounded.
-	if strings.Contains(path, "/logs") {
-		v := ""
-		if query != nil {
-			v = strings.ToLower(query.Get("follow"))
-		}
-		if v == "1" || v == "true" {
-			return true
-		}
-	}
-
-	// Container stats: by default stream=true, which is unbounded.
-	if strings.Contains(path, "/stats") {
-		if query == nil {
-			return true
-		}
-		v := strings.ToLower(query.Get("stream"))
-		if v == "" || v == "1" || v == "true" {
-			return true
-		}
-	}
-
-	// Wait can legitimately run as long as the container runs.
-	if strings.HasSuffix(path, "/wait") {
-		return true
-	}
-
-	return false
-}
-
-// SocketPath returns the Unix socket path, if using a Unix transport.
-func (c *Client) SocketPath() string {
-	if !c.isUnix {
+// BaseURL returns the resolved base URL the client uses.
+func (c *Client) BaseURL() string {
+	if c.baseURL == nil {
 		return ""
 	}
-	return c.unixPath
+	return c.baseURL.String()
 }
