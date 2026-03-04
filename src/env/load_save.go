@@ -7,11 +7,12 @@ package env
 
 import (
 	"encoding/json"
-	cerr "github.com/jeanfrancoisgratton/customError/v3"
-	hf "github.com/jeanfrancoisgratton/helperFunctions/v4"
 	"os"
 	"path/filepath"
 	"strings"
+
+	cerr "github.com/jeanfrancoisgratton/customError/v3"
+	hf "github.com/jeanfrancoisgratton/helperFunctions/v4"
 )
 
 func safeDecodePassword(s string) string {
@@ -47,11 +48,11 @@ func LoadEnvironmentFile() (EnvironmentStruct, *cerr.CustomError) {
 	rcFile := filepath.Join(os.Getenv("HOME"), ".config", "JFG", "nxtools", EnvConfigFile)
 	jFile, err := os.ReadFile(rcFile)
 	if err != nil {
-		return EnvironmentStruct{}, &cerr.CustomError{Title: err.Error(), Fatality: cerr.Fatal}
+		return EnvironmentStruct{}, &cerr.CustomError{Title: err.Error()}
 	}
 	err = json.Unmarshal(jFile, &payload)
 	if err != nil {
-		return EnvironmentStruct{}, &cerr.CustomError{Title: err.Error(), Fatality: cerr.Fatal}
+		return EnvironmentStruct{}, &cerr.CustomError{Title: err.Error()}
 	} else {
 		payload.Password = safeDecodePassword(payload.Password)
 		return payload, nil
@@ -69,7 +70,7 @@ func (e EnvironmentStruct) SaveEnvironmentFile(outputfile string) *cerr.CustomEr
 	}
 	rcFile := filepath.Join(os.Getenv("HOME"), ".config", "JFG", "nxtools", outputfile)
 	if err = os.WriteFile(rcFile, jStream, 0600); err != nil {
-		return &cerr.CustomError{Title: err.Error(), Fatality: cerr.Fatal}
+		return &cerr.CustomError{Title: err.Error()}
 	}
 
 	return nil

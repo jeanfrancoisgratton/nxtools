@@ -14,7 +14,6 @@ import (
 	"os"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
-	hf "github.com/jeanfrancoisgratton/helperFunctions/v4"
 	hftx "github.com/jeanfrancoisgratton/helperFunctions/v4/terminalfx"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
@@ -53,19 +52,14 @@ func ListRepositories(envFile string) *cerr.CustomError {
 
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"Name", "Format", "Type", "URL", "Size"})
+	t.AppendHeader(table.Row{"Name", "Format", "Type", "URL"})
 
 	for _, r := range repos {
-		sz := ""
-		if r.Size > 0 {
-			sz = hf.SI(r.Size)
-		}
 		t.AppendRow(table.Row{
 			hftx.Green(r.Name),
 			hftx.Green(r.Format),
 			hftx.Green(r.Type),
 			hftx.Green(r.URL),
-			hftx.Green(sz),
 		})
 	}
 

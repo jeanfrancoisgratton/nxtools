@@ -32,9 +32,9 @@ func AddEnvFile(envfile string) *cerr.CustomError {
 	if !strings.HasSuffix(envfile, ".json") {
 		envfile += ".json"
 	}
-	env.NexusServerUrl = hf.GetStringValFromPrompt("Enter the server URL (ex: https://myserver:myport) ")
-	env.Username = hf.GetStringValFromPrompt("Enter your username ")
-	env.Password = hf.GetPassword("Enter your password ", DebugMode)
+	env.NexusServerUrl = hf.GetStringValFromPrompt("Enter the server URL (ex: https://myserver:myport): ")
+	env.Username = hf.GetStringValFromPrompt("Enter your username: ")
+	env.Password = hf.GetPassword("Enter your password: ", DebugMode)
 
 	if env.NexusServerUrl == "" || env.Username == "" || env.Password == "" {
 		return &cerr.CustomError{Title: "Error creating environment file", Message: "Nexus URL, username and password cannot be empty"}
