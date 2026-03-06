@@ -1,6 +1,6 @@
 module nxtools
 
-go 1.26.0
+go 1.26.1
 
 require (
 	github.com/jeanfrancoisgratton/helperFunctions/v4 v4.1.1
