@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jeanfrancoisgratton/customError/v3 v3.0.0 // indirect
 	github.com/jedib0t/go-pretty/v6 v6.7.8 // indirect

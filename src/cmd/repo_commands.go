@@ -12,7 +12,6 @@ import (
 	"nxtools/repositories"
 )
 
-var repoEnvFile string
 var repoFormat string
 var repoType string
 var repoJSONFile string
@@ -32,7 +31,7 @@ var repoListCmd = &cobra.Command{
 	Example: "nxtools repo list -e defaultEnv.json",
 	Short:   "Lists all repositories visible to the configured user",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := repositories.ListRepositories(repoEnvFile); err != nil {
+		if err := repositories.ListRepositories(Envfile); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
@@ -44,7 +43,7 @@ var repoCreateCmd = &cobra.Command{
 	Example: "nxtools repo create -e defaultEnv.json --format yum --type hosted --json payload.json",
 	Short:   "Creates a repository (payload is recipe-specific)",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := repositories.CreateRepository(repoEnvFile, repoFormat, repoType, repoJSONFile); err != nil {
+		if err := repositories.CreateRepository(Envfile, repoFormat, repoType, repoJSONFile); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
@@ -57,15 +56,13 @@ var repoDeleteCmd = &cobra.Command{
 	Short:   "Deletes a repository by name",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := repositories.DeleteRepository(repoEnvFile, args[0]); err != nil {
+		if err := repositories.DeleteRepository(Envfile, args[0]); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
 }
 
 func init() {
-	repoCmd.PersistentFlags().StringVarP(&repoEnvFile, "env", "e", "defaultEnv.json", "Environment file to load (from $HOME/.config/JFG/nxtools)")
-
 	repoCreateCmd.Flags().StringVar(&repoFormat, "format", "", "Repository format/recipe family (e.g. yum, apt, maven, docker)")
 	repoCreateCmd.Flags().StringVar(&repoType, "type", "", "Repository type (hosted, proxy, group)")
 	repoCreateCmd.Flags().StringVar(&repoJSONFile, "json", "", "JSON payload file for the recipe (use '-' to read from stdin)")

@@ -16,8 +16,8 @@ type SoftQuota struct {
 
 // ─── List / Summary ───────────────────────────────────────────────────────────
 
-// ListItem is returned by GET /v1/blobstores
-type ListItem struct {
+// BlobStoreSummary is returned by GET /v1/blobstores
+type BlobStoreSummary struct {
 	Name                  string     `json:"name"`
 	Type                  string     `json:"type"` // "File", "S3", "Azure", "Group"
 	Unavailable           bool       `json:"unavailable"`
