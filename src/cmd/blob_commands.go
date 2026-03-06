@@ -24,15 +24,28 @@ var blobCmd = &cobra.Command{
 var blobListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
-	Example: "nxtools blob list -e defaultEnv.json",
+	Example: "nxtools blob list FLAGS",
 	Short:   "Lists all blobs visible to the configured user",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := blobstores.ListBlobs(Envfile); err != nil {
+		if err := blobstores.ListBlobs(); err != nil {
+			fmt.Println(err.Error())
+		}
+	},
+}
+
+var removeCmd = &cobra.Command{
+	Use:     "remove",
+	Aliases: []string{"rm", "delete", "del"},
+	Example: "nxtools blob rm FLAGS blobstore",
+	Args:    cobra.MinimumNArgs(1),
+	Short:   "Removes a blobstore from the server",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := blobstores.RemoveBlob(args); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
 }
 
 func init() {
-	blobCmd.AddCommand(blobListCmd)
+	blobCmd.AddCommand(blobListCmd, removeCmd)
 }

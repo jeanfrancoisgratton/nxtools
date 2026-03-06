@@ -18,6 +18,7 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
 	"nxtools/rest"
+	"nxtools/shared"
 )
 
 // ListRepositories prints all repositories the configured user can browse.
@@ -25,8 +26,8 @@ import (
 // Endpoint:
 //
 //	GET /service/rest/v1/repositories
-func ListRepositories(envFile string) *cerr.CustomError {
-	c, err := rest.NewClientFromEnvFile(envFile)
+func ListRepositories() *cerr.CustomError {
+	c, err := rest.NewClientFromEnvFile(shared.Envfile)
 	if err != nil {
 		return err
 	}

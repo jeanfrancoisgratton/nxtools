@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"nxtools/shared"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -32,5 +33,5 @@ func init() {
 
 	rootCmd.AddCommand(envCmd, repoCmd, blobCmd)
 
-	rootCmd.PersistentFlags().StringVarP(&Envfile, "env", "e", "defaultEnv.json", "Environment file to load (from $HOME/.config/JFG/nxtools)")
+	rootCmd.PersistentFlags().StringVarP(&shared.Envfile, "env", "e", "defaultEnv.json", "Environment file to load (from $HOME/.config/JFG/nxtools)")
 }

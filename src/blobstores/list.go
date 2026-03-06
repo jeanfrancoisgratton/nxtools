@@ -27,8 +27,8 @@ import (
 // Endpoint:
 //
 //	GET /v1/blobstores
-func ListBlobs(envFile string) *cerr.CustomError {
-	c, err := rest.NewClientFromEnvFile(envFile)
+func ListBlobs() *cerr.CustomError {
+	c, err := rest.NewClientFromEnvFile(shared.Envfile)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func ListBlobs(envFile string) *cerr.CustomError {
 		}
 		if b.SoftQuota != nil {
 			sqtype = hftx.Green(b.SoftQuota.Type)
-			sqlimit = hftx.Green(fmt.Sprintf("%v", b.SoftQuota.Limit))
+			sqlimit = hftx.Green(shared.FormatSize(b.SoftQuota.Limit))
 		}
 		t.AppendRow(table.Row{
 			hftx.Green(b.Name),
