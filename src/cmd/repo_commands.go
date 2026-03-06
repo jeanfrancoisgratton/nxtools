@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"nxtools/repositories"
+	"nxtools/shared"
 )
 
 var repoFormat string
@@ -31,7 +32,7 @@ var repoListCmd = &cobra.Command{
 	Example: "nxtools repo list -e defaultEnv.json",
 	Short:   "Lists all repositories visible to the configured user",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := repositories.ListRepositories(Envfile); err != nil {
+		if err := repositories.ListRepositories(); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
@@ -43,7 +44,7 @@ var repoCreateCmd = &cobra.Command{
 	Example: "nxtools repo create -e defaultEnv.json --format yum --type hosted --json payload.json",
 	Short:   "Creates a repository (payload is recipe-specific)",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := repositories.CreateRepository(Envfile, repoFormat, repoType, repoJSONFile); err != nil {
+		if err := repositories.CreateRepository(shared.Envfile, repoFormat, repoType, repoJSONFile); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
@@ -56,7 +57,7 @@ var repoDeleteCmd = &cobra.Command{
 	Short:   "Deletes a repository by name",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := repositories.DeleteRepository(Envfile, args[0]); err != nil {
+		if err := repositories.DeleteRepository(shared.Envfile, args[0]); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
