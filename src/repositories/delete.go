@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
+	"nxtools/rest"
 )
 
 // DeleteRepository deletes a repository by name.
@@ -27,7 +28,7 @@ func DeleteRepository(envFile, repoName string) *cerr.CustomError {
 		return &cerr.CustomError{Title: "Missing parameters", Message: "repository name is required"}
 	}
 
-	c, err := newClientFromEnvFile(envFile)
+	c, err := rest.NewClientFromEnvFile(envFile)
 	if err != nil {
 		return err
 	}

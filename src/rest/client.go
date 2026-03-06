@@ -16,6 +16,9 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/jeanfrancoisgratton/customError/v3"
+	"nxtools/env"
 )
 
 // NewClient builds a Client from Config.
@@ -207,4 +210,32 @@ func (c *Client) BaseURL() string {
 		return ""
 	}
 	return c.baseURL.String()
+}
+
+func NewClientFromEnvFile(envFile string) (*Client, *customError.CustomError) {
+	oldEnvFile := env.EnvConfigFile
+	if strings.TrimSpace(envFile) == "" {
+		envFile = "defaultEnv.json"
+	}
+
+	env.EnvConfigFile = envFile
+	e, err := env.LoadEnvironmentFile()
+	env.EnvConfigFile = oldEnvFile
+	if err != nil {
+		return nil, err
+	}
+
+	// If the env file doesn't specify a host, rest.NewClient() falls back to NEXUS_HOST.
+	cfg := Config{
+		Host:     strings.TrimSpace(e.NexusServerUrl),
+		Username: strings.TrimSpace(e.Username),
+		Password: strings.TrimSpace(e.Password),
+	}
+
+	c, e2 := NewClient(cfg)
+	if e2 != nil {
+		return nil, &customError.CustomError{Title: "Unable to create REST client", Message: e2.Error(), Fatality: customError.Fatal}
+	}
+
+	return c, nil
 }

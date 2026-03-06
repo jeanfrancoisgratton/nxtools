@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
+	"nxtools/rest"
 )
 
 // CreateRepository creates a repository using the Repositories API.
@@ -53,7 +54,7 @@ func CreateRepository(envFile, format, repoType, jsonFile string) *cerr.CustomEr
 		return &cerr.CustomError{Title: "Invalid JSON payload", Message: "payload is empty"}
 	}
 
-	c, err := newClientFromEnvFile(envFile)
+	c, err := rest.NewClientFromEnvFile(envFile)
 	if err != nil {
 		return err
 	}

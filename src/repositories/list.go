@@ -17,6 +17,7 @@ import (
 	hftx "github.com/jeanfrancoisgratton/helperFunctions/v4/terminalfx"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
+	"nxtools/rest"
 )
 
 // ListRepositories prints all repositories the configured user can browse.
@@ -25,7 +26,7 @@ import (
 //
 //	GET /service/rest/v1/repositories
 func ListRepositories(envFile string) *cerr.CustomError {
-	c, err := newClientFromEnvFile(envFile)
+	c, err := rest.NewClientFromEnvFile(envFile)
 	if err != nil {
 		return err
 	}
