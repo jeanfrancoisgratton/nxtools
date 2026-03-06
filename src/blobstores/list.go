@@ -51,7 +51,7 @@ func ListBlobs(envFile string) *cerr.CustomError {
 		return &cerr.CustomError{Title: "Unable to parse server response", Message: e3.Error()}
 	}
 
-	fmt.Printf("Number of repositories: %s\n", hftx.Green(fmt.Sprintf("%d", len(blobs))))
+	fmt.Printf("Number of blob stores: %s\n", hftx.Green(fmt.Sprintf("%d", len(blobs))))
 
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
