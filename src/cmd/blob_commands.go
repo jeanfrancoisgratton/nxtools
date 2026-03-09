@@ -33,7 +33,7 @@ var blobListCmd = &cobra.Command{
 	},
 }
 
-var removeCmd = &cobra.Command{
+var blobRemoveCmd = &cobra.Command{
 	Use:     "remove",
 	Aliases: []string{"rm", "delete", "del"},
 	Example: "nxtools blob rm FLAGS blobstore",
@@ -46,6 +46,29 @@ var removeCmd = &cobra.Command{
 	},
 }
 
+var blobAddCmd = &cobra.Command{
+	Use:     "add",
+	Aliases: []string{"create"},
+	Example: "nxtools blob add FLAGS blobstore",
+	Args:    cobra.ExactArgs(1),
+	Short:   "Creates a blobstore from the server",
+	Run: func(cmd *cobra.Command, args []string) {
+		if blobstores.SoftQuotaEnabled {
+			blobstores.SoftQuotaSummary = blobstores.SoftQuotaStruct{Type: blobstores.SoftQuotaType, Limit: blobstores.SoftQuotaLimit}
+		}
+		if err := blobstores.CreateBlob(args[0]); err != nil {
+			fmt.Println(err.Error())
+		}
+	},
+}
+
 func init() {
-	blobCmd.AddCommand(blobListCmd, removeCmd)
+	blobCmd.AddCommand(blobListCmd, blobRemoveCmd, blobAddCmd)
+
+	blobAddCmd.Flags().StringVar(&blobstores.Blobtype, "type", "file", "Blob type (file, gcp, amazon, azure, group)")
+	blobAddCmd.Flags().StringVar(&blobstores.FileBlobPath, "path", "", "File blob path")
+	blobAddCmd.Flags().BoolVar(&blobstores.SoftQuotaEnabled, "softquota", false, "Soft quota enabled or not")
+	blobAddCmd.Flags().StringVar(&blobstores.SoftQuotaType, "sqtype", "spaceUsedQuota", "Softquota type ('spaceRemainingQuota' or 'spaceUsedQuota'")
+	blobAddCmd.Flags().Int64Var(&blobstores.SoftQuotaLimit, "sqlimit", 0, "Soft quota limit")
+	_ = blobAddCmd.MarkFlagRequired("type")
 }
