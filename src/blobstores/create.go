@@ -5,11 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v4/terminalfx"
 	"nxtools/rest"
 	"nxtools/shared"
 )
@@ -87,12 +87,12 @@ func CreateFileBlob(blobname string) *cerr.CustomError {
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		b, _ := io.ReadAll(resp.Body)
 		return &cerr.CustomError{
 			Title:   "Unable to create file blob store",
-			Message: fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(b)),
+			Message: fmt.Sprintf("HTTP %d: %s", resp.StatusCode, resp.Status),
 		}
 	}
 
+	fmt.Println(hftx.EnabledSign("File-based blob store " + blobname + "with path " + FileBlobPath + " has been created"))
 	return nil
 }
