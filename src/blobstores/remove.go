@@ -30,7 +30,7 @@ func RemoveBlob(blobs []string) *cerr.CustomError {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != 204 {
-			return &cerr.CustomError{Title: "Unable to delete blob " + blob, Message: fmt.Sprintf("HTTP %d: %s", resp.StatusCode, resp.Status)}
+			return &cerr.CustomError{Title: "Unable to delete blob " + blob, Message: "HTTP status code: " + resp.Status}
 		}
 		fmt.Println(hftx.EnabledSign("Successfully deleted blob " + blob))
 	}

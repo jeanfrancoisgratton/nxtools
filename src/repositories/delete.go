@@ -7,8 +7,6 @@ package repositories
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -41,8 +39,7 @@ func DeleteRepository(envFile, repoName string) *cerr.CustomError {
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		b, _ := io.ReadAll(resp.Body)
-		return &cerr.CustomError{Title: "Unable to delete repository", Message: fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(b))}
+		return &cerr.CustomError{Title: "Unable to delete repository", Message: "HTTP status code: " + resp.Status}
 	}
 
 	return nil

@@ -71,8 +71,7 @@ func CreateRepository(envFile, format, repoType, jsonFile string) *cerr.CustomEr
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		b, _ := io.ReadAll(resp.Body)
-		return &cerr.CustomError{Title: "Unable to create repository", Message: fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(b))}
+		return &cerr.CustomError{Title: "Unable to create repository", Message: "HTTP status code: " + resp.Status}
 	}
 
 	// Nexus often returns 201 + an empty body for create.

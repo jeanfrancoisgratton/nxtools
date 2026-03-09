@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 
@@ -39,8 +38,7 @@ func ListRepositories() *cerr.CustomError {
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		b, _ := io.ReadAll(resp.Body)
-		return &cerr.CustomError{Title: "Unable to list repositories", Message: fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(b))}
+		return &cerr.CustomError{Title: "Unable to list repositories", Message: "HTTP status code: " + resp.Status}
 	}
 
 	var repos []RepositorySummary
