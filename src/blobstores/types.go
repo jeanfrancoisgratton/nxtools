@@ -7,24 +7,37 @@ package blobstores
 
 // ─── Shared ──────────────────────────────────────────────────────────────────
 
-// SoftQuota defines an optional space/age constraint on a blob store.
+// SoftQuotaStruct defines an optional space/age constraint on a blob store.
 // Type values: "spaceRemainingQuota" | "spaceUsedQuota"
-type SoftQuota struct {
+type SoftQuotaStruct struct {
 	Type  string `json:"type"`
 	Limit int64  `json:"limit"` // in bytes
+	// type is of : "enum" : [ "spaceRemainingQuota", "spaceUsedQuota" ]
 }
+
+// Blob types
+// Available types are : "file", "google", "azure", "s3"
+// Currently we only support "file"
+
+var Blobtype = "file"
+var FileBlobPath = ""
+var SoftQuotaEnabled = false
+var SoftQuotaType = "spaceRemainingQuota"
+var SoftQuotaLimit int64 = 0
+
+var SoftQuotaSummary = SoftQuotaStruct{Type: "spaceRemainingQuota", Limit: 0}
 
 // ─── List / Summary ───────────────────────────────────────────────────────────
 
 // BlobStoreSummary is returned by GET /v1/blobstores
 type BlobStoreSummary struct {
-	Name                  string     `json:"name"`
-	Type                  string     `json:"type"` // "File", "S3", "Azure", "Group"
-	Unavailable           bool       `json:"unavailable"`
-	BlobCount             int64      `json:"blobCount"`
-	TotalSizeInBytes      int64      `json:"totalSizeInBytes"`
-	AvailableSpaceInBytes int64      `json:"availableSpaceInBytes"`
-	SoftQuota             *SoftQuota `json:"softQuota,omitempty"`
+	Name                  string           `json:"name"`
+	Type                  string           `json:"type"` // "File", "S3", "Azure", "Group"
+	Unavailable           bool             `json:"unavailable"`
+	BlobCount             int64            `json:"blobCount"`
+	TotalSizeInBytes      int64            `json:"totalSizeInBytes"`
+	AvailableSpaceInBytes int64            `json:"availableSpaceInBytes"`
+	SoftQuota             *SoftQuotaStruct `json:"softQuota,omitempty"`
 }
 
 // QuotaStatus is returned by GET /v1/blobstores/{name}/quota-status
@@ -36,30 +49,30 @@ type QuotaStatus struct {
 
 // ─── File Blob Store ──────────────────────────────────────────────────────────
 
-// FileAttributes holds the filesystem path for a file-backed blob store.
-type FileAttributes struct {
+// BlobFileAttributes holds the filesystem path for a file-backed blob store.
+type BlobFileAttributes struct {
 	Path string `json:"path"` // absolute path on the Nexus server
 }
 
 // FileCreateRequest is the payload for POST /v1/blobstores/file
 type FileCreateRequest struct {
-	Name      string     `json:"name"`
-	SoftQuota *SoftQuota `json:"softQuota,omitempty"`
-	Path      string     `json:"path"` // convenience field; maps to attributes
+	Name      string           `json:"name"`
+	SoftQuota *SoftQuotaStruct `json:"softQuota,omitempty"`
+	Path      string           `json:"path"` // convenience field; maps to attributes
 }
 
 // FileUpdateRequest is the payload for PUT /v1/blobstores/file/{name}
 // Identical shape to create; name comes from the URL path, not the body.
 type FileUpdateRequest struct {
-	SoftQuota *SoftQuota `json:"softQuota,omitempty"`
-	Path      string     `json:"path"`
+	SoftQuota *SoftQuotaStruct `json:"softQuota,omitempty"`
+	Path      string           `json:"path"`
 }
 
 // FileResponse is returned by GET /v1/blobstores/file/{name}
 type FileResponse struct {
-	Name      string     `json:"name"`
-	SoftQuota *SoftQuota `json:"softQuota,omitempty"`
-	Path      string     `json:"path"`
+	Name      string           `json:"name"`
+	SoftQuota *SoftQuotaStruct `json:"softQuota,omitempty"`
+	Path      string           `json:"path"`
 }
 
 // ─── S3 Blob Store ────────────────────────────────────────────────────────────
@@ -95,7 +108,7 @@ type S3AdvancedBucketConnection struct {
 // S3CreateRequest is the payload for POST /v1/blobstores/s3
 type S3CreateRequest struct {
 	Name                     string                      `json:"name"`
-	SoftQuota                *SoftQuota                  `json:"softQuota,omitempty"`
+	SoftQuota                *SoftQuotaStruct            `json:"softQuota,omitempty"`
 	BucketConfiguration      S3BucketConfiguration       `json:"bucketConfiguration"`
 	Encryption               *S3EncryptionConfiguration  `json:"encryption,omitempty"`
 	AdvancedBucketConnection *S3AdvancedBucketConnection `json:"advancedBucketConnection,omitempty"`
@@ -103,7 +116,7 @@ type S3CreateRequest struct {
 
 // S3UpdateRequest is the payload for PUT /v1/blobstores/s3/{name}
 type S3UpdateRequest struct {
-	SoftQuota                *SoftQuota                  `json:"softQuota,omitempty"`
+	SoftQuota                *SoftQuotaStruct            `json:"softQuota,omitempty"`
 	BucketConfiguration      S3BucketConfiguration       `json:"bucketConfiguration"`
 	Encryption               *S3EncryptionConfiguration  `json:"encryption,omitempty"`
 	AdvancedBucketConnection *S3AdvancedBucketConnection `json:"advancedBucketConnection,omitempty"`
@@ -112,7 +125,7 @@ type S3UpdateRequest struct {
 // S3Response is returned by GET /v1/blobstores/s3/{name}
 type S3Response struct {
 	Name                     string                      `json:"name"`
-	SoftQuota                *SoftQuota                  `json:"softQuota,omitempty"`
+	SoftQuota                *SoftQuotaStruct            `json:"softQuota,omitempty"`
 	BucketConfiguration      S3BucketConfiguration       `json:"bucketConfiguration"`
 	Encryption               *S3EncryptionConfiguration  `json:"encryption,omitempty"`
 	AdvancedBucketConnection *S3AdvancedBucketConnection `json:"advancedBucketConnection,omitempty"`
@@ -131,20 +144,20 @@ type AzureBucketConfiguration struct {
 // AzureCreateRequest is the payload for POST /v1/blobstores/azure
 type AzureCreateRequest struct {
 	Name                string                   `json:"name"`
-	SoftQuota           *SoftQuota               `json:"softQuota,omitempty"`
+	SoftQuota           *SoftQuotaStruct         `json:"softQuota,omitempty"`
 	BucketConfiguration AzureBucketConfiguration `json:"bucketConfiguration"`
 }
 
 // AzureUpdateRequest is the payload for PUT /v1/blobstores/azure/{name}
 type AzureUpdateRequest struct {
-	SoftQuota           *SoftQuota               `json:"softQuota,omitempty"`
+	SoftQuota           *SoftQuotaStruct         `json:"softQuota,omitempty"`
 	BucketConfiguration AzureBucketConfiguration `json:"bucketConfiguration"`
 }
 
 // AzureResponse is returned by GET /v1/blobstores/azure/{name}
 type AzureResponse struct {
 	Name                string                   `json:"name"`
-	SoftQuota           *SoftQuota               `json:"softQuota,omitempty"`
+	SoftQuota           *SoftQuotaStruct         `json:"softQuota,omitempty"`
 	BucketConfiguration AzureBucketConfiguration `json:"bucketConfiguration"`
 }
 
@@ -160,23 +173,23 @@ const (
 
 // GroupCreateRequest is the payload for POST /v1/blobstores/group
 type GroupCreateRequest struct {
-	Name       string          `json:"name"`
-	SoftQuota  *SoftQuota      `json:"softQuota,omitempty"`
-	Members    []string        `json:"members"` // ordered list of member blob store names
-	FillPolicy GroupFillPolicy `json:"fillPolicy"`
+	Name       string           `json:"name"`
+	SoftQuota  *SoftQuotaStruct `json:"softQuota,omitempty"`
+	Members    []string         `json:"members"` // ordered list of member blob store names
+	FillPolicy GroupFillPolicy  `json:"fillPolicy"`
 }
 
 // GroupUpdateRequest is the payload for PUT /v1/blobstores/group/{name}
 type GroupUpdateRequest struct {
-	SoftQuota  *SoftQuota      `json:"softQuota,omitempty"`
-	Members    []string        `json:"members"`
-	FillPolicy GroupFillPolicy `json:"fillPolicy"`
+	SoftQuota  *SoftQuotaStruct `json:"softQuota,omitempty"`
+	Members    []string         `json:"members"`
+	FillPolicy GroupFillPolicy  `json:"fillPolicy"`
 }
 
 // GroupResponse is returned by GET /v1/blobstores/group/{name}
 type GroupResponse struct {
-	Name       string          `json:"name"`
-	SoftQuota  *SoftQuota      `json:"softQuota,omitempty"`
-	Members    []string        `json:"members"`
-	FillPolicy GroupFillPolicy `json:"fillPolicy"`
+	Name       string           `json:"name"`
+	SoftQuota  *SoftQuotaStruct `json:"softQuota,omitempty"`
+	Members    []string         `json:"members"`
+	FillPolicy GroupFillPolicy  `json:"fillPolicy"`
 }
