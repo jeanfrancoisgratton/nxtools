@@ -82,24 +82,23 @@ func lookupTaskID(taskType, reponame string) (string, *cerr.CustomError) {
 	q := url.Values{}
 	q.Set("type", taskType)
 
-	resp, e2 := c.Do(context.Background(), http.MethodPost, "/service/rest/v1/tasks", q, nil, nil)
+	resp, e2 := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/tasks", q, nil, nil)
 	if e2 != nil {
 		return "", &cerr.CustomError{Title: "HTTP request failed", Message: e2.Error()}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return "", &cerr.CustomError{Title: "Unable to list blobs", Message: "HTTP status code: " + resp.Status}
+		return "", &cerr.CustomError{Title: "Unable to list tasks", Message: "HTTP status code: " + resp.Status}
 	}
 
-	var tasks []TaskSummary
+	var taskResp ListTasksResponse
 	dec := json.NewDecoder(resp.Body)
-	// The payload may evolve across Nexus versions; be liberal in what we accept.
-	if e3 := dec.Decode(&tasks); e3 != nil {
+	if e3 := dec.Decode(&taskResp); e3 != nil {
 		return "", &cerr.CustomError{Title: "Unable to parse server response", Message: e3.Error()}
 	}
 
-	for _, task := range tasks {
+	for _, task := range taskResp.Items {
 		if task.Type == taskType && task.Name == "_reindex_"+reponame {
 			ids = append(ids, task.ID)
 		}
