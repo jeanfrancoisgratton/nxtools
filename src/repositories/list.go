@@ -25,27 +25,31 @@ import (
 // Endpoint:
 //
 //	GET /service/rest/v1/repositories
-func ListRepositories() *cerr.CustomError {
+func ListRepositories(displayOutput bool) ([]RepositorySummary, *cerr.CustomError) {
 	c, err := rest.NewClientFromEnvFile(shared.Envfile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, e2 := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/repositories", nil, nil, nil)
 	if e2 != nil {
-		return &cerr.CustomError{Title: "HTTP request failed", Message: e2.Error()}
+		return nil, &cerr.CustomError{Title: "HTTP request failed", Message: e2.Error()}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return &cerr.CustomError{Title: "Unable to list repositories", Message: "HTTP status code: " + resp.Status}
+		return nil, &cerr.CustomError{Title: "Unable to list repositories", Message: "HTTP status code: " + resp.Status}
 	}
 
 	var repos []RepositorySummary
 	dec := json.NewDecoder(resp.Body)
 	// The payload may evolve across Nexus versions; be liberal in what we accept.
 	if e3 := dec.Decode(&repos); e3 != nil {
-		return &cerr.CustomError{Title: "Unable to parse server response", Message: e3.Error()}
+		return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: e3.Error()}
+	}
+
+	if !displayOutput {
+		return repos, nil
 	}
 
 	fmt.Printf("Number of repositories: %s\n", hftx.Green(fmt.Sprintf("%d", len(repos))))
@@ -68,5 +72,5 @@ func ListRepositories() *cerr.CustomError {
 	t.Style().Format.Header = text.FormatDefault
 	t.Render()
 
-	return nil
+	return repos, nil
 }

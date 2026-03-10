@@ -8,9 +8,11 @@ package cmd
 import (
 	"fmt"
 
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v4/terminalfx"
 	"github.com/spf13/cobra"
 	"nxtools/repositories"
 	"nxtools/shared"
+	"nxtools/tasks"
 )
 
 var repoFormat string
@@ -32,7 +34,7 @@ var repoListCmd = &cobra.Command{
 	Example: "nxtools repo list -e defaultEnv.json",
 	Short:   "Lists all repositories visible to the configured user",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := repositories.ListRepositories(); err != nil {
+		if _, err := repositories.ListRepositories(true); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
@@ -44,7 +46,7 @@ var repoCreateCmd = &cobra.Command{
 	Example: "nxtools repo create -e defaultEnv.json --format yum --type hosted --json payload.json",
 	Short:   "Creates a repository (payload is recipe-specific)",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := repositories.CreateRepository(shared.Envfile, repoFormat, repoType, repoJSONFile); err != nil {
+		if err := repositories.CreateRepository(repoFormat, repoType, repoJSONFile); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
@@ -57,19 +59,49 @@ var repoDeleteCmd = &cobra.Command{
 	Short:   "Deletes a repository by name",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := repositories.DeleteRepository(shared.Envfile, args[0]); err != nil {
+		if err := repositories.DeleteRepository(args[0]); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
 }
 
+var repoQueryTypeCmd = &cobra.Command{
+	Use:     "type",
+	Example: "nxtools repo type -e defaultEnv.json REPO_NAME",
+	Short:   "Returns the type of the repository",
+	Args:    cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		if repoformat, err := repositories.QueryRepoType(args[0]); err != nil {
+			fmt.Println(err.Error())
+		} else {
+			fmt.Println("Repository format: " + hftx.Blue(repoformat))
+		}
+	},
+}
+
+var reindexRepoCmd = &cobra.Command{
+	Use:     "reindex",
+	Example: "nxtools repo reindex -e defaultEnv.json REPO_NAME",
+	Short:   "Rebuilds the repository metadata",
+	Args:    cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := tasks.ReindexRepo(args[0]); err != nil {
+			fmt.Println(err.Error())
+		} else {
+			if !shared.QuietOutput {
+				fmt.Println(hftx.EnabledSign("Repository " + args[0] + " was successfully reindexed"))
+			}
+		}
+	},
+}
+
 func init() {
+	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, reindexRepoCmd)
+
 	repoCreateCmd.Flags().StringVar(&repoFormat, "format", "", "Repository format/recipe family (e.g. yum, apt, maven, docker)")
 	repoCreateCmd.Flags().StringVar(&repoType, "type", "", "Repository type (hosted, proxy, group)")
 	repoCreateCmd.Flags().StringVar(&repoJSONFile, "json", "", "JSON payload file for the recipe (use '-' to read from stdin)")
 	_ = repoCreateCmd.MarkFlagRequired("format")
 	_ = repoCreateCmd.MarkFlagRequired("type")
 	_ = repoCreateCmd.MarkFlagRequired("json")
-
-	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd)
 }

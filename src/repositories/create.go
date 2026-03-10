@@ -17,6 +17,7 @@ import (
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
 	"nxtools/rest"
+	"nxtools/shared"
 )
 
 // CreateRepository creates a repository using the Repositories API.
@@ -28,7 +29,7 @@ import (
 // You are expected to supply the full JSON payload for that recipe.
 // Easiest workflow: export the payload from Nexus' embedded Swagger UI
 // (Settings -> System -> API) for the desired recipe.
-func CreateRepository(envFile, format, repoType, jsonFile string) *cerr.CustomError {
+func CreateRepository(format, repoType, jsonFile string) *cerr.CustomError {
 	format = strings.TrimSpace(format)
 	repoType = strings.TrimSpace(repoType)
 	jsonFile = strings.TrimSpace(jsonFile)
@@ -54,7 +55,7 @@ func CreateRepository(envFile, format, repoType, jsonFile string) *cerr.CustomEr
 		return &cerr.CustomError{Title: "Invalid JSON payload", Message: "payload is empty"}
 	}
 
-	c, err := rest.NewClientFromEnvFile(envFile)
+	c, err := rest.NewClientFromEnvFile(shared.Envfile)
 	if err != nil {
 		return err
 	}

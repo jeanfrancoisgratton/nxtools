@@ -13,6 +13,7 @@ import (
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
 	"nxtools/rest"
+	"nxtools/shared"
 )
 
 // DeleteRepository deletes a repository by name.
@@ -20,13 +21,13 @@ import (
 // Endpoint (generic):
 //
 //	DELETE /service/rest/v1/repositories/{repositoryName}
-func DeleteRepository(envFile, repoName string) *cerr.CustomError {
+func DeleteRepository(repoName string) *cerr.CustomError {
 	repoName = strings.TrimSpace(repoName)
 	if repoName == "" {
 		return &cerr.CustomError{Title: "Missing parameters", Message: "repository name is required"}
 	}
 
-	c, err := rest.NewClientFromEnvFile(envFile)
+	c, err := rest.NewClientFromEnvFile(shared.Envfile)
 	if err != nil {
 		return err
 	}
