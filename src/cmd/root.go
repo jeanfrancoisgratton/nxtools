@@ -34,4 +34,5 @@ func init() {
 	rootCmd.AddCommand(envCmd, repoCmd, blobCmd, uploadCmd)
 
 	rootCmd.PersistentFlags().StringVarP(&shared.Envfile, "env", "e", "defaultEnv.json", "Environment file to load (from $HOME/.config/JFG/nxtools)")
+	rootCmd.PersistentFlags().BoolVarP(&shared.QuietOutput, "quiet", "q", false, "Output will be as quiet as possible")
 }

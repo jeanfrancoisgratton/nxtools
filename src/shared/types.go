@@ -8,3 +8,4 @@ package shared
 // Global variables and structs
 
 var Envfile = "defaultEnv.json"
+var QuietOutput = false

@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v4/terminalfx"
 	"nxtools/rest"
 	"nxtools/shared"
 )
@@ -454,11 +455,35 @@ func alignRPMSection(n int64) int64 {
 }
 
 func uploadApt(repoName, filePath string) *cerr.CustomError {
-	return uploadComponentMultipart(repoName, "apt.asset", filePath, nil)
+	if !shared.QuietOutput {
+		fmt.Println(hftx.InProgressSign("Uploading " + filepath.Base(filePath) + " to " + repoName))
+	}
+	if e := uploadComponentMultipart(repoName, "apt.asset", filePath, nil); e != nil {
+		if !shared.QuietOutput {
+			fmt.Println(hftx.ErrorSign("Failed to upload " + hftx.Red(filePath) + " to " + hftx.Red(repoName)))
+		}
+		return e
+	}
+	if !shared.QuietOutput {
+		fmt.Println(hftx.EnabledSign("Uploaded " + hftx.Green(filePath) + " to " + hftx.Green(repoName)))
+	}
+	return nil
 }
 
 func uploadHelm(repoName, filePath string) *cerr.CustomError {
-	return uploadComponentMultipart(repoName, "helm.asset", filePath, nil)
+	if !shared.QuietOutput {
+		fmt.Println(hftx.InProgressSign("Uploading " + filepath.Base(filePath) + " to " + repoName))
+	}
+	if e := uploadComponentMultipart(repoName, "helm.asset", filePath, nil); e != nil {
+		if !shared.QuietOutput {
+			fmt.Println(hftx.ErrorSign("Failed to upload " + hftx.Red(filePath) + " to " + hftx.Red(repoName)))
+		}
+		return e
+	}
+	if !shared.QuietOutput {
+		fmt.Println(hftx.EnabledSign("Uploaded " + hftx.Green(filePath) + " to " + hftx.Green(repoName)))
+	}
+	return nil
 }
 
 func uploadRaw(repoName, filePath, directory string) *cerr.CustomError {
@@ -466,13 +491,37 @@ func uploadRaw(repoName, filePath, directory string) *cerr.CustomError {
 		"raw.directory":       inferRawDirectory(directory),
 		"raw.asset1.filename": filepath.Base(filePath),
 	}
-	return uploadComponentMultipart(repoName, "raw.asset1", filePath, fields)
+	if !shared.QuietOutput {
+		fmt.Println(hftx.InProgressSign("Uploading " + filepath.Base(filePath) + " to " + repoName))
+	}
+	if e := uploadComponentMultipart(repoName, "raw.asset1", filePath, fields); e != nil {
+		if !shared.QuietOutput {
+			fmt.Println(hftx.ErrorSign("Failed to upload " + hftx.Red(filePath) + " to " + hftx.Red(repoName)))
+		}
+		return e
+	}
+	if !shared.QuietOutput {
+		fmt.Println(hftx.EnabledSign("Uploaded " + hftx.Green(filePath) + " to " + hftx.Green(repoName)))
+	}
+	return nil
 }
 
 func uploadYum(repoName, filePath, directory string) *cerr.CustomError {
+	if !shared.QuietOutput {
+		fmt.Println(hftx.InProgressSign("Uploading " + filepath.Base(filePath) + " to " + repoName))
+	}
 	resolvedDirectory, err := inferYumDirectory(repoName, filePath, directory)
 	if err != nil {
 		return err
 	}
-	return uploadRepositoryPath(repoName, filePath, resolvedDirectory)
+	if e := uploadRepositoryPath(repoName, filePath, resolvedDirectory); e != nil {
+		if !shared.QuietOutput {
+			fmt.Println(hftx.ErrorSign("Failed to upload " + hftx.Red(filePath) + " to " + hftx.Red(repoName)))
+		}
+		return e
+	}
+	if !shared.QuietOutput {
+		fmt.Println(hftx.EnabledSign("Uploaded " + hftx.Green(filePath) + " to " + hftx.Green(repoName)))
+	}
+	return nil
 }
