@@ -18,3 +18,19 @@ type RepositorySummary struct {
 	Size       uint64         `json:"size,omitempty"`
 	Attributes map[string]any `json:"attributes,omitempty"`
 }
+
+// YumHostedRepository contains the fields needed by upload helpers when
+// inferring a default upload path for hosted Yum repositories.
+type YumHostedRepository struct {
+	Name   string              `json:"name"`
+	Format string              `json:"format"`
+	Type   string              `json:"type"`
+	Yum    YumHostedAttributes `json:"yum"`
+}
+
+// YumHostedAttributes contains the Yum-specific hosted settings returned by
+// GET /service/rest/v1/repositories/yum/hosted/{repositoryName}.
+type YumHostedAttributes struct {
+	RepodataDepth int    `json:"repodataDepth"`
+	DeployPolicy  string `json:"deployPolicy,omitempty"`
+}
