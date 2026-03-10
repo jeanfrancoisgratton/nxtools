@@ -61,6 +61,14 @@ install -Dpm 0755 %{_sourcedir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryn
 
 
 %changelog
+* Tue Mar 10 2026 Binary package builder <builder@famillegratton.net> 0.30.00-0
+- Fixed reindex task (jean-francois@famillegratton.net)
+- version bump (jean-francois@famillegratton.net)
+- completed repo reindex tasks (jean-francois@famillegratton.net)
+- Completed upload (jean-francois@famillegratton.net)
+- completed but untested the upload command (jean-francois@famillegratton.net)
+- simplified error output (jean-francois@famillegratton.net)
+
 * Sun Mar 08 2026 Binary package builder <builder@famillegratton.net> 0.20.00-0
 - new package built with tito
 
