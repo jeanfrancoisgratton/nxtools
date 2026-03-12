@@ -17,7 +17,7 @@ var assetsCmd = &cobra.Command{
 	Aliases: []string{"asset"},
 	Short:   "Asset-related sub-command",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Valid subcommands are: { list }")
+		fmt.Println("Valid subcommands are: { list | info | upload }")
 	},
 }
 
@@ -34,8 +34,52 @@ var assetsListCmd = &cobra.Command{
 	},
 }
 
-func init() {
-	assetsCmd.AddCommand(assetsListCmd)
+var assetInfoCmd = &cobra.Command{
+	Use:     "info ASSET_ID",
+	Example: "nxtools assets info [-e defaultEnv.json] ASSET_ID",
+	Args:    cobra.ExactArgs(1),
+	Short:   "Provides information on an asset",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := assets.AssetInformation(args[0]); err != nil {
+			fmt.Println(err.Error())
+		}
+	},
+}
 
-	assetsListCmd.Flags().BoolVar(&assets.LatestAssetsOnly, "latest", false, "Only list the latest version of each logical asset/component")
+var assetsUploadCmd = &cobra.Command{
+	Use:     "upload REPO_NAME FILE_NAME",
+	Aliases: []string{"push"},
+	Example: "nxtools assets upload [-e defaultEnv.json] my-repository /path/to/file",
+	Args:    cobra.ExactArgs(2),
+	Short:   "Uploads a file to a supported hosted repository",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := assets.UploadAsset(args[0], args[1], assets.UploadDirectory); err != nil {
+			fmt.Println(err.Error())
+		}
+	},
+}
+
+var assetsDownloadCmd = &cobra.Command{
+	Use:     "download URL DEST_FILE",
+	Aliases: []string{"get"},
+	Example: "nxtools assets download [-e defaultEnv.json] ASSET_URL /PATH/TO/FILE",
+	Args:    cobra.MinimumNArgs(1),
+	Short:   "Downloads a file from a supported hosted repository",
+	Run: func(cmd *cobra.Command, args []string) {
+		destfile := ""
+		if len(args) == 2 {
+			destfile = args[1]
+		}
+		if err := assets.DownloadAsset(args[0], destfile); err != nil {
+			fmt.Println(err.Error())
+		}
+	},
+}
+
+func init() {
+	assetsCmd.AddCommand(assetsListCmd, assetInfoCmd, assetsUploadCmd, assetsDownloadCmd)
+
+	assetsListCmd.Flags().BoolVarP(&assets.LatestAssetsOnly, "latest", "l", false, "Only list the latest version of each logical asset/component")
+	assetsListCmd.Flags().BoolVarP(&assets.AlternateInfo, "alternate", "a", false, "Show alternate asset information")
+	assetsUploadCmd.Flags().StringVar(&assets.UploadDirectory, "directory", "", "Target directory inside the repository (optional; defaults are inferred for raw and yum)")
 }

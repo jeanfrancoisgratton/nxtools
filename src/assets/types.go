@@ -5,9 +5,29 @@
 
 package assets
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 var LatestAssetsOnly bool
+var AlternateInfo bool
+var UploadDirectory string
+
+const (
+	rpmLeadSize      = 96
+	rpmTagArch       = 1022
+	rpmTypeString    = 6
+	rpmTypeI18N      = 9
+	rpmAutoDirPrefix = "packages"
+)
+
+type rpmHeaderIndex struct {
+	Tag    uint32
+	Type   uint32
+	Offset uint32
+	Count  uint32
+}
 
 type ListAssetResponse struct {
 	Items             []AssetSummary `json:"items"`
@@ -23,8 +43,8 @@ type AssetSummary struct {
 	Format         string          `json:"format"`
 	Checksum       json.RawMessage `json:"checksum"`
 	ContentType    string          `json:"contentType"`
-	LastModified   string          `json:"lastModified"`
-	LastDownloaded string          `json:"lastDownloaded"`
+	LastModified   time.Time       `json:"lastModified"`
+	LastDownloaded time.Time       `json:"lastDownloaded"`
 	Uploader       string          `json:"uploader"`
 	UploaderIP     string          `json:"uploaderIp"`
 	FileSize       int64           `json:"fileSize"`

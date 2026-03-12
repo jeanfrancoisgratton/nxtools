@@ -43,7 +43,6 @@ func ListRepositories(displayOutput bool) ([]RepositorySummary, *cerr.CustomErro
 
 	var repos []RepositorySummary
 	dec := json.NewDecoder(resp.Body)
-	// The payload may evolve across Nexus versions; be liberal in what we accept.
 	if e3 := dec.Decode(&repos); e3 != nil {
 		return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: e3.Error()}
 	}

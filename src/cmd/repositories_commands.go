@@ -24,7 +24,7 @@ var repoCmd = &cobra.Command{
 	Aliases: []string{"repos", "repositories"},
 	Short:   "Repository-related sub-command",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Valid subcommands are: { list | create | delete }")
+		fmt.Println("Valid subcommands are: { list | create | delete | type | reindex }")
 	},
 }
 
@@ -95,21 +95,8 @@ var reindexRepoCmd = &cobra.Command{
 	},
 }
 
-var upload2RepoCmd = &cobra.Command{
-	Use:     "upload REPO_NAME FILE_NAME",
-	Aliases: []string{"push"},
-	Example: "nxtools upload [-e defaultEnv.json] my-repository /path/to/file.rpm",
-	Args:    cobra.ExactArgs(2),
-	Short:   "Uploads a file to a supported hosted repository",
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := repositories.UploadFile(args[0], args[1], repositories.RepoUploadDirectory); err != nil {
-			fmt.Println(err.Error())
-		}
-	},
-}
-
 func init() {
-	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, reindexRepoCmd, upload2RepoCmd)
+	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, reindexRepoCmd)
 
 	repoCreateCmd.Flags().StringVar(&repoFormat, "format", "", "Repository format/recipe family (e.g. yum, apt, maven, docker)")
 	repoCreateCmd.Flags().StringVar(&repoType, "type", "", "Repository type (hosted, proxy, group)")
@@ -117,6 +104,4 @@ func init() {
 	_ = repoCreateCmd.MarkFlagRequired("format")
 	_ = repoCreateCmd.MarkFlagRequired("type")
 	_ = repoCreateCmd.MarkFlagRequired("json")
-
-	upload2RepoCmd.Flags().StringVar(&repositories.RepoUploadDirectory, "directory", "", "Target directory inside the repository (optional; defaults are inferred for raw and yum)")
 }

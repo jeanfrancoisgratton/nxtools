@@ -1,11 +1,9 @@
 // nxtools
 // Written by J.F. Gratton <jean-francois@famillegratton.net>
-// Original timestamp: 2026/03/03
+// Original timestamp: 2026/03/12 18:04
 // Original filename: src/repositories/types.go
 
 package repositories
-
-var RepoUploadDirectory = ""
 
 // RepositorySummary is the (limited) repository representation returned by:
 //

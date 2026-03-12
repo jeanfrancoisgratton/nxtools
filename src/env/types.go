@@ -10,7 +10,7 @@ var DebugMode = false
 
 // This structure holds the basic software config
 type EnvironmentStruct struct {
-	NexusServerUrl string `json:"NexusServerUrl"`
+	NexusServerUrl string `json:"NexusServerUrl,omitempty"`
 	Username       string `json:"Username"`
 	Password       string `json:"Password"`
 }

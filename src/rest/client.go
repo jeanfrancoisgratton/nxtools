@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jeanfrancoisgratton/customError/v3"
+	cerr "github.com/jeanfrancoisgratton/customError/v3"
 	"nxtools/env"
 )
 
@@ -125,30 +125,8 @@ func (c cancelOnClose) Close() error {
 	return c.ReadCloser.Close()
 }
 
-// Do issues an HTTP request to the Nexus server.
-//
-// `path` is relative to cfg.Host and may include a base path if you run Nexus
-// behind a reverse proxy (e.g. cfg.Host="https://host/nexus").
-// Example path: "/service/rest/v1/repositories".
-func (c *Client) Do(
-	ctx context.Context,
-	method string,
-	path string,
-	query url.Values,
-	body io.Reader,
-	headers http.Header,
-) (*http.Response, error) {
-	if path == "" || path[0] != '/' {
-		path = "/" + path
-	}
-
-	u := *c.baseURL
-	u.Path = joinURLPath(c.baseURL.Path, path)
-	u.RawQuery = ""
-	if len(query) > 0 {
-		u.RawQuery = query.Encode()
-	}
-
+func (c *Client) doURL(ctx context.Context, method string, rawURL string,
+	body io.Reader, headers http.Header) (*http.Response, *cerr.CustomError) {
 	reqCtx := ctx
 	if reqCtx == nil {
 		reqCtx = context.Background()
@@ -161,12 +139,12 @@ func (c *Client) Do(
 		}
 	}
 
-	req, err := http.NewRequestWithContext(reqCtx, method, u.String(), body)
+	req, err := http.NewRequestWithContext(reqCtx, method, rawURL, body)
 	if err != nil {
 		if cancel != nil {
 			cancel()
 		}
-		return nil, err
+		return nil, &cerr.CustomError{Title: "HTTP client error", Message: err.Error()}
 	}
 
 	// Default headers
@@ -195,13 +173,66 @@ func (c *Client) Do(
 		if cancel != nil {
 			cancel()
 		}
-		return nil, err
+		return nil, &cerr.CustomError{Title: "HTTP client error", Message: err.Error()}
 	}
 
 	if cancel != nil {
 		resp.Body = cancelOnClose{ReadCloser: resp.Body, cancel: cancel}
 	}
 	return resp, nil
+}
+
+// Do issues an HTTP request to the Nexus server.
+//
+// `path` is relative to cfg.Host and may include a base path if you run Nexus
+// behind a reverse proxy (e.g. cfg.Host="https://host/nexus").
+// Example path: "/service/rest/v1/repositories".
+func (c *Client) Do(ctx context.Context, method string, path string,
+	query url.Values, body io.Reader, headers http.Header) (*http.Response, *cerr.CustomError) {
+	if path == "" || path[0] != '/' {
+		path = "/" + path
+	}
+
+	u := *c.baseURL
+	u.Path = joinURLPath(c.baseURL.Path, path)
+	u.RawQuery = ""
+	if len(query) > 0 {
+		u.RawQuery = query.Encode()
+	}
+
+	return c.doURL(ctx, method, u.String(), body, headers)
+}
+
+// Get issues a simple HTTP GET request.
+//
+// target may be either:
+//   - a Nexus-relative path such as "/service/rest/v1/repositories", or
+//   - a fully-qualified URL such as "https://nexus.example.com/repository/repo/file.rpm".
+//
+// Authentication headers are applied automatically from the client config.
+func (c *Client) Get(target string) (*http.Response, *cerr.CustomError) {
+	return c.GetWithOptions(nil, target, nil)
+}
+
+// GetWithOptions issues an HTTP GET request with optional context and headers.
+//
+// target may be either:
+//   - a Nexus-relative path such as "/service/rest/v1/repositories", or
+//   - a fully-qualified URL such as "https://nexus.example.com/repository/repo/file.rpm".
+//
+// Any configured authentication headers are applied automatically unless the
+// caller explicitly sets Authorization in headers.
+func (c *Client) GetWithOptions(ctx context.Context, target string, headers http.Header) (*http.Response, *cerr.CustomError) {
+	target = strings.TrimSpace(target)
+	if target == "" {
+		return nil, &cerr.CustomError{Title: "HTTP client GET error", Message: "empty GET target"}
+	}
+
+	if strings.HasPrefix(strings.ToLower(target), "http://") || strings.HasPrefix(strings.ToLower(target), "https://") {
+		return c.doURL(ctx, http.MethodGet, target, nil, headers)
+	}
+
+	return c.Do(ctx, http.MethodGet, target, nil, nil, headers)
 }
 
 // BaseURL returns the resolved base URL the client uses.
@@ -212,7 +243,7 @@ func (c *Client) BaseURL() string {
 	return c.baseURL.String()
 }
 
-func NewClientFromEnvFile(envFile string) (*Client, *customError.CustomError) {
+func NewClientFromEnvFile(envFile string) (*Client, *cerr.CustomError) {
 	oldEnvFile := env.EnvConfigFile
 	if strings.TrimSpace(envFile) == "" {
 		envFile = "defaultEnv.json"
@@ -234,7 +265,7 @@ func NewClientFromEnvFile(envFile string) (*Client, *customError.CustomError) {
 
 	c, e2 := NewClient(cfg)
 	if e2 != nil {
-		return nil, &customError.CustomError{Title: "Unable to create REST client", Message: e2.Error(), Fatality: customError.Fatal}
+		return nil, &cerr.CustomError{Title: "Unable to create REST client", Message: e2.Error()}
 	}
 
 	return c, nil

@@ -42,10 +42,11 @@ func ListAssets(repoName string, latestOnly bool, displayOutput bool) ([]AssetSu
 		return nil, &cerr.CustomError{Title: "Missing parameters", Message: "repository name is required"}
 	}
 
-	repoFormat, err := repositories.QueryRepoType(repoName)
+	repo, err := repositories.GetRepositorySummary(repoName)
 	if err != nil {
 		return nil, err
 	}
+	repoFormat := repo.Format
 
 	var items []AssetSummary
 	if latestOnly {
@@ -261,19 +262,24 @@ func printAssets(repoName string, latestOnly bool, items []AssetSummary) {
 
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"Path", "Size", "Last modified", "Download URL"})
-
-	for _, item := range items {
-		t.AppendRow(table.Row{
-			displayAssetName(item),
-			shared.FormatSize(item.FileSize),
-			item.LastModified,
-			item.DownloadURL,
-		})
+	if !AlternateInfo {
+		t.AppendHeader(table.Row{"Asset name", "Asset ID", "Size", "Last modified", "Download URL"})
+	} else {
+		t.AppendHeader(table.Row{"Asset name", "Size", "Last modified", "Uploader", "Uploader IP", "Download URL"})
 	}
 
-	t.SortBy([]table.SortBy{{Name: "Path", Mode: table.Asc}})
-	t.SetStyle(table.StyleBold)
+	for _, item := range items {
+		if !AlternateInfo {
+			t.AppendRow(table.Row{displayAssetName(item), item.ID, shared.FormatSize(item.FileSize),
+				item.LastModified.Format("2006.01.02 15:04:05"), item.DownloadURL})
+		} else {
+			t.AppendRow(table.Row{displayAssetName(item), shared.FormatSize(item.FileSize),
+				item.LastModified.Format("2006.01.02 15:04:05"), item.Uploader, item.UploaderIP, item.DownloadURL})
+		}
+	}
+
+	t.SortBy([]table.SortBy{{Name: "Asset name", Mode: table.Asc}})
+	t.SetStyle(table.StyleRounded)
 	t.Style().Format.Header = text.FormatDefault
 	t.Render()
 }

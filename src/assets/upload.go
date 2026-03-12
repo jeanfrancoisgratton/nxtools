@@ -1,9 +1,9 @@
 // nxtools
 // Written by J.F. Gratton <jean-francois@famillegratton.net>
 // Original timestamp: 2026/03/09
-// Original filename: src/repositories/upload.go
+// Original filename: src/assets/upload.go
 
-package repositories
+package assets
 
 import (
 	"os"
@@ -11,9 +11,10 @@ import (
 	"strings"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
+	"nxtools/repositories"
 )
 
-func UploadFile(repoName, filePath, directory string) *cerr.CustomError {
+func UploadAsset(repoName, filePath, directory string) *cerr.CustomError {
 	repoName = strings.TrimSpace(repoName)
 	filePath = strings.TrimSpace(filePath)
 	directory = strings.TrimSpace(directory)
@@ -29,11 +30,11 @@ func UploadFile(repoName, filePath, directory string) *cerr.CustomError {
 		return &cerr.CustomError{Title: "Unable to access file", Message: err.Error()}
 	}
 
-	repo, err := getRepositorySummary(repoName)
+	repo, err := repositories.GetRepositorySummary(repoName)
 	if err != nil {
 		return err
 	}
-	if err = ensureUploadableRepository(repo); err != nil {
+	if err = repositories.EnsureUploadableRepository(repo); err != nil {
 		return err
 	}
 
