@@ -51,17 +51,17 @@ This should give you an Alpine package
 3. Run the following: `git push --follow-tags origin` --> **This has to be done from a forked repo, otherwise if you point at my own repo, it will likely fail**
 4. Run the following: `tito build --rpm` : the result will be in /tmp/tito/ copy the files (SRPM, RPM) in a safe place
 
-## Blob operations
+### Blob operations
 We support add, remove and list operations; update operations are not yet implemented
 
-### List blobs
+#### List blobs
 Very simply: `nxtools blob ls`
 **IMAGE TO COME**
 
 
-## Repositories operations
+### Repositories operations
 We support add, remove, list operations
 
-### List repos
+#### List repos
 Again, very simply: `nxtools repos ls`
 **IMAGE TO COME**
