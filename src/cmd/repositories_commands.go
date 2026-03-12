@@ -1,7 +1,7 @@
 // nxtools
 // Written by J.F. Gratton <jean-francois@famillegratton.net>
 // Original timestamp: 2026/03/03
-// Original filename: src/cmd/repo_commands.go
+// Original filename: src/cmd/repositories_commands.go
 
 package cmd
 
@@ -31,7 +31,7 @@ var repoCmd = &cobra.Command{
 var repoListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
-	Example: "nxtools repo list -e defaultEnv.json",
+	Example: "nxtools repo list [-e defaultEnv.json]",
 	Short:   "Lists all repositories visible to the configured user",
 	Run: func(cmd *cobra.Command, args []string) {
 		if _, err := repositories.ListRepositories(true); err != nil {
@@ -43,7 +43,7 @@ var repoListCmd = &cobra.Command{
 var repoCreateCmd = &cobra.Command{
 	Use:     "create",
 	Aliases: []string{"add"},
-	Example: "nxtools repo create -e defaultEnv.json --format yum --type hosted --json payload.json",
+	Example: "nxtools repo create [-e defaultEnv.json] --format yum --type hosted --json payload.json",
 	Short:   "Creates a repository (payload is recipe-specific)",
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := repositories.CreateRepository(repoFormat, repoType, repoJSONFile); err != nil {
@@ -55,7 +55,7 @@ var repoCreateCmd = &cobra.Command{
 var repoDeleteCmd = &cobra.Command{
 	Use:     "delete REPO_NAME",
 	Aliases: []string{"rm", "remove"},
-	Example: "nxtools repo delete -e defaultEnv.json my-repo-name",
+	Example: "nxtools repo delete [-e defaultEnv.json] my-repo-name",
 	Short:   "Deletes a repository by name",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -67,7 +67,7 @@ var repoDeleteCmd = &cobra.Command{
 
 var repoQueryTypeCmd = &cobra.Command{
 	Use:     "type",
-	Example: "nxtools repo type -e defaultEnv.json REPO_NAME",
+	Example: "nxtools repo type [-e defaultEnv.json] REPO_NAME",
 	Short:   "Returns the type of the repository",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -81,7 +81,7 @@ var repoQueryTypeCmd = &cobra.Command{
 
 var reindexRepoCmd = &cobra.Command{
 	Use:     "reindex",
-	Example: "nxtools repo reindex -e defaultEnv.json REPO_NAME",
+	Example: "nxtools repo reindex [-e defaultEnv.json] REPO_NAME",
 	Short:   "Rebuilds the repository metadata",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -95,8 +95,21 @@ var reindexRepoCmd = &cobra.Command{
 	},
 }
 
+var upload2RepoCmd = &cobra.Command{
+	Use:     "upload REPO_NAME FILE_NAME",
+	Aliases: []string{"push"},
+	Example: "nxtools upload [-e defaultEnv.json] my-repository /path/to/file.rpm",
+	Args:    cobra.ExactArgs(2),
+	Short:   "Uploads a file to a supported hosted repository",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := repositories.UploadFile(args[0], args[1], repositories.RepoUploadDirectory); err != nil {
+			fmt.Println(err.Error())
+		}
+	},
+}
+
 func init() {
-	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, reindexRepoCmd)
+	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, reindexRepoCmd, upload2RepoCmd)
 
 	repoCreateCmd.Flags().StringVar(&repoFormat, "format", "", "Repository format/recipe family (e.g. yum, apt, maven, docker)")
 	repoCreateCmd.Flags().StringVar(&repoType, "type", "", "Repository type (hosted, proxy, group)")
@@ -104,4 +117,6 @@ func init() {
 	_ = repoCreateCmd.MarkFlagRequired("format")
 	_ = repoCreateCmd.MarkFlagRequired("type")
 	_ = repoCreateCmd.MarkFlagRequired("json")
+
+	upload2RepoCmd.Flags().StringVar(&repositories.RepoUploadDirectory, "directory", "", "Target directory inside the repository (optional; defaults are inferred for raw and yum)")
 }

@@ -1,7 +1,7 @@
 // nxtools
 // Written by J.F. Gratton <jean-francois@famillegratton.net>
 // Original timestamp: 2026/03/05 20:06
-// Original filename: src/cmd/blob_commands.go
+// Original filename: src/cmd/blobstores_commands.go
 
 package cmd
 

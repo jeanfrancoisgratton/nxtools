@@ -13,7 +13,7 @@ func QueryRepoType(reponame string) (string, *cerr.CustomError) {
 	var rs []RepositorySummary
 	var err *cerr.CustomError
 	if rs, err = ListRepositories(false); err != nil {
-		return "", nil
+		return "", err
 	}
 
 	for _, repo := range rs {

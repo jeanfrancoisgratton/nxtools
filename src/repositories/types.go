@@ -5,6 +5,8 @@
 
 package repositories
 
+var RepoUploadDirectory = ""
+
 // RepositorySummary is the (limited) repository representation returned by:
 //
 //	GET /service/rest/v1/repositories
