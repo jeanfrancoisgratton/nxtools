@@ -61,6 +61,13 @@ install -Dpm 0755 %{_sourcedir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryn
 
 
 %changelog
+* Fri Mar 13 2026 Binary package builder <builder@famillegratton.net> 0.40.00-0
+- version bump (jean-francois@famillegratton.net)
+- Major refactoring, completed the assets subcommand (jean-
+  francois@famillegratton.net)
+- Added the 'assets ls' subcommand (jean-francois@famillegratton.net)
+- types corrections (jean-francois@famillegratton.net)
+
 * Tue Mar 10 2026 Binary package builder <builder@famillegratton.net> 0.30.00-1
 - Bumped release number for all packages (jean-francois@famillegratton.net)
 - Fixed perm on build script (builder@famillegratton.net)
