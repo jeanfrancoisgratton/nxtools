@@ -76,8 +76,21 @@ var assetsDownloadCmd = &cobra.Command{
 	},
 }
 
+var assetsDeleteCmd = &cobra.Command{
+	Use:     "delete ASSET_ID1 [ASSET_ID2 ...]",
+	Aliases: []string{"rm"},
+	Example: "nxtools assets delete [-e defaultEnv.json] ASSET_ID [ASSET_ID2 ...]",
+	Args:    cobra.MinimumNArgs(1),
+	Short:   "Deletes one or more assets from a repository",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := assets.DeleteAssets(args); err != nil {
+			fmt.Println(err.Error())
+		}
+	},
+}
+
 func init() {
-	assetsCmd.AddCommand(assetsListCmd, assetInfoCmd, assetsUploadCmd, assetsDownloadCmd)
+	assetsCmd.AddCommand(assetsListCmd, assetInfoCmd, assetsUploadCmd, assetsDownloadCmd, assetsDeleteCmd)
 
 	assetsListCmd.Flags().BoolVarP(&assets.LatestAssetsOnly, "latest", "l", false, "Only list the latest version of each logical asset/component")
 	assetsListCmd.Flags().BoolVarP(&assets.AlternateInfo, "alternate", "a", false, "Show alternate asset information")
