@@ -7,7 +7,9 @@ package shared
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"math"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -19,6 +21,15 @@ import (
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
 	"nxtools/rest"
 )
+
+func FormatSize(sz int64) string {
+	numSize := (float64)(sz) / 1000.0 / 1000.0 // this will give us the size in MB
+	if (int)(math.Log10(float64(numSize))) > 2 {
+		return fmt.Sprintf("%.3f GB", numSize/1000.0)
+	} else {
+		return fmt.Sprintf("%.3f MB", numSize)
+	}
+}
 
 func NormalizeDirectory(dir string) string {
 	dir = strings.TrimSpace(dir)

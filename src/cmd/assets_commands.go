@@ -89,10 +89,27 @@ var assetsDeleteCmd = &cobra.Command{
 	},
 }
 
+var assetsComponentInfoCmd = &cobra.Command{
+	Use:     "pkginfo PKG_NAME REPO_NAME",
+	Example: "nxtools assets pkginfo [-e defaultEnv.json] PKG_NAME REPO_NAME",
+	Args:    cobra.ExactArgs(2),
+	Short:   "Fetches information about a package from a given repository",
+	Long: `This subcommand relies on the component API endpoint and thus needs a package name (not an asset ID),
+			and the name of the repository where the package is housed.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if _, err := assets.PackageInfo(args[0], args[1], true); err != nil {
+			fmt.Println(err.Error())
+		}
+	},
+}
+
 func init() {
-	assetsCmd.AddCommand(assetsListCmd, assetInfoCmd, assetsUploadCmd, assetsDownloadCmd, assetsDeleteCmd)
+	assetsCmd.AddCommand(assetsListCmd, assetInfoCmd, assetsUploadCmd, assetsDownloadCmd, assetsDeleteCmd, assetsComponentInfoCmd)
 
 	assetsListCmd.Flags().BoolVarP(&assets.LatestAssetsOnly, "latest", "l", false, "Only list the latest version of each logical asset/component")
 	assetsListCmd.Flags().BoolVarP(&assets.AlternateInfo, "alternate", "a", false, "Show alternate asset information")
 	assetsUploadCmd.Flags().StringVar(&assets.UploadDirectory, "directory", "", "Target directory inside the repository (optional; defaults are inferred for raw and yum)")
+
+	assetInfoCmd.Flags().BoolVarP(&assets.JsonOutput, "json", "j", false, "Output asset information as JSON")
+	assetsComponentInfoCmd.Flags().BoolVarP(&assets.JsonOutput, "json", "j", false, "Output asset information as JSON")
 }

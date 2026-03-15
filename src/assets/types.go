@@ -13,6 +13,7 @@ import (
 var LatestAssetsOnly bool
 var AlternateInfo bool
 var UploadDirectory string
+var JsonOutput bool
 
 const (
 	rpmLeadSize      = 96
@@ -48,7 +49,7 @@ type AssetSummary struct {
 	Uploader       string          `json:"uploader"`
 	UploaderIP     string          `json:"uploaderIp"`
 	FileSize       int64           `json:"fileSize"`
-	BlobCreated    string          `json:"blobCreated"`
+	BlobCreated    time.Time       `json:"blobCreated"`
 	BlobStoreName  string          `json:"blobStoreName"`
 }
 
