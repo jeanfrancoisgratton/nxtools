@@ -33,7 +33,7 @@ func ListRepositories(displayOutput bool) ([]RepositorySummary, *cerr.CustomErro
 
 	resp, e2 := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/repositories", nil, nil, nil)
 	if e2 != nil {
-		return nil, &cerr.CustomError{Title: "HTTP request failed", Message: e2.Error()}
+		return nil, e2
 	}
 	defer resp.Body.Close()
 

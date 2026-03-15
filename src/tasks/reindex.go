@@ -84,7 +84,7 @@ func lookupTaskID(taskType, reponame string) (string, *cerr.CustomError) {
 
 	resp, e2 := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/tasks", q, nil, nil)
 	if e2 != nil {
-		return "", &cerr.CustomError{Title: "HTTP request failed", Message: e2.Error()}
+		return "", e2
 	}
 	defer resp.Body.Close()
 

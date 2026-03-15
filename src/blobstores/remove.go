@@ -25,7 +25,7 @@ func RemoveBlob(blobs []string) *cerr.CustomError {
 	for _, blob := range blobs {
 		resp, e2 := c.Do(context.Background(), http.MethodDelete, "/service/rest/v1/blobstores/"+blob, nil, nil, nil)
 		if e2 != nil {
-			return &cerr.CustomError{Title: "HTTP request failed", Message: e2.Error()}
+			return e2
 		}
 		defer resp.Body.Close()
 

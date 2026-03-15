@@ -67,7 +67,7 @@ func CreateRepository(format, repoType, jsonFile string) *cerr.CustomError {
 
 	resp, e2 := c.Do(context.Background(), http.MethodPost, path, nil, bytes.NewReader(payload), headers)
 	if e2 != nil {
-		return &cerr.CustomError{Title: "HTTP request failed", Message: e2.Error()}
+		return e2
 	}
 	defer resp.Body.Close()
 

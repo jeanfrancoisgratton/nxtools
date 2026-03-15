@@ -25,7 +25,7 @@ func DeleteAssets(assets []string) *cerr.CustomError {
 	for _, asset := range assets {
 		resp, e2 := c.Do(context.Background(), http.MethodDelete, "/service/rest/v1/assets/"+asset, nil, nil, nil)
 		if e2 != nil {
-			return &cerr.CustomError{Title: "HTTP request failed", Message: e2.Error()}
+			return e2
 		}
 		defer resp.Body.Close()
 

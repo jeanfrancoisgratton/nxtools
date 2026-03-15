@@ -8,7 +8,6 @@ package repositories
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -33,7 +32,7 @@ func GetRepositorySummary(repoName string) (*RepositorySummary, *cerr.CustomErro
 	path := "/service/rest/v1/repositories/" + url.PathEscape(repoName)
 	resp, e2 := c.Do(context.Background(), http.MethodGet, path, nil, nil, nil)
 	if e2 != nil {
-		return nil, &cerr.CustomError{Title: "HTTP request failed", Message: e2.Error()}
+		return nil, e2
 	}
 	defer resp.Body.Close()
 
@@ -96,7 +95,7 @@ func EnsureUploadableRepository(repo *RepositorySummary) *cerr.CustomError {
 	if !strings.EqualFold(strings.TrimSpace(repo.Type), "hosted") {
 		return &cerr.CustomError{
 			Title:   "Unsupported repository type",
-			Message: fmt.Sprintf("repository %q is of type %q; uploads are only supported to hosted repositories", repo.Name, repo.Type),
+			Message: "Repository " + repo.Name + " is of type " + repo.Type + "; uploads are only supported (for now) on hosted repositories",
 		}
 	}
 

@@ -133,7 +133,7 @@ func listLatestAssets(repoName, repoFormat string) ([]AssetSummary, *cerr.Custom
 
 		resp, e2 := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/search", q, nil, nil)
 		if e2 != nil {
-			return nil, &cerr.CustomError{Title: "HTTP request failed", Message: e2.Error()}
+			return nil, e2
 		}
 
 		var payload ListComponentResponse

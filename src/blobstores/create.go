@@ -70,19 +70,9 @@ func CreateFileBlob(blobname string) *cerr.CustomError {
 	headers.Set("Accept", "application/json")
 	headers.Set("Content-Type", "application/json")
 
-	resp, e2 := c.Do(
-		context.Background(),
-		http.MethodPost,
-		"/service/rest/v1/blobstores/file",
-		nil,
-		bytes.NewReader(payload),
-		headers,
-	)
+	resp, e2 := c.Do(context.Background(), http.MethodPost, "/service/rest/v1/blobstores/file", nil, bytes.NewReader(payload), headers)
 	if e2 != nil {
-		return &cerr.CustomError{
-			Title:   "HTTP request failed",
-			Message: e2.Error(),
-		}
+		return e2
 	}
 	defer resp.Body.Close()
 

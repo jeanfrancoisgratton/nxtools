@@ -34,7 +34,7 @@ func ListBlobs() *cerr.CustomError {
 
 	resp, e2 := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/blobstores", nil, nil, nil)
 	if e2 != nil {
-		return &cerr.CustomError{Title: "HTTP request failed", Message: e2.Error()}
+		return e2
 	}
 	defer resp.Body.Close()
 
