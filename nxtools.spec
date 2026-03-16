@@ -61,6 +61,13 @@ install -Dpm 0755 %{_sourcedir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryn
 
 
 %changelog
+* Mon Mar 16 2026 Binary package builder <builder@famillegratton.net> 0.50.00-0
+- Version bump, ready to merge (jean-francois@famillegratton.net)
+- completed the assets commands (jean-francois@famillegratton.net)
+- completed most of assets (jean-francois@famillegratton.net)
+- fixed error handling in c.Do() (jean-francois@famillegratton.net)
+- Completed the assets commands (jean-francois@famillegratton.net)
+
 * Fri Mar 13 2026 Binary package builder <builder@famillegratton.net> 0.40.00-0
 - version bump (jean-francois@famillegratton.net)
 - Major refactoring, completed the assets subcommand (jean-
