@@ -11,7 +11,7 @@ import (
 	"net/http"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
-	hftx "github.com/jeanfrancoisgratton/helperFunctions/v4/terminalfx"
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"nxtools/rest"
 	"nxtools/shared"
 )

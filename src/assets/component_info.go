@@ -1,7 +1,7 @@
 // nxtools
 // Written by J.F. Gratton <jean-francois@famillegratton.net>
 // Original timestamp: 2026/03/14 19:01
-// Original filename: src/assets/package_information.go
+// Original filename: src/assets/component_info.go
 
 package assets
 
@@ -9,39 +9,149 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
+	"os"
+	"strings"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
+	hfjson "github.com/jeanfrancoisgratton/helperFunctions/v5/prettyjson"
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/v6/text"
 	"nxtools/rest"
 	"nxtools/shared"
 )
 
-// PackageInfo
-// This will list all available versions of a given package in a given repo
-// Optional flags provide extra information
-
+// PackageInfo lists all indexed component entries for a given package name in a
+// given repository.
+//
+// It uses the Search API instead of the Components API because the search
+// endpoint is designed for filtering by repository/name/version attributes and
+// returns the same component summary structure, including component assets.
 func PackageInfo(pkg, repository string, displayOutput bool) ([]ComponentSummary, *cerr.CustomError) {
+	pkg = strings.TrimSpace(pkg)
+	repository = strings.TrimSpace(repository)
+
+	if pkg == "" || repository == "" {
+		return nil, &cerr.CustomError{
+			Title:   "Missing parameters",
+			Message: "package name and repository are required",
+		}
+	}
+
 	c, err := rest.NewClientFromEnvFile(shared.Envfile)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, e2 := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/componensts", nil, nil, nil)
-	if e2 != nil {
-		return nil, e2
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, &cerr.CustomError{Title: "Unable to list repositories", Message: "HTTP status code: " + resp.Status}
-	}
-	var components []ComponentSummary
-	dec := json.NewDecoder(resp.Body)
-	if e3 := dec.Decode(&components); e3 != nil {
-		return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: e3.Error()}
+	components, err := searchComponentsByPackage(c, pkg, repository)
+	if err != nil {
+		return nil, err
 	}
 
 	if !displayOutput {
 		return components, nil
 	}
+
+	if JsonOutput {
+		payload := ListComponentResponse{
+			Items:             components,
+			ContinuationToken: nil,
+		}
+
+		body, e2 := json.Marshal(payload)
+		if e2 != nil {
+			return nil, &cerr.CustomError{
+				Title:   "Unable to encode JSON output",
+				Message: e2.Error(),
+			}
+		}
+
+		if e3 := hfjson.Print(body); e3 != nil {
+			return nil, &cerr.CustomError{
+				Title:   "Unable to parse server response",
+				Message: e3.Error(),
+			}
+		}
+		return nil, nil
+	}
+
+	printComponentSummary(components)
 	return nil, nil
+}
+
+func searchComponentsByPackage(c *rest.Client, pkg, repository string) ([]ComponentSummary, *cerr.CustomError) {
+	var all []ComponentSummary
+	var continuationToken string
+
+	for {
+		q := url.Values{}
+		q.Set("repository", repository)
+		q.Set("name", pkg)
+		q.Set("sort", "version")
+
+		if continuationToken != "" {
+			q.Set("continuationToken", continuationToken)
+		}
+
+		resp, err := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/search", q, nil, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		var payload ListComponentResponse
+		decodeErr := decodePackageSearchResponse(resp, &payload)
+		resp.Body.Close()
+		if decodeErr != nil {
+			return nil, decodeErr
+		}
+
+		for _, component := range payload.Items {
+			if strings.EqualFold(strings.TrimSpace(component.Repository), repository) &&
+				strings.EqualFold(strings.TrimSpace(component.Name), pkg) {
+				all = append(all, component)
+			}
+		}
+
+		if payload.ContinuationToken == nil || strings.TrimSpace(*payload.ContinuationToken) == "" {
+			break
+		}
+		continuationToken = strings.TrimSpace(*payload.ContinuationToken)
+	}
+
+	return all, nil
+}
+
+func decodePackageSearchResponse(resp *http.Response, payload *ListComponentResponse) *cerr.CustomError {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return &cerr.CustomError{Title: "Unable to fetch package info", Message: "HTTP status code: " + resp.Status}
+	}
+
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(payload); err != nil {
+		return &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
+	}
+
+	return nil
+}
+
+func printComponentSummary(components []ComponentSummary) {
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"Component name", "Component version", "Format",
+		"Repository", "Repository group", "Assets"})
+
+	for _, item := range components {
+		grp := hftx.ErrorSign("")
+		if strings.TrimSpace(item.Group) != "" {
+			grp = item.Group
+		}
+
+		t.AppendRow(table.Row{item.Name, item.Version, item.Format,
+			item.Repository, grp, len(item.Assets)})
+	}
+
+	t.SetStyle(table.StyleRounded)
+	t.Style().Format.Header = text.FormatDefault
+	t.Render()
 }

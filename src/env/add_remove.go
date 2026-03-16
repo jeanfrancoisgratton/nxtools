@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
-	hf "github.com/jeanfrancoisgratton/helperFunctions/v4"
+	hf "github.com/jeanfrancoisgratton/helperFunctions/v5"
 )
 
 func RemoveEnvFile(envfile string) *cerr.CustomError {

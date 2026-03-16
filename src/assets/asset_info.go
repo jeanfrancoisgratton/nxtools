@@ -15,8 +15,9 @@ import (
 	"text/tabwriter"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
-	hfjson "github.com/jeanfrancoisgratton/helperFunctions/v4/prettyjson"
-	hftx "github.com/jeanfrancoisgratton/helperFunctions/v4/terminalfx"
+	hfnet "github.com/jeanfrancoisgratton/helperFunctions/v5/networking"
+	hfjson "github.com/jeanfrancoisgratton/helperFunctions/v5/prettyjson"
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"nxtools/rest"
 	"nxtools/shared"
 )
@@ -58,24 +59,33 @@ func AssetInformation(assetID string) *cerr.CustomError {
 	if e3 := dec.Decode(&asset); e3 != nil {
 		return &cerr.CustomError{Title: "Unable to parse server response", Message: e3.Error()}
 	}
-	tabulateSummaryOutput(asset)
+	if e4 := tabulateSummaryOutput(asset); e4 != nil {
+		return e4
+
+	}
 	return nil
 }
 
-func tabulateSummaryOutput(aInfo AssetSummary) {
+func tabulateSummaryOutput(aInfo AssetSummary) *cerr.CustomError {
 	w := tabwriter.NewWriter(os.Stdout, 1, 4, 2, ' ', 0)
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Name"), aInfo.Path[1:])
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("ID"), aInfo.ID)
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("File size"), shared.FormatSize(aInfo.FileSize))
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Download URL"), aInfo.DownloadURL)
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Content type"), aInfo.ContentType)
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Repository name"), aInfo.Repository)
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Repository format"), aInfo.Format)
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Last modified"), aInfo.LastModified.Format("2006.01.02 15:04:05"))
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Last downloaded"), aInfo.LastDownloaded.Format("2006.01.02 15:04:05"))
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Uploaded by"), aInfo.Uploader)
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Uploader IP address"), aInfo.UploaderIP)
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Stored in blobstore"), aInfo.BlobStoreName)
-	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Blobstore created"), aInfo.BlobCreated.Format("2006.01.02 15:04:05"))
-	w.Flush()
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Name: "), aInfo.Path[1:])
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("ID: "), aInfo.ID)
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("File size: "), shared.FormatSize(aInfo.FileSize))
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Download URL: "), aInfo.DownloadURL)
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Content type: "), aInfo.ContentType)
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Repository name: "), aInfo.Repository)
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Repository format: "), aInfo.Format)
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Last modified: "), aInfo.LastModified.Format("2006.01.02 15:04:05"))
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Last downloaded: "), aInfo.LastDownloaded.Format("2006.01.02 15:04:05"))
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Uploaded by: "), aInfo.Uploader)
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Uploader IP address: "), aInfo.UploaderIP)
+	_, domainname, err := hfnet.GetDomainFromIP(aInfo.UploaderIP)
+	if err != nil {
+		return &cerr.CustomError{Title: "Unable to parse uploader IP address", Message: err.Error()}
+	}
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Uploader ISP domain name: "), domainname)
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Stored in blob store: "), aInfo.BlobStoreName)
+	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Blobstore created: "), aInfo.BlobCreated.Format("2006.01.02 15:04:05"))
+	_ = w.Flush()
+	return nil
 }
