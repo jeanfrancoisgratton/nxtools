@@ -40,8 +40,8 @@ type BlobStoreSummary struct {
 	SoftQuota             *SoftQuotaStruct `json:"softQuota,omitempty"`
 }
 
-// QuotaStatus is returned by GET /v1/blobstores/{name}/quota-status
-type QuotaStatus struct {
+// QuotaStatusSummary is returned by GET /v1/blobstores/{name}/quota-status
+type QuotaStatusSummary struct {
 	IsViolation   bool   `json:"isViolation"`
 	Message       string `json:"message"`
 	BlobStoreName string `json:"blobStoreName"`
@@ -49,14 +49,16 @@ type QuotaStatus struct {
 
 // ─── File Blob Store ──────────────────────────────────────────────────────────
 
-// BlobFileAttributes holds the filesystem path for a file-backed blob store.
-type BlobFileAttributes struct {
-	Path string `json:"path"` // absolute path on the Nexus server
+// FileQuotaConfig
+type FileQuotaConfig struct {
+	QuotaStatus *QuotaStatusSummary `json:"quotaStatus,omitempty"`
+	SoftQuota   *SoftQuotaStruct    `json:"softQuota,omitempty"`
+	Path        string              `json:"path"`
 }
 
 // FileCreateRequest is the payload for POST /v1/blobstores/file
 type FileCreateRequest struct {
-	Name      string           `json:"name"`
+	Name      string           `json:"name,omitempty"`
 	SoftQuota *SoftQuotaStruct `json:"softQuota,omitempty"`
 	Path      string           `json:"path"` // convenience field; maps to attributes
 }
