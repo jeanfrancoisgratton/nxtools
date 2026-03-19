@@ -1,0 +1,24 @@
+{
+  "name": "internal",
+  "format": "yum",
+  "type": "hosted",
+  "url": "http://localhost:8081/repository/yum-example",
+  "online": true,
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true,
+    "writePolicy": "ALLOW_ONCE"
+  },
+  "cleanup": {
+    "policyNames": [
+      "string"
+    ]
+  },
+  "component": {
+    "proprietaryComponents": true
+  },
+  "yum": {
+    "repodataDepth": 5,
+    "deployPolicy": "STRICT"
+  }
+}

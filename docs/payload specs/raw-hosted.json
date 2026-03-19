@@ -1,0 +1,20 @@
+{
+  "name": "internal",
+  "format": "simpleapihostedrepository",
+  "type": "hosted",
+  "url": "http://localhost:8081/repository/simpleapihostedrepository-example",
+  "online": true,
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true,
+    "writePolicy": "ALLOW_ONCE"
+  },
+  "cleanup": {
+    "policyNames": [
+      "string"
+    ]
+  },
+  "component": {
+    "proprietaryComponents": true
+  }
+}

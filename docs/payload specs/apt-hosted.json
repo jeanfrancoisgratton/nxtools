@@ -1,0 +1,27 @@
+{
+  "name": "internal",
+  "format": "apt",
+  "type": "hosted",
+  "url": "http://localhost:8081/repository/apt-example",
+  "online": true,
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true,
+    "writePolicy": "ALLOW_ONCE"
+  },
+  "cleanup": {
+    "policyNames": [
+      "string"
+    ]
+  },
+  "component": {
+    "proprietaryComponents": true
+  },
+  "apt": {
+    "distribution": "bionic"
+  },
+  "aptSigning": {
+    "keypair": "string",
+    "passphrase": "string"
+  }
+}

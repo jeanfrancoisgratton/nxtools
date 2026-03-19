@@ -1,0 +1,28 @@
+{
+  "name": "internal",
+  "format": "docker",
+  "type": "hosted",
+  "url": "http://localhost:8081/repository/docker-example",
+  "online": true,
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true,
+    "writePolicy": "ALLOW_ONCE"
+  },
+  "cleanup": {
+    "policyNames": [
+      "string"
+    ]
+  },
+  "component": {
+    "proprietaryComponents": true
+  },
+  "docker": {
+    "v1Enabled": false,
+    "forceBasicAuth": true,
+    "httpPort": 8082,
+    "httpsPort": 8083,
+    "subdomain": "docker-a",
+    "pathEnabled": true
+  }
+}
