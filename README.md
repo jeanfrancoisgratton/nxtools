@@ -1,4 +1,4 @@
-# <img src="./images/nxtools_logo.png" alt="nxtools logo" height="64" />
+# <img src="./images/nxtools_logo.png" alt="nxtools logo" height="256" width="512" />
 ___
 
 This tool is a CLI-driven client to Nexus Repository Manager 3 servers.<br>It will allow:
@@ -45,23 +45,30 @@ This should give you an Alpine package
 4. Copy the .deb file in a safe space, then run `./restore_repo.sh`
 
 #### RPM (RPMBUILDER)
-**FORK** the repo, do not **CLONE** it; there's a step there that would fail, otherwise
+**FORK OR COPY the repo, do not CLONE** it; there's a step there that would fail, otherwise (see step #4)
 1. Ensure that tito is installed; the easy way is with pip: `pip install tito`
-2. Run the following: `tito tag --keep-version`
-3. Run the following: `git push --follow-tags origin` --> **This has to be done from a forked repo, otherwise if you point at my own repo, it will likely fail**
-4. Run the following: `tito build --rpm` : the result will be in /tmp/tito/ copy the files (SRPM, RPM) in a safe place
+2. Ensure that all other build deps are installed; from the nxtools root directory, run: `./rpmbuild-deps.sh`
+3. Run the following: `tito tag --keep-version`
+4. Run the following: `git push --follow-tags origin` --> **This has to be done from a forked repo, otherwise if you point at my own repo, it will likely fail**
+5. Run the following: `tito build --rpm` : the result will be in /tmp/tito/ copy the files (SRPM, RPM) in a safe place
 
-### Blob operations
-We support add, remove and list operations; update operations are not yet implemented
+## Blob operations
+We support add, remove and list operations; update operations are not yet implemented. The current blob subcommands are:
+<img src="./images/blob_-h.png" alt="nxtools blobs -h"/>
 
-#### List blobs
-Very simply: `nxtools blob ls`
-**IMAGE TO COME**
+### List blobs
+Very simply: `nxtools blob ls`<br><br>
+<img src="./images/blob_ls.png" alt="nxtools blobs ls"/>
 
+### Delete blobs
+`nxtools blob rm $BLOBSTORE_NAME`, as shown below<br><br>
+<img src="./images/blob_ls_rm_ls.png" alt="nxtools blobs rm"/>
 
-### Repositories operations
+### Create blob stores
+
+## Repositories operations
 We support add, remove, list operations
 
-#### List repos
+### List repos
 Again, very simply: `nxtools repos ls`
 **IMAGE TO COME**
