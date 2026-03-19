@@ -46,6 +46,6 @@ func ConfigFromEnv() Config {
 	if ua := os.Getenv("NEXUS_USER_AGENT"); ua != "" {
 		cfg.UserAgent = ua
 	}
-	
+
 	return cfg
 }
