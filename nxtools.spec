@@ -12,7 +12,7 @@
 %define _build_id_links none
 %define _name nxtools
 %define _prefix /opt
-%define _version 0.60.00
+%define _version 0.61.00
 %define _rel 0
 #%define _arch x86_64
 %define _binaryname nxtools
@@ -61,6 +61,12 @@ install -Dpm 0755 %{_sourcedir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryn
 
 
 %changelog
+* Thu Mar 19 2026 Binary package builder <builder@famillegratton.net> 0.60.00-0
+- Implement extra info and --json flag for repo ls (jean-
+  francois@famillegratton.net)
+- added repositorySettings json payloads doc (jean-francois@famillegratton.net)
+- Added extra information to blobstore ls (jean-francois@famillegratton.net)
+
 * Mon Mar 16 2026 Binary package builder <builder@famillegratton.net> 0.50.00-0
 - Version bump, ready to merge (jean-francois@famillegratton.net)
 - completed the assets commands (jean-francois@famillegratton.net)
