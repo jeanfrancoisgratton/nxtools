@@ -31,7 +31,7 @@ var repoCmd = &cobra.Command{
 var repoListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
-	Example: "nxtools repo list [-e defaultEnv.json] [--json] [-x]",
+	Example: "nxtools repo list [-e defaultEnv.json] [--json]",
 	Short:   "Lists all repositories visible to the configured user",
 	Run: func(cmd *cobra.Command, args []string) {
 		if _, err := repositories.ListRepositories(true); err != nil {
@@ -99,7 +99,6 @@ func init() {
 	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, reindexRepoCmd)
 
 	repoListCmd.Flags().BoolVar(&repositories.RepoListJSONOutput, "json", false, "Output repository information as JSON")
-	repoListCmd.Flags().BoolVarP(&repositories.RepoListExtraOutput, "extra", "x", false, "Fetch and display extra hosted repository information")
 
 	repoCreateCmd.Flags().StringVar(&repoFormat, "format", "", "Repository format/recipe family (e.g. yum, apt, maven, docker)")
 	repoCreateCmd.Flags().StringVar(&repoType, "type", "", "Repository type (hosted, proxy, group)")
