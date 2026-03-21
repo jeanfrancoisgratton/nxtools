@@ -54,15 +54,15 @@ This should give you an Alpine package
 
 ## Blob operations
 We support add, remove and list operations; update operations are not yet implemented. The current blob subcommands are:
-<img src="./images/blob_-h.png" alt="nxtools blobs -h"/>
+<img src="./images/blobs_-h.png" alt="nxtools blobs -h"/>
 
 ### List blobs
 Very simply: `nxtools blob ls`<br><br>
-<img src="./images/blob_ls.png" alt="nxtools blobs ls"/>
+<img src="./images/blobs_ls.png" alt="nxtools blobs ls"/>
 
 ### Delete blobs
 `nxtools blob rm $BLOBSTORE_NAME`, as shown below<br><br>
-<img src="./images/blob_ls_rm_ls.png" alt="nxtools blobs rm"/>
+<img src="./images/blobs_ls_rm_ls.png" alt="nxtools blobs rm"/>
 
 ### Create blob stores
 

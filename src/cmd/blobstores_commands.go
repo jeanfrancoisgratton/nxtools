@@ -14,7 +14,7 @@ import (
 
 var blobCmd = &cobra.Command{
 	Use:     "blob",
-	Aliases: []string{"blobs", "blobstore"},
+	Aliases: []string{"blobs", "blobstore", "blobstores"},
 	Short:   "Blobstore-related sub-command",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Valid subcommands are: { list | create | delete }")
