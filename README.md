@@ -60,9 +60,13 @@ We support add, remove and list operations; update operations are not yet implem
 Very simply: `nxtools blob ls`<br><br>
 <img src="./images/blobs_ls.png" alt="nxtools blobs ls"/>
 
+*A note about the Path column* : the column will not show any data for paths with relative values (that is: the blobstore path uses its default value, inside Nexus' $DATA_DIR)
+
+
 ### Delete blobs
 `nxtools blob rm $BLOBSTORE_NAME`, as shown below<br><br>
-<img src="./images/blobs_ls_rm_ls.png" alt="nxtools blobs rm"/>
+<img src="./images/blobs_ls-rm-ls.png" alt="nxtools blobs rm"/>
+
 
 ### Create blob stores
 
