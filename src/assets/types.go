@@ -6,8 +6,7 @@
 package assets
 
 import (
-	"encoding/json"
-	"time"
+	"nxtools/shared"
 )
 
 var LatestAssetsOnly bool
@@ -30,29 +29,6 @@ type rpmHeaderIndex struct {
 	Count  uint32
 }
 
-type ListAssetResponse struct {
-	Items             []AssetSummary `json:"items"`
-	ContinuationToken *string        `json:"continuationToken"`
-}
-
-// AssetXO represents a single asset item returned by the Nexus REST API.
-type AssetSummary struct {
-	DownloadURL    string          `json:"downloadUrl"`
-	Path           string          `json:"path"`
-	ID             string          `json:"id"`
-	Repository     string          `json:"repository"`
-	Format         string          `json:"format"`
-	Checksum       json.RawMessage `json:"checksum"`
-	ContentType    string          `json:"contentType"`
-	LastModified   time.Time       `json:"lastModified"`
-	LastDownloaded time.Time       `json:"lastDownloaded"`
-	Uploader       string          `json:"uploader"`
-	UploaderIP     string          `json:"uploaderIp"`
-	FileSize       int64           `json:"fileSize"`
-	BlobCreated    time.Time       `json:"blobCreated"`
-	BlobStoreName  string          `json:"blobStoreName"`
-}
-
 type ListComponentResponse struct {
 	Items             []ComponentSummary `json:"items"`
 	ContinuationToken *string            `json:"continuationToken"`
@@ -60,11 +36,11 @@ type ListComponentResponse struct {
 
 // ComponentSummary is the search API representation of one component.
 type ComponentSummary struct {
-	ID         string         `json:"id"`
-	Repository string         `json:"repository"`
-	Format     string         `json:"format"`
-	Group      string         `json:"group,omitempty"`
-	Name       string         `json:"name,omitempty"`
-	Version    string         `json:"version,omitempty"`
-	Assets     []AssetSummary `json:"assets"`
+	ID         string                `json:"id"`
+	Repository string                `json:"repository"`
+	Format     string                `json:"format"`
+	Group      string                `json:"group,omitempty"`
+	Name       string                `json:"name,omitempty"`
+	Version    string                `json:"version,omitempty"`
+	Assets     []shared.AssetSummary `json:"assets"`
 }

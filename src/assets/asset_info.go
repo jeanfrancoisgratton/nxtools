@@ -54,7 +54,7 @@ func AssetInformation(assetID string) *cerr.CustomError {
 		return nil
 	}
 
-	var asset AssetSummary
+	var asset shared.AssetSummary
 	dec := json.NewDecoder(resp.Body)
 	if e3 := dec.Decode(&asset); e3 != nil {
 		return &cerr.CustomError{Title: "Unable to parse server response", Message: e3.Error()}
@@ -66,7 +66,7 @@ func AssetInformation(assetID string) *cerr.CustomError {
 	return nil
 }
 
-func tabulateSummaryOutput(aInfo AssetSummary) *cerr.CustomError {
+func tabulateSummaryOutput(aInfo shared.AssetSummary) *cerr.CustomError {
 	w := tabwriter.NewWriter(os.Stdout, 1, 4, 2, ' ', 0)
 	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("Name: "), aInfo.Path[1:])
 	_, _ = fmt.Fprintf(w, "%s\t%s\n", hftx.Blue("ID: "), aInfo.ID)
