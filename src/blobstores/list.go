@@ -60,6 +60,7 @@ func ListBlobs() *cerr.CustomError {
 		var fqc FileQuotaConfig
 		var err *cerr.CustomError
 		var qsm string
+		path := ""
 		avail := ""
 		sqtype := hftx.Yellow("n/a")
 		sqlimit := hftx.Yellow("n/a")
@@ -71,6 +72,10 @@ func ListBlobs() *cerr.CustomError {
 		if b.Type == "File" {
 			if fqc, err = getFileBlobQuotaInformation(c, b.Name); err != nil {
 				return err
+			}
+			// We do not need to print the path if the path is relative
+			if strings.HasPrefix(fqc.Path, "/") {
+				path = fqc.Path
 			}
 		}
 		if b.SoftQuota != nil {
@@ -86,18 +91,9 @@ func ListBlobs() *cerr.CustomError {
 		} else {
 			qsm = hftx.Green("n/a")
 		}
-		t.AppendRow(table.Row{
-			hftx.Green(b.Name),
-			hftx.Green(b.Type),
-			avail, // Unavailable
-			hftx.Green(hf.SI(b.BlobCount)),
-			hftx.Green(fqc.Path),
-			hftx.Green(shared.FormatSize(b.TotalSizeInBytes)),
-			hftx.Green(shared.FormatSize(b.AvailableSpaceInBytes)),
-			sqtype,
-			sqlimit,
-			qsm,
-		})
+		t.AppendRow(table.Row{hftx.Green(b.Name), hftx.Green(b.Type), avail, hftx.Green(hf.SI(b.BlobCount)),
+			hftx.Green(path), hftx.Green(shared.FormatSize(b.TotalSizeInBytes)),
+			hftx.Green(shared.FormatSize(b.AvailableSpaceInBytes)), sqtype, sqlimit, qsm})
 	}
 
 	t.SortBy([]table.SortBy{{Name: "Name", Mode: table.Asc}})
@@ -110,32 +106,44 @@ func ListBlobs() *cerr.CustomError {
 
 func getFileBlobQuotaInformation(c *rest.Client, bname string) (FileQuotaConfig, *cerr.CustomError) {
 	var bi FileQuotaConfig
-	var qi FileCreateRequest
+	var qi FileResponse
 
-	// First, we need to fetch the path of the blob store
-	resp, e2 := c.Do(context.Background(), http.MethodGet, "service/rest/v1/blobstores/file/"+bname, nil, nil, nil)
+	resp, e2 := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/blobstores/file/"+bname, nil, nil, nil)
 	if e2 != nil {
 		return FileQuotaConfig{}, e2
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return FileQuotaConfig{}, &cerr.CustomError{Title: "Unable to list the blob config", Message: "HTTP status code: " + resp.Status}
-	}
-
-	//var blobs []BlobStoreSummary
-	dec := json.NewDecoder(resp.Body)
-	if e3 := dec.Decode(&qi); e3 != nil {
-		return FileQuotaConfig{}, &cerr.CustomError{Title: "Unable to parse server response", Message: e3.Error()}
-	}
-	// Second, if there is a soft quota, we need to get its status
-	if qi.SoftQuota != nil {
-		if qss, err := getFileBlobQuotaViolations(c, bname); err != nil {
-			return FileQuotaConfig{}, err
-		} else {
-			bi = FileQuotaConfig{SoftQuota: qi.SoftQuota, Path: qi.Path, QuotaStatus: qss}
+		return FileQuotaConfig{}, &cerr.CustomError{
+			Title:   "Unable to list the blob config",
+			Message: "HTTP status code: " + resp.Status,
 		}
 	}
+
+	dec := json.NewDecoder(resp.Body)
+	if e3 := dec.Decode(&qi); e3 != nil {
+		return FileQuotaConfig{}, &cerr.CustomError{
+			Title:   "Unable to parse server response",
+			Message: e3.Error(),
+		}
+	}
+
+	// Always preserve the path
+	bi = FileQuotaConfig{
+		Path:      qi.Path,
+		SoftQuota: qi.SoftQuota,
+	}
+
+	// Only fetch quota status when a soft quota exists
+	if qi.SoftQuota != nil {
+		qss, err := getFileBlobQuotaViolations(c, bname)
+		if err != nil {
+			return FileQuotaConfig{}, err
+		}
+		bi.QuotaStatus = qss
+	}
+
 	return bi, nil
 }
 
