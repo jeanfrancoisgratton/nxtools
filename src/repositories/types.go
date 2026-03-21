@@ -20,6 +20,7 @@ type RepositorySummary struct {
 	Size       uint64         `json:"size,omitempty"`
 	Attributes map[string]any `json:"attributes,omitempty"`
 	Storage    StorageSpec    `json:"storage,omitempty"`
+	AssetCount int            `json:"asset_count,omitempty"`
 }
 
 // YumHostedRepository contains the fields needed by upload helpers when

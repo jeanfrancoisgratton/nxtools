@@ -54,6 +54,10 @@ func ListRepositories(displayOutput bool) ([]RepositorySummary, *cerr.CustomErro
 		return nil, err
 	}
 
+	if repos, err = getNumberOfAssets(c, repos); err != nil {
+		return nil, err
+	}
+
 	if !displayOutput {
 		return repos, nil
 	}
@@ -73,18 +77,13 @@ func ListRepositories(displayOutput bool) ([]RepositorySummary, *cerr.CustomErro
 
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"Name", "Format", "Type", "Blob store", "Strict validation", "Write policy", "URL"})
+	t.AppendHeader(table.Row{"Name", "Format", "# Assets", "Type", "Blob store", "Strict validation", "Write policy", "URL"})
 
 	for _, r := range repos {
-		t.AppendRow(table.Row{
-			hftx.Green(r.Name),
-			hftx.Green(r.Format),
-			hftx.Green(r.Type),
-			hftx.Green(r.Storage.BlobStoreName),
+		t.AppendRow(table.Row{hftx.Green(r.Name), hftx.Green(r.Format),
+			hftx.Green(fmt.Sprintf("%d", r.AssetCount)), hftx.Green(r.Type), hftx.Green(r.Storage.BlobStoreName),
 			hftx.Green(fmt.Sprintf("%t", r.Storage.StrictContentTypeValidation)),
-			hftx.Green(strings.ToLower(r.Storage.WritePolicy)),
-			hftx.Green(r.URL),
-		})
+			hftx.Green(strings.ToLower(r.Storage.WritePolicy)), hftx.Green(r.URL)})
 	}
 
 	t.SortBy([]table.SortBy{{Name: "Name", Mode: table.Asc}})
@@ -94,6 +93,9 @@ func ListRepositories(displayOutput bool) ([]RepositorySummary, *cerr.CustomErro
 
 	return repos, nil
 }
+
+// getStorageSpecs will fetch the blobstore name. It could actually fetch more information than that,
+// but for now I'm satisfied with only the blobstore name
 
 func getStorageSpecs(c *rest.Client, repos []RepositorySummary) ([]RepositorySummary, *cerr.CustomError) {
 	for i := range repos {
@@ -201,4 +203,34 @@ func getStorageSpecs(c *rest.Client, repos []RepositorySummary) ([]RepositorySum
 	}
 
 	return repos, nil
+}
+
+// getNumberOfAssets returns the number of assets in the specified repository
+
+func getNumberOfAssets(c *rest.Client, repos []RepositorySummary) ([]RepositorySummary, *cerr.CustomError) {
+	var rs []RepositorySummary
+
+	for _, r := range repos {
+		q := url.Values{}
+		q.Set("repository", r.Name)
+
+		resp, ee := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/assets", q, nil, nil)
+		if ee != nil {
+			return nil, ee
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return nil, &cerr.CustomError{Title: "Unable to list blobs", Message: "HTTP status code: " + resp.Status}
+		}
+		var lr shared.ListAssetResponse
+		dec := json.NewDecoder(resp.Body)
+		if eee := dec.Decode(&lr); eee != nil {
+			return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: eee.Error()}
+		}
+		r.AssetCount = len(lr.Items)
+		rs = append(rs, r)
+	}
+
+	return rs, nil
 }

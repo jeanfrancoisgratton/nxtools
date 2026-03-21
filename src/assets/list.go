@@ -36,7 +36,7 @@ import (
 // package assets:
 //
 //	GET /service/rest/v1/search?repository=<name>&sort=version
-func ListAssets(repoName string, latestOnly bool, displayOutput bool) ([]AssetSummary, *cerr.CustomError) {
+func ListAssets(repoName string, latestOnly bool, displayOutput bool) ([]shared.AssetSummary, *cerr.CustomError) {
 	repoName = strings.TrimSpace(repoName)
 	if repoName == "" {
 		return nil, &cerr.CustomError{Title: "Missing parameters", Message: "repository name is required"}
@@ -48,7 +48,7 @@ func ListAssets(repoName string, latestOnly bool, displayOutput bool) ([]AssetSu
 	}
 	repoFormat := repo.Format
 
-	var items []AssetSummary
+	var items []shared.AssetSummary
 	if latestOnly {
 		items, err = listLatestAssets(repoName, repoFormat)
 	} else {
@@ -70,13 +70,13 @@ func ListAssets(repoName string, latestOnly bool, displayOutput bool) ([]AssetSu
 	return items, nil
 }
 
-func listAllAssets(repoName, repoFormat string) ([]AssetSummary, *cerr.CustomError) {
+func listAllAssets(repoName, repoFormat string) ([]shared.AssetSummary, *cerr.CustomError) {
 	c, err := rest.NewClientFromEnvFile(shared.Envfile)
 	if err != nil {
 		return nil, err
 	}
 
-	var all []AssetSummary
+	var all []shared.AssetSummary
 	var continuationToken string
 
 	for {
@@ -88,15 +88,19 @@ func listAllAssets(repoName, repoFormat string) ([]AssetSummary, *cerr.CustomErr
 
 		resp, e2 := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/assets", q, nil, nil)
 		if e2 != nil {
-			return nil, &cerr.CustomError{Title: "HTTP request failed", Message: e2.Error()}
+			return nil, e2
 		}
 
-		var payload ListAssetResponse
-		decodeErr := decodeAssetResponse(resp, &payload)
-		resp.Body.Close()
-		if decodeErr != nil {
-			return nil, decodeErr
+		var payload shared.ListAssetResponse
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return nil, &cerr.CustomError{Title: "Unable to list assets", Message: "HTTP status code: " + resp.Status}
 		}
+
+		dec := json.NewDecoder(resp.Body)
+		if err := dec.Decode(payload); err != nil {
+			return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
+		}
+		defer resp.Body.Close()
 
 		for _, item := range payload.Items {
 			if shouldIncludeAsset(repoFormat, item) {
@@ -113,14 +117,14 @@ func listAllAssets(repoName, repoFormat string) ([]AssetSummary, *cerr.CustomErr
 	return all, nil
 }
 
-func listLatestAssets(repoName, repoFormat string) ([]AssetSummary, *cerr.CustomError) {
+func listLatestAssets(repoName, repoFormat string) ([]shared.AssetSummary, *cerr.CustomError) {
 	c, err := rest.NewClientFromEnvFile(shared.Envfile)
 	if err != nil {
 		return nil, err
 	}
 
 	seen := make(map[string]struct{})
-	var selected []AssetSummary
+	var selected []shared.AssetSummary
 	var continuationToken string
 
 	for {
@@ -137,11 +141,15 @@ func listLatestAssets(repoName, repoFormat string) ([]AssetSummary, *cerr.Custom
 		}
 
 		var payload ListComponentResponse
-		decodeErr := decodeComponentResponse(resp, &payload)
-		resp.Body.Close()
-		if decodeErr != nil {
-			return nil, decodeErr
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return nil, &cerr.CustomError{Title: "Unable to list latest assets", Message: "HTTP status code: " + resp.Status}
 		}
+
+		dec := json.NewDecoder(resp.Body)
+		if err := dec.Decode(payload); err != nil {
+			return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
+		}
+		defer resp.Body.Close()
 
 		for _, component := range payload.Items {
 			filteredAssets := filterAssetsByFormat(repoFormat, component.Assets)
@@ -164,32 +172,6 @@ func listLatestAssets(repoName, repoFormat string) ([]AssetSummary, *cerr.Custom
 	}
 
 	return selected, nil
-}
-
-func decodeAssetResponse(resp *http.Response, payload *ListAssetResponse) *cerr.CustomError {
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return &cerr.CustomError{Title: "Unable to list assets", Message: "HTTP status code: " + resp.Status}
-	}
-
-	dec := json.NewDecoder(resp.Body)
-	if err := dec.Decode(payload); err != nil {
-		return &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
-	}
-
-	return nil
-}
-
-func decodeComponentResponse(resp *http.Response, payload *ListComponentResponse) *cerr.CustomError {
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return &cerr.CustomError{Title: "Unable to list latest assets", Message: "HTTP status code: " + resp.Status}
-	}
-
-	dec := json.NewDecoder(resp.Body)
-	if err := dec.Decode(payload); err != nil {
-		return &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
-	}
-
-	return nil
 }
 
 func buildComponentIdentityKey(component ComponentSummary) string {
@@ -217,7 +199,7 @@ func buildComponentIdentityKey(component ComponentSummary) string {
 	return format + "|" + strings.TrimSpace(component.ID)
 }
 
-func shouldIncludeAsset(repoFormat string, item AssetSummary) bool {
+func shouldIncludeAsset(repoFormat string, item shared.AssetSummary) bool {
 	repoFormat = strings.ToLower(strings.TrimSpace(repoFormat))
 	name := strings.ToLower(displayAssetName(item))
 
@@ -235,8 +217,8 @@ func shouldIncludeAsset(repoFormat string, item AssetSummary) bool {
 	}
 }
 
-func filterAssetsByFormat(repoFormat string, items []AssetSummary) []AssetSummary {
-	filtered := make([]AssetSummary, 0, len(items))
+func filterAssetsByFormat(repoFormat string, items []shared.AssetSummary) []shared.AssetSummary {
+	filtered := make([]shared.AssetSummary, 0, len(items))
 	for _, item := range items {
 		if shouldIncludeAsset(repoFormat, item) {
 			filtered = append(filtered, item)
@@ -245,7 +227,7 @@ func filterAssetsByFormat(repoFormat string, items []AssetSummary) []AssetSummar
 	return filtered
 }
 
-func displayAssetName(item AssetSummary) string {
+func displayAssetName(item shared.AssetSummary) string {
 	p := strings.TrimSpace(item.Path)
 	if p == "" {
 		return ""
@@ -253,7 +235,7 @@ func displayAssetName(item AssetSummary) string {
 	return pathlib.Base(p)
 }
 
-func printAssets(repoName string, latestOnly bool, items []AssetSummary) {
+func printAssets(repoName string, latestOnly bool, items []shared.AssetSummary) {
 	msg := fmt.Sprintf("Number of assets in repository %s: %s", hftx.Blue(repoName), hftx.Green(fmt.Sprintf("%d", len(items))))
 	if latestOnly {
 		msg += " (latest version only)"
