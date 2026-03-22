@@ -102,6 +102,23 @@ A few notes, here:
 2. If you set `--sqlimit` and/or `--sqtype` are set but `--softquota` is not, those two parameters will be ignored
 3. if `--path` is unset, the blob path will be the `$DATA_DIR/blobs/$blobstore_name`; the path can be absolute, or relative to `$DATA_DIR/blobs`
 
+## Assets operations
+Some of the assets operations here work against repositories; both assets and repositories are kind of tightly-coupled. The supported (so far) operations are:
+<img src="./images/assets_h.png" alt="nxtools assets -h"/>
+
+### Assets listing
+Lists assets in a given repo
+`nxtools assets ls [-a] [-l] REPONAME`
+
+The flags:
+- [-a] : lists alternate info than the usual ones
+- [-l] : only lists the latest versions of all packages
+
+Also, note that when listing assets in a docker registry, it will only show the manifests, not anything else; the output would be way too noisy otherwise.
+If you need to list the actual images and tags, you should use my other tool, [dtools2](https://github.com/jeanfrancoisgratton/dtools2) :
+
+### Upload an asset (package) to a repo
+The syntax is: ``
 
 ## Repositories operations
 We support remove and list operations. Add operations are forthcoming.
@@ -142,3 +159,15 @@ Again, very simply: `nxtools repos ls`
 Follows the usual pattern: `nxtools repo rm REPONAME`
 
 **Please be aware that this operation is irreversible, and *will* delete non-empty repos**
+
+### Reindex repos
+This goes this way: `nxtools [repos] reindex REPONAME`
+```bash
+[21:01:34|jfgratton@london:packages]: nxtools reindex aptLocal
+✅ Repository aptLocal was successfully reindexed
+```
+
+You use this operation after having uploaded a package to the named repository.
+#### PRE-REQUISITES
+`nxtools` has not yet implemented tasks creation, and might never do so (unsure of that, yet), so it calls upon tasks that **have to already be present through the webUI**
+The task names have to follow this naming scheme: `_reindex_$REPONAME`, thus to reindex the repo `dnfLocal`, you would need to have a task named `_reindex_dnfLocal` already present
