@@ -67,12 +67,78 @@ Very simply: `nxtools blob ls`<br><br>
 `nxtools blob rm $BLOBSTORE_NAME`, as shown below<br><br>
 <img src="./images/blobs_ls-rm-ls.png" alt="nxtools blobs rm"/>
 
+*Note:* You will not be able to delete a blob store if Blobcount > 0 (that is: it is not empty)
 
 ### Create blob stores
+Currently, only file-based stores are supported
+
+```bash
+[20:30:49|jfgratton@london:src]: nxtools-documentation blob add -h
+Creates a blobstore from the server
+
+Usage:
+  nxtools blob add [flags]
+
+Aliases:
+  add, create
+
+Examples:
+nxtools blob add FLAGS blobstore
+
+Flags:
+  -h, --help            help for add
+      --path string     File blob path
+  -s, --softquota       Soft quota enabled or not
+      --sqlimit int     Soft quota limit
+      --sqtype string   Softquota type, 'spaceRemainingQuota' or 'spaceUsedQuota' (default "spaceUsedQuota")
+      --type string     Blob type (file, gcp, amazon, azure, group) (default "file")
+
+Global Flags:
+  -e, --env string   Environment file to load in from $HOME/.config/JFG/nxtools (default "defaultEnv.json")
+  -q, --quiet        Output will be as quiet as possible
+```
+A few notes, here:
+1. Even though only the file-based type is currently supported, the --type flag is mandatory (so here, it'd be: `--type file`)
+2. If you set `--sqlimit` and/or `--sqtype` are set but `--softquota` is not, those two parameters will be ignored
+3. if `--path` is unset, the blob path will be the `$DATA_DIR/blobs/$blobstore_name`; the path can be absolute, or relative to `$DATA_DIR/blobs`
+
 
 ## Repositories operations
-We support add, remove, list operations
+We support remove and list operations. Add operations are forthcoming.
+```bash
+[20:36:58|jfgratton@london:src]: nxtools repo -h
+Repository-related sub-command
+
+Usage:
+  nxtools repo [flags]
+  nxtools repo [command]
+
+Aliases:
+  repo, repos, repositories
+
+Available Commands:
+  create      Creates a repository (payload is recipe-specific)
+  delete      Deletes a repository by name
+  list        Lists all repositories visible to the configured user
+  reindex     Rebuilds the repository metadata
+  type        Returns the type of the repository
+
+Flags:
+  -h, --help   help for repo
+
+Global Flags:
+  -e, --env string   Environment file to load in from $HOME/.config/JFG/nxtools (default "defaultEnv.json")
+  -q, --quiet        Output will be as quiet as possible
+
+Use "nxtools repo [command] --help" for more information about a command.
+```
+
 
 ### List repos
 Again, very simply: `nxtools repos ls`
-**IMAGE TO COME**
+<img src="./images/repo_ls.png" alt="nxtools repos ls"/>
+
+### Remove repos
+Follows the usual pattern: `nxtools repo rm REPONAME`
+
+**Please be aware that this operation is irreversible, and *will* delete non-empty repos**

@@ -67,8 +67,8 @@ func init() {
 
 	blobAddCmd.Flags().StringVar(&blobstores.Blobtype, "type", "file", "Blob type (file, gcp, amazon, azure, group)")
 	blobAddCmd.Flags().StringVar(&blobstores.FileBlobPath, "path", "", "File blob path")
-	blobAddCmd.Flags().BoolVar(&blobstores.SoftQuotaEnabled, "softquota", false, "Soft quota enabled or not")
-	blobAddCmd.Flags().StringVar(&blobstores.SoftQuotaType, "sqtype", "spaceUsedQuota", "Softquota type ('spaceRemainingQuota' or 'spaceUsedQuota'")
+	blobAddCmd.Flags().BoolVarP(&blobstores.SoftQuotaEnabled, "softquota", "s", false, "Soft quota enabled or not")
+	blobAddCmd.Flags().StringVar(&blobstores.SoftQuotaType, "sqtype", "spaceUsedQuota", "Softquota type, 'spaceRemainingQuota' or 'spaceUsedQuota'")
 	blobAddCmd.Flags().Int64Var(&blobstores.SoftQuotaLimit, "sqlimit", 0, "Soft quota limit")
 	_ = blobAddCmd.MarkFlagRequired("type")
 }
