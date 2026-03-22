@@ -61,6 +61,20 @@ install -Dpm 0755 %{_sourcedir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryn
 
 
 %changelog
+* Sat Mar 21 2026 Binary package builder <builder@famillegratton.net> 0.62.00-0
+- completed doc, for now (jean-francois@famillegratton.net)
+- added verbosity to repo rm (jean-francois@famillegratton.net)
+- foolproofed blob rm (jean-francois@famillegratton.net)
+- doc update, version bump (jean-francois@famillegratton.net)
+- fixed path issue in blob ls (jean-francois@famillegratton.net)
+- fixed path issue in blob ls (jean-francois@famillegratton.net)
+- Added the assets count column to repo ls (jean-francois@famillegratton.net)
+- interim update (jean-francois@famillegratton.net)
+- simplified output of repo ls (jean-francois@famillegratton.net)
+- interim commit (jean-francois@famillegratton.net)
+- preparing to refactor repositories (jean-francois@famillegratton.net)
+- doc update (jean-francois@famillegratton.net)
+
 * Thu Mar 19 2026 Binary package builder <builder@famillegratton.net> 0.60.00-0
 - Implement extra info and --json flag for repo ls (jean-
   francois@famillegratton.net)
