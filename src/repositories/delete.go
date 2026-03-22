@@ -7,11 +7,13 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"nxtools/rest"
 	"nxtools/shared"
 )
@@ -43,5 +45,8 @@ func DeleteRepository(repoName string) *cerr.CustomError {
 		return &cerr.CustomError{Title: "Unable to delete repository", Message: "HTTP status code: " + resp.Status}
 	}
 
+	if !shared.QuietOutput {
+		fmt.Println(hftx.EnabledSign("Repository " + repoName + " deleted"))
+	}
 	return nil
 }

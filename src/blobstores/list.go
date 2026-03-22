@@ -27,30 +27,34 @@ import (
 // Endpoint:
 //
 //	GET /v1/blobstores
-func ListBlobs() *cerr.CustomError {
+func ListBlobs(displayOut bool) ([]BlobStoreSummary, *cerr.CustomError) {
 	c, err := rest.NewClientFromEnvFile(shared.Envfile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, e2 := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/blobstores", nil, nil, nil)
 	if e2 != nil {
-		return e2
+		return nil, e2
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return &cerr.CustomError{Title: "Unable to list blobs", Message: "HTTP status code: " + resp.Status}
+		return nil, &cerr.CustomError{Title: "Unable to list blobs", Message: "HTTP status code: " + resp.Status}
 	}
 
 	var blobs []BlobStoreSummary
 	dec := json.NewDecoder(resp.Body)
 	// The payload may evolve across Nexus versions; be liberal in what we accept.
 	if e3 := dec.Decode(&blobs); e3 != nil {
-		return &cerr.CustomError{Title: "Unable to parse server response", Message: e3.Error()}
+		return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: e3.Error()}
 	}
 
-	fmt.Printf("Number of blob stores: %s\n", hftx.Green(fmt.Sprintf("%d", len(blobs))))
+	if displayOut {
+		fmt.Printf("Number of blob stores: %s\n", hftx.Green(fmt.Sprintf("%d", len(blobs))))
+	} else {
+		return blobs, nil
+	}
 
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
@@ -71,7 +75,7 @@ func ListBlobs() *cerr.CustomError {
 		}
 		if b.Type == "File" {
 			if fqc, err = getFileBlobQuotaInformation(c, b.Name); err != nil {
-				return err
+				return nil, err
 			}
 			// We do not need to print the path if the path is relative
 			if strings.HasPrefix(fqc.Path, "/") {
@@ -101,7 +105,7 @@ func ListBlobs() *cerr.CustomError {
 	t.Style().Format.Header = text.FormatDefault
 	t.Render()
 
-	return nil
+	return blobs, nil
 }
 
 func getFileBlobQuotaInformation(c *rest.Client, bname string) (FileQuotaConfig, *cerr.CustomError) {
