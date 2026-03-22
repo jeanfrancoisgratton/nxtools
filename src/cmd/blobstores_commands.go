@@ -27,7 +27,7 @@ var blobListCmd = &cobra.Command{
 	Example: "nxtools blob list FLAGS",
 	Short:   "Lists all blobs visible to the configured user",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := blobstores.ListBlobs(); err != nil {
+		if _, err := blobstores.ListBlobs(true); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
@@ -37,10 +37,10 @@ var blobRemoveCmd = &cobra.Command{
 	Use:     "remove",
 	Aliases: []string{"rm", "delete", "del"},
 	Example: "nxtools blob rm FLAGS blobstore",
-	Args:    cobra.MinimumNArgs(1),
+	Args:    cobra.ExactArgs(1),
 	Short:   "Removes a blobstore from the server",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := blobstores.RemoveBlob(args); err != nil {
+		if err := blobstores.RemoveBlob(args[0]); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
