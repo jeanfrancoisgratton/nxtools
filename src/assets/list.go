@@ -97,10 +97,10 @@ func listAllAssets(repoName, repoFormat string) ([]shared.AssetSummary, *cerr.Cu
 		}
 
 		dec := json.NewDecoder(resp.Body)
-		if err := dec.Decode(payload); err != nil {
+		if err := dec.Decode(&payload); err != nil {
 			return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 		}
-		defer resp.Body.Close()
+		resp.Body.Close()
 
 		for _, item := range payload.Items {
 			if shouldIncludeAsset(repoFormat, item) {
@@ -146,7 +146,7 @@ func listLatestAssets(repoName, repoFormat string) ([]shared.AssetSummary, *cerr
 		}
 
 		dec := json.NewDecoder(resp.Body)
-		if err := dec.Decode(payload); err != nil {
+		if err := dec.Decode(&payload); err != nil {
 			return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 		}
 		defer resp.Body.Close()
