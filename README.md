@@ -216,37 +216,13 @@ Building /opt/bin/nxtools
 ```
 ### Delete an asset
 You first need to fetch the asset ID from `nxtools assets REPOSITORY_NAME`. This subcommand allows you to delete multiple assets in a single stroke :
+<img src="./images/assets_rm.png" alt="nxtools assets rm">
 
 <a id="repos-ops"></a>
 ## Repositories operations
-We support remove and list operations. Add operations are forthcoming.
-```bash
-[20:36:58|jfgratton@london:src]: nxtools repo -h
-Repository-related sub-command
+Refresh the repo metadata (reindex), remove and list operations are currently supported. Other operations are forthcoming.
+<img src="./images/repos_-h.png" alt="repos -h">
 
-Usage:
-  nxtools repo [flags]
-  nxtools repo [command]
-
-Aliases:
-  repo, repos, repositories
-
-Available Commands:
-  create      Creates a repository (payload is recipe-specific)
-  delete      Deletes a repository by name
-  list        Lists all repositories visible to the configured user
-  reindex     Rebuilds the repository metadata
-  type        Returns the type of the repository
-
-Flags:
-  -h, --help   help for repo
-
-Global Flags:
-  -e, --env string   Environment file to load in from $HOME/.config/JFG/nxtools (default "defaultEnv.json")
-  -q, --quiet        Output will be as quiet as possible
-
-Use "nxtools repo [command] --help" for more information about a command.
-```
 
 ### List repos
 Again, very simply: `nxtools repos ls`
