@@ -1,7 +1,7 @@
 // nxtools
 // Written by J.F. Gratton <jean-francois@famillegratton.net>
 // Original timestamp: 2026/03/14 19:01
-// Original filename: src/assets/component_info.go
+// Original filename: src/assets/package_info.go
 
 package assets
 
@@ -15,7 +15,6 @@ import (
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
 	hfjson "github.com/jeanfrancoisgratton/helperFunctions/v5/prettyjson"
-	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
 	"nxtools/rest"
@@ -28,7 +27,7 @@ import (
 // It uses the Search API instead of the Components API because the search
 // endpoint is designed for filtering by repository/name/version attributes and
 // returns the same component summary structure, including component assets.
-func PackageInfo(pkg, repository string, displayOutput bool) ([]ComponentSummary, *cerr.CustomError) {
+func PackageInfo(repository, pkg string, displayOutput bool) ([]ComponentSummary, *cerr.CustomError) {
 	pkg = strings.TrimSpace(pkg)
 	repository = strings.TrimSpace(repository)
 
@@ -138,20 +137,14 @@ func decodePackageSearchResponse(resp *http.Response, payload *ListComponentResp
 func printComponentSummary(components []ComponentSummary) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"Component name", "Component version", "Format",
-		"Repository", "Repository group", "Assets"})
+	t.AppendHeader(table.Row{"Package name", "Version", "Format", "Repository"})
 
 	for _, item := range components {
-		grp := hftx.ErrorSign("")
-		if strings.TrimSpace(item.Group) != "" {
-			grp = item.Group
-		}
-
-		t.AppendRow(table.Row{item.Name, item.Version, item.Format,
-			item.Repository, grp, len(item.Assets)})
+		t.AppendRow(table.Row{item.Name, item.Version, item.Format, item.Repository})
 	}
 
 	t.SetStyle(table.StyleRounded)
+	t.SortBy([]table.SortBy{{Name: "Version", Mode: table.Asc}})
 	t.Style().Format.Header = text.FormatDefault
 	t.Render()
 }

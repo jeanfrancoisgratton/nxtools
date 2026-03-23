@@ -90,12 +90,12 @@ var assetsDeleteCmd = &cobra.Command{
 }
 
 var assetsComponentInfoCmd = &cobra.Command{
-	Use:     "pkginfo PKG_NAME REPO_NAME",
-	Example: "nxtools assets pkginfo [-e defaultEnv.json] PKG_NAME REPO_NAME",
+	Use:     "pkginfo REPO_NAME PKG_NAME",
+	Example: "nxtools assets pkginfo [-e defaultEnv.json] REPO_NAME PKG_NAME",
 	Args:    cobra.ExactArgs(2),
 	Short:   "Fetches information about a package from a given repository",
 	Long: `This subcommand relies on the component API endpoint and thus needs a package name (not an asset ID),
-			and the name of the repository where the package is housed.`,
+and the name of the repository where the package is housed.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if _, err := assets.PackageInfo(args[0], args[1], true); err != nil {
 			fmt.Println(err.Error())

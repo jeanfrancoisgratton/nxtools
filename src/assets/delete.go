@@ -29,7 +29,7 @@ func DeleteAssets(assets []string) *cerr.CustomError {
 		}
 		defer resp.Body.Close()
 
-		if resp.StatusCode != 200 {
+		if resp.StatusCode != 204 {
 			return &cerr.CustomError{Title: "Unable to fetch asset info", Message: "HTTP status code: " + resp.Status}
 		}
 		if !shared.QuietOutput {
