@@ -13,7 +13,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -25,9 +24,6 @@ import (
 // If cfg.Host is empty, it falls back to NEXUS_HOST.
 func NewClient(cfg Config) (*Client, error) {
 	host := strings.TrimSpace(cfg.Host)
-	if host == "" {
-		host = strings.TrimSpace(os.Getenv("NEXUS_HOST"))
-	}
 	if host == "" {
 		return nil, errors.New("nexus host is empty (set cfg.Host or NEXUS_HOST)")
 	}

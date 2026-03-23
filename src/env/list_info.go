@@ -71,7 +71,7 @@ func ExplainEnvFile(envfiles []string) *cerr.CustomError {
 
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"Environment file", "Server URL", "Username", "Password"})
+	t.AppendHeader(table.Row{"Environment file", "Server URL", "Username", "Password", "Comments"})
 
 	for _, envfile := range envfiles {
 		EnvConfigFile = envfile
@@ -81,7 +81,7 @@ func ExplainEnvFile(envfiles []string) *cerr.CustomError {
 			return err
 		} else {
 			t.AppendRow([]interface{}{hftx.Green(envfile), hftx.Green(e.NexusServerUrl), hftx.Green(filepath.Base(e.Username)),
-				hftx.Yellow("* ENCRYPTED *")})
+				hftx.Yellow("* ENCRYPTED *"), hftx.Green(e.Comments)})
 		}
 
 	}

@@ -35,6 +35,7 @@ func AddEnvFile(envfile string) *cerr.CustomError {
 	env.NexusServerUrl = hf.GetStringValFromPrompt("Enter the server URL (ex: https://myserver:myport): ")
 	env.Username = hf.GetStringValFromPrompt("Enter your username: ")
 	env.Password = hf.GetPassword("Enter your password: ", DebugMode)
+	env.Comments = hf.GetStringValFromPrompt("[OPTIONAL] Enter your comments: ")
 
 	if env.NexusServerUrl == "" || env.Username == "" || env.Password == "" {
 		return &cerr.CustomError{Title: "Error creating environment file", Message: "Nexus URL, username and password cannot be empty"}
