@@ -8,7 +8,42 @@ This tool is a CLI-driven client to Nexus Repository Manager 3 servers.<br>It wi
 - repo ops (list, delete, create, edit, upload+download package)
 - more to come
 
-## Build/install requirements
+**TABLE OF CONTENTS**<br>
+
+[Basic Nexus Concepts](#concepts)
+
+[Build / Install requirements](#build-install-requirements)
+
+[Using the tool](#using-the-tool)
+
+[Command summary](#command-summary)
+- [Blobs operations](#blobs-ops)
+- [Assets operations](#assets-ops)
+- [Repositories operations](#repos-ops)
+
+<a id="concepts"></a>
+# Basic Nexus Concepts
+Nexus Repository Manager (NxRM) is a repository tool to host all of your development artifacts, whether they are distro-specific binary packages (rpm, deb, etc), docker images, free form artifacts, etc
+
+## Blob stores
+The artifacts (called **assets**) are physically stored in blob stores; those stores can be filed-based (thus locally, on the NxRM host filesystem), or hosted on the cloud (GCP and AWS).<br>
+`nxtools` currently only supports file-based blob stores
+
+## Repositories
+This is what everything in NxRM revolves around. Each repo uses its own specific format. To see which repo format is currently supported, have a look at the [doc](../docs/ROADMAP.md)/
+
+## Assets
+The basic block in NxRM. Every single piece (binary package, file, metadata, etc) that gets into a repo is an asset.
+
+## Tasks
+Tasks are executed on-demand or through an internal scheduler. `nxtools` currently offers limited support for tasks, but it will get expanded over time
+
+## Roles and privileges
+Roles are the basic access control items in NxRM and are heavily granularized. Privileges is a collection of roles grouped together for convenience.
+Roles and privileges (or user management, for that matter) are not yet implemented in `nxtools`.
+
+<a id="build-install-requirements"></a>
+# Build/install requirements
 
 You have three alternatives:
 - [Install from source](#install-from-source)
@@ -18,36 +53,36 @@ You have three alternatives:
 Installing from source requires a bit more work in the sense that GO has to be installed on your system
 
 <a id="install-from-source"></a>
-### Install from source
+## Install from source
 1. Clone/fork the repo : either `git clone https://github.com/jeanfrancoisgratton/nxtools` or `git clone https://git.famillegratton.net:3000/devops/nxtools`
 2. Ensure that you have the proper GO version, as stated in the `go.version` file in the root of the repo. Your GO version should be equal or higher than the one in that file. To ensure, run `go version`
 3. cd to `src`, and then run: `./updateBuildDeps.sh`, to ensure that all build dependencies are up to date; this might be overkill, but I always run it nonetheless
 4. run `./build.sh`. By default, the binary will be created in /opt (check the dir's permission ahead of running it). Examine that script, you can taylor the output as you see fit
 
 <a id="install-from-a-binary-package"></a>
-### Install from a binary package
+## Install from a binary package
 The simplest way : just go in the RELEASES tab of the repo, select your format, download it, and then install throught you package manager
 
 <a id="build-your-own-package"></a>
-### Build your own package
+## Build your own package
 The scripts and files (__alpine/, __debian, nxtools.spec) are there for my own ease of work; I usually build my tools using "builder containers" for each format: `apkbuilder`, `debbuilder`, `rpmbuilder`
 I'll leave you with homeworks, and will show you how to roughly reproduce my environment
 
 **The three methods below assume that you have forked (not just cloned) the repo somewhere**
 
-#### ALPINE (APKBUILDER)
+### APKBUILDER : Alpine Linux
 1. In an Alpine container or VM, you need the following packages: `abuild-doc pax-utils git alpine-sdk`. Some other packages might be needed, depending on the config in __alpine/APKBUILD
 2. From the `__alpine`, run: `abuild -r`
 
 This should give you an Alpine package
 
-#### DEBIAN (DEBBUILDER)
+### DEBBUILDER : Debian-based distros (Debian, Ubuntu, Mint, etc)
 1. cd to `__debian`
 2. Besides binutils, you do not need any specific package, and of course the required GO version. Have a look at `../go.version`, and `./1.install-build-deps.sh`.
 3. Run `./2.build_binary.sh`
 4. Copy the .deb file in a safe space, then run `./restore_repo.sh`
 
-#### RPM (RPMBUILDER)
+### RPMBUILDER : RedHat-based distros (RedHat, CentOS, Fedora, RockyLinux, OpenSUSE)
 **FORK OR COPY the repo, do not CLONE** it; there's a step there that would fail, otherwise (see step #4)
 1. Ensure that tito is installed; the easy way is with pip: `pip install tito`
 2. Ensure that all other build deps are installed; from the nxtools root directory, run: `./rpmbuild-deps.sh`
@@ -55,6 +90,7 @@ This should give you an Alpine package
 4. Run the following: `git push --follow-tags origin` --> **This has to be done from a forked repo, otherwise if you point at my own repo, it will likely fail**
 5. Run the following: `tito build --rpm` : the result will be in /tmp/tito/ copy the files (SRPM, RPM) in a safe place
 
+<a id="using-the-tool"></a>
 # USING THE TOOL
 
 ## Creating the environment file
@@ -67,8 +103,13 @@ To create the environment file, it's simple as `nxtools env create [ENVIRONMENTF
 When you create your file, you will be prompted for a host, username, password and optional comments :<br>
 <img src="./images/env_ls__env_info.png" alt="nxtools env ls ; nxtools env info devEnv"/>
 
+## Using environment variables
+The tool will eventually support environment variables such as NEXUS_HOST, NEXUS_USER, NEXUS_PASSWD, but the config management code needs a bit of cleanup before I implement this
+
+<a id="command-summary"></a>
 # COMMAND SUMMARY
 
+<a id="blobs-ops"></a>
 ## Blob operations
 We support add, remove and list operations; update operations are not yet implemented. The current blob subcommands are:
 <img src="./images/blobs_-h.png" alt="nxtools blobs -h"/>
@@ -89,7 +130,7 @@ Very simply: `nxtools blob ls`<br><br>
 Currently, only file-based stores are supported
 
 ```bash
-[20:30:49|jfgratton@london:src]: nxtools-documentation blob add -h
+[20:30:49|jfgratton@london:src]: nxtools blob add -h
 Creates a blobstore from the server
 
 Usage:
@@ -118,6 +159,7 @@ A few notes, here:
 2. If you set `--sqlimit` and/or `--sqtype` are set but `--softquota` is not, those two parameters will be ignored
 3. if `--path` is unset, the blob path will be the `$DATA_DIR/blobs/$blobstore_name`; the path can be absolute, or relative to `$DATA_DIR/blobs`
 
+<a id="assets-ops"></a>
 ## Assets operations
 Some of the assets operations here work against repositories; both assets and repositories are kind of tightly-coupled. The supported (so far) operations are:
 <img src="./images/assets_h.png alt="nxtools assets -h"/>
@@ -146,7 +188,36 @@ A few notes worthy of attention :
 All you need is the download url, from `ntxools assets ls REPO_NAME`, as shown below:
 <img src="./images/assets_download.png" alt="nxtools download"/>
 
+### Assets information
 
+There are two commands to show information about an asset, one is ID-based, the other is package_name-based
+
+#### Asset-based information:
+This one gives the most comprehensive information about an asset, but since it is ID-based, it will only give info about that specific version of the package (a repo can hold multiple versions of the same package)<br>
+You can fetch the asset ID using `nxtools assets [-l] [-a] REPOSITORY_NAME`
+
+<img src="./images/assets_info.png" alt="nxtools assets info">
+
+#### Package name-based information
+The information provided here is of more limited use. This is a quick lookup helper to see how many versions of a given package exist in the repo. This is much less cluttered than using `assets ls` :
+
+```bash
+[1:52:22|jfgratton@london:src]: ./build.sh;nxtools-documentation assets pkginfo aptLocal nxtools
+Building /opt/bin/nxtools
+╭────────────────┬───────────┬────────┬────────────╮
+│ Component name │ Version   │ Format │ Repository │
+├────────────────┼───────────┼────────┼────────────┤
+│ nxtools        │ 0.30.00-1 │ apt    │ aptLocal   │
+│ nxtools        │ 0.40.00-0 │ apt    │ aptLocal   │
+│ nxtools        │ 0.50.00-0 │ apt    │ aptLocal   │
+│ nxtools        │ 0.60.00-0 │ apt    │ aptLocal   │
+│ nxtools        │ 0.62.00-0 │ apt    │ aptLocal   │
+╰────────────────┴───────────┴────────┴────────────╯
+```
+### Delete an asset
+You first need to fetch the asset ID from `nxtools assets REPOSITORY_NAME`. This subcommand allows you to delete multiple assets in a single stroke :
+
+<a id="repos-ops"></a>
 ## Repositories operations
 We support remove and list operations. Add operations are forthcoming.
 ```bash
