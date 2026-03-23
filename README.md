@@ -30,7 +30,7 @@ The artifacts (called **assets**) are physically stored in blob stores; those st
 `nxtools` currently only supports file-based blob stores
 
 ## Repositories
-This is what everything in NxRM revolves around. Each repo uses its own specific format. To see which repo format is currently supported, have a look at the [doc](../docs/ROADMAP.md)/
+This is what everything in NxRM revolves around. Each repo uses its own specific format. To see which repo format is currently supported, have a look at the [doc](docs/ROADMAP.md)
 
 ## Assets
 The basic block in NxRM. Every single piece (binary package, file, metadata, etc) that gets into a repo is an asset.
