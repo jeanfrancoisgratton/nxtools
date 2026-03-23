@@ -11,21 +11,24 @@ This tool is a CLI-driven client to Nexus Repository Manager 3 servers.<br>It wi
 ## Build/install requirements
 
 You have three alternatives:
-- [Install from source](#Install from source)
-- [Install from a binary package](#Install from a binary package)
-- [Build your own APK, DEB, RPM packages, then manually install those packages](#Build your own package)
+- [Install from source](#install-from-source)
+- [Install from a binary package](#install-from-a-binary-package)
+- [Build your own APK, DEB, RPM packages, then manually install those packages](#build-your-own-package)
 
 Installing from source requires a bit more work in the sense that GO has to be installed on your system
 
+<a id="install-from-source"></a>
 ### Install from source
 1. Clone/fork the repo : either `git clone https://github.com/jeanfrancoisgratton/nxtools` or `git clone https://git.famillegratton.net:3000/devops/nxtools`
 2. Ensure that you have the proper GO version, as stated in the `go.version` file in the root of the repo. Your GO version should be equal or higher than the one in that file. To ensure, run `go version`
 3. cd to `src`, and then run: `./updateBuildDeps.sh`, to ensure that all build dependencies are up to date; this might be overkill, but I always run it nonetheless
-4. run `./build.sh`. By default the binary will be created in /opt (check the dir's permission ahead of running it). Examine that script, you can taylor the output as you see fit
+4. run `./build.sh`. By default, the binary will be created in /opt (check the dir's permission ahead of running it). Examine that script, you can taylor the output as you see fit
 
+<a id="install-from-a-binary-package"></a>
 ### Install from a binary package
 The simplest way : just go in the RELEASES tab of the repo, select your format, download it, and then install throught you package manager
 
+<a id="build-your-own-package"></a>
 ### Build your own package
 The scripts and files (__alpine/, __debian, nxtools.spec) are there for my own ease of work; I usually build my tools using "builder containers" for each format: `apkbuilder`, `debbuilder`, `rpmbuilder`
 I'll leave you with homeworks, and will show you how to roughly reproduce my environment
