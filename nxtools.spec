@@ -61,6 +61,18 @@ install -Dpm 0755 %{_sourcedir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryn
 
 
 %changelog
+* Mon Mar 23 2026 Binary package builder <builder@famillegratton.net> 0.62.01-0
+- fixed a broken link (jean-francois@famillegratton.net)
+- Completed the assets doc (jean-francois@famillegratton.net)
+- updated doc (jean-francois@famillegratton.net)
+- Fixed assets rm (jean-francois@famillegratton.net)
+- links fix so they now (...should) work properly (jean-
+  francois@famillegratton.net)
+- doc phase 2 (jean-francois@famillegratton.net)
+- added a comments field in the environment file, and removed the NEXUS_HOST
+  env var (jean-francois@famillegratton.net)
+- bugfix to asset ls (jean-francois@famillegratton.net)
+
 * Sat Mar 21 2026 Binary package builder <builder@famillegratton.net> 0.62.00-0
 - completed doc, for now (jean-francois@famillegratton.net)
 - added verbosity to repo rm (jean-francois@famillegratton.net)
