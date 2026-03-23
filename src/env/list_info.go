@@ -49,7 +49,7 @@ func ListEnvironments(envdir string) *cerr.CustomError {
 
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"Environment file", "File size", "Modification time"})
+	t.AppendHeader(table.Row{"Environment file", "File size", "Last modified"})
 
 	for _, fi := range finfo {
 		t.AppendRow([]interface{}{hftx.Green(fi.Name()), hftx.Green(hf.SI(uint64(fi.Size()))),
@@ -57,7 +57,6 @@ func ListEnvironments(envdir string) *cerr.CustomError {
 	}
 	t.SortBy([]table.SortBy{
 		{Name: "Environment file", Mode: table.Asc},
-		{Name: "File size", Mode: table.Asc},
 	})
 	t.SetStyle(table.StyleBold)
 	t.Style().Format.Header = text.FormatDefault
@@ -81,7 +80,7 @@ func ExplainEnvFile(envfiles []string) *cerr.CustomError {
 			return err
 		} else {
 			t.AppendRow([]interface{}{hftx.Green(envfile), hftx.Green(e.NexusServerUrl), hftx.Green(filepath.Base(e.Username)),
-				hftx.Yellow("* ENCRYPTED *"), hftx.Green(e.Comments)})
+				hftx.Yellow("*ENCRYPTED*"), hftx.Green(e.Comments)})
 		}
 
 	}

@@ -52,6 +52,20 @@ This should give you an Alpine package
 4. Run the following: `git push --follow-tags origin` --> **This has to be done from a forked repo, otherwise if you point at my own repo, it will likely fail**
 5. Run the following: `tito build --rpm` : the result will be in /tmp/tito/ copy the files (SRPM, RPM) in a safe place
 
+# USING THE TOOL
+
+## Creating the environment file
+This tool constantly works in "admin mode", and in order to avoid having to repeatedly log in, you must create a credential file (called an environment file here).<br>
+You can have as many environment files as you wish, for as many users, servers, etc, that you need. If no filename or `-e` flag is set, the default `defaultEnv.json` file will be created in `$HOME/.config/JFG/nxtools/`
+
+To create the environment file, it's simple as `nxtools env create [ENVIRONMENTFILE_NAME]`; remember that you choose a name other than `defaultEnv` you will need to provide that name whenever you invoke nxtools, like this:<br>
+`nxtools -e ENVIRONMENTFILE_NAME command`
+
+When you create your file, you will be prompted for a host, username, password and optional comments :<br>
+<img src="./images/env_ls__env_info.png" alt="nxtools env ls ; nxtools env info devEnv"/>
+
+# COMMAND SUMMARY
+
 ## Blob operations
 We support add, remove and list operations; update operations are not yet implemented. The current blob subcommands are:
 <img src="./images/blobs_-h.png" alt="nxtools blobs -h"/>
@@ -61,7 +75,6 @@ Very simply: `nxtools blob ls`<br><br>
 <img src="./images/blobs_ls.png" alt="nxtools blobs ls"/>
 
 *A note about the Path column* : the column will not show any data for paths with relative values (that is: the blobstore path uses its default value, inside Nexus' $DATA_DIR)
-
 
 ### Delete blobs
 `nxtools blob rm $BLOBSTORE_NAME`, as shown below<br><br>
@@ -104,21 +117,32 @@ A few notes, here:
 
 ## Assets operations
 Some of the assets operations here work against repositories; both assets and repositories are kind of tightly-coupled. The supported (so far) operations are:
-<img src="./images/assets_h.png" alt="nxtools assets -h"/>
+<img src="./images/assets_h.png alt="nxtools assets -h"/>
 
 ### Assets listing
 Lists assets in a given repo
 `nxtools assets ls [-a] [-l] REPONAME`
 
 The flags:
-- [-a] : lists alternate info than the usual ones
+- [-a] : lists alternate info than the usual one
 - [-l] : only lists the latest versions of all packages
 
-Also, note that when listing assets in a docker registry, it will only show the manifests, not anything else; the output would be way too noisy otherwise.
-If you need to list the actual images and tags, you should use my other tool, [dtools2](https://github.com/jeanfrancoisgratton/dtools2) :
+As you see with the image below, listing assets in a docker registry would only show the manifests; showing all the assets pertaining to a specific image would yield way too much info.<br>
+<img src="./images/assets_ls.png" alt="nxtools assets ls -l"/>
+
+If you need to list images and tags, use my other tool, [dtools2](https://github.com/jeanfrancoisgratton/dtools2) :
 
 ### Upload an asset (package) to a repo
-The syntax is: ``
+The syntax is: `nxtools assets upload REPO_NAME /PATH/TO/PACKAGE`
+
+A few notes worthy of attention :
+- The same package could be re-uploaded multiple times without triggering an error (ie: launching `nxtools upload MY_REPO MY_PACKAGE 3 successive times is OK)
+- If you were trying to upload a package of a wrong format (say RPM) in the wrong repo (say DEB) the current error message would be an http response 500. This will be enhanced in future versions
+
+### Download an asset (package) from a repo
+All you need is the download url, from `ntxools assets ls REPO_NAME`, as shown below:
+<img src="./images/assets_download.png" alt="nxtools download"/>
+
 
 ## Repositories operations
 We support remove and list operations. Add operations are forthcoming.
@@ -149,7 +173,6 @@ Global Flags:
 
 Use "nxtools repo [command] --help" for more information about a command.
 ```
-
 
 ### List repos
 Again, very simply: `nxtools repos ls`
