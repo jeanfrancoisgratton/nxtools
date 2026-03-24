@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -76,10 +77,14 @@ func CreateFileBlob(blobname string) *cerr.CustomError {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return &cerr.CustomError{Title: "Unable to create file blob store", Message: "HTTP status code: " + resp.Status}
+	if resp.StatusCode != 204 {
+		body, _ := io.ReadAll(resp.Body)
+		return &cerr.CustomError{
+			Title:   "Unable to create blob store " + blobname,
+			Message: fmt.Sprintf("HTTP %s: %s", resp.Status, string(body)),
+		}
 	}
 
-	fmt.Println(hftx.EnabledSign("File-based blob store " + blobname + "with path " + FileBlobPath + " has been created"))
+	fmt.Println(hftx.EnabledSign("File-based blob store " + hftx.Green(blobname) + " with path " + hftx.Green(FileBlobPath) + " has been created"))
 	return nil
 }

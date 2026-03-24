@@ -46,7 +46,7 @@ func DeleteRepository(repoName string) *cerr.CustomError {
 	}
 
 	if !shared.QuietOutput {
-		fmt.Println(hftx.EnabledSign("Repository " + repoName + " deleted"))
+		fmt.Println(hftx.EnabledSign("Repository " + hftx.Green(repoName) + " deleted"))
 	}
 	return nil
 }

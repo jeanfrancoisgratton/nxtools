@@ -7,6 +7,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"github.com/spf13/cobra"
@@ -42,6 +43,10 @@ var repoCreateCmd = &cobra.Command{
 	Short:   "Creates a repository (payload is recipe-specific)",
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
+		if repositories.RepoFormat == "apt" && repositories.RepoSigningFile == "" {
+			hftx.ErrorSign("You need to provide a PGP private key file (flag -k) when using the APT format")
+			os.Exit(1)
+		}
 		if err := repositories.CreateRepository(args[0], args[1]); err != nil {
 			fmt.Println(err.Error())
 		}
