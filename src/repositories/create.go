@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"nxtools/rest"
 	"nxtools/shared"
 )
@@ -25,11 +26,8 @@ import (
 // Endpoint:
 //
 //	POST /service/rest/v1/repositories/{format}/{type}
-//
-// You are expected to supply the full JSON payload for that recipe.
-// Easiest workflow: export the payload from Nexus' embedded Swagger UI
-// (Settings -> System -> API) for the desired recipe.
-func CreateRepository(format, repoType, jsonFile string) *cerr.CustomError {
+
+func CreateRepository_old(format, repoType, jsonFile string) *cerr.CustomError {
 	format = strings.TrimSpace(format)
 	repoType = strings.TrimSpace(repoType)
 	jsonFile = strings.TrimSpace(jsonFile)
@@ -76,5 +74,85 @@ func CreateRepository(format, repoType, jsonFile string) *cerr.CustomError {
 	}
 
 	// Nexus often returns 201 + an empty body for create.
+	return nil
+}
+
+func CreateRepository(reponame, blobname string) *cerr.CustomError {
+	a := strings.ToLower(StorageWritePolicy)
+
+	// ensure we have a sane storage write policy
+	if a != "allow" && a != "allow_once" && a != "deny" {
+		StorageWritePolicy = "ALLOW"
+	}
+
+	switch strings.ToLower(RepoFormat) {
+	case "apt":
+		if payload, e1 := createApt(reponame, blobname); e1 != nil {
+			return e1
+		} else {
+			return sendPayload(reponame, blobname, payload)
+		}
+	case "yum":
+		if payload, e1 := createYum(reponame, blobname); e1 != nil {
+			return e1
+		} else {
+			return sendPayload(reponame, blobname, payload)
+		}
+	case "docker":
+		if payload, e1 := createDocker(reponame, blobname); e1 != nil {
+			return e1
+		} else {
+			return sendPayload(reponame, blobname, payload)
+		}
+	case "maven":
+		if payload, e1 := createMaven(reponame, blobname); e1 != nil {
+			return e1
+		} else {
+			return sendPayload(reponame, blobname, payload)
+		}
+	case "raw", "helm", "cargo", "npm", "nuget", "pypi":
+		if payload, e1 := createGeneric(reponame, blobname); e1 != nil {
+			return e1
+		} else {
+			return sendPayload(reponame, blobname, payload)
+		}
+	default:
+		return &cerr.CustomError{Title: "Failed to create repository", Message: RepoFormat + " is not a supported format"}
+	}
+}
+
+func sendPayload(repo, blob string, payload []byte) *cerr.CustomError {
+	if len(bytes.TrimSpace(payload)) == 0 {
+		return &cerr.CustomError{Title: "Invalid JSON payload", Message: "payload is empty"}
+	}
+
+	c, err := rest.NewClientFromEnvFile(shared.Envfile)
+	if err != nil {
+		return err
+	}
+
+	path := "/service/rest/v1/repositories/" + RepoFormat + "/" + RepoType
+	headers := http.Header{}
+	headers.Set("Accept", "application/json")
+	headers.Set("Content-Type", "application/json")
+
+	resp, e2 := c.Do(context.Background(), http.MethodPost, path, nil, bytes.NewReader(payload), headers)
+	if e2 != nil {
+		return e2
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 201 {
+		body, _ := io.ReadAll(resp.Body)
+		return &cerr.CustomError{
+			Title:   "Unable to create repository",
+			Message: fmt.Sprintf("HTTP %s: %s", resp.Status, string(body)),
+		}
+	}
+
+	if !shared.QuietOutput {
+		fmt.Printf("%s %s using blob store %s\n", hftx.EnabledSign("Succesfully created repository"),
+			hftx.Green(repo), hftx.Green(blob))
+	}
 	return nil
 }

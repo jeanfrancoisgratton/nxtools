@@ -8,10 +8,12 @@ package tasks
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"nxtools/repositories"
 	"nxtools/rest"
 	"nxtools/shared"
@@ -45,6 +47,10 @@ func ReindexRepo(reponame string) *cerr.CustomError {
 
 	if resp.StatusCode != 204 {
 		return &cerr.CustomError{Title: "Unable to list blobs", Message: "HTTP status code: " + resp.Status}
+	}
+
+	if !shared.QuietOutput {
+		fmt.Println(hftx.EnabledSign("Repository " + reponame + " was successfully reindexed"))
 	}
 	return nil
 }
