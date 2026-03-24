@@ -11,8 +11,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
@@ -26,56 +24,6 @@ import (
 // Endpoint:
 //
 //	POST /service/rest/v1/repositories/{format}/{type}
-
-func CreateRepository_old(format, repoType, jsonFile string) *cerr.CustomError {
-	format = strings.TrimSpace(format)
-	repoType = strings.TrimSpace(repoType)
-	jsonFile = strings.TrimSpace(jsonFile)
-
-	if format == "" || repoType == "" {
-		return &cerr.CustomError{Title: "Missing parameters", Message: "format and type are required"}
-	}
-	if jsonFile == "" {
-		return &cerr.CustomError{Title: "Missing parameters", Message: "json payload file is required"}
-	}
-
-	var payload []byte
-	var e1 error
-	if jsonFile == "-" {
-		payload, e1 = io.ReadAll(os.Stdin)
-	} else {
-		payload, e1 = os.ReadFile(filepath.Clean(jsonFile))
-	}
-	if e1 != nil {
-		return &cerr.CustomError{Title: "Unable to read JSON payload", Message: e1.Error()}
-	}
-	if len(bytes.TrimSpace(payload)) == 0 {
-		return &cerr.CustomError{Title: "Invalid JSON payload", Message: "payload is empty"}
-	}
-
-	c, err := rest.NewClientFromEnvFile(shared.Envfile)
-	if err != nil {
-		return err
-	}
-
-	path := fmt.Sprintf("/service/rest/v1/repositories/%s/%s", format, repoType)
-	headers := http.Header{}
-	headers.Set("Accept", "application/json")
-	headers.Set("Content-Type", "application/json")
-
-	resp, e2 := c.Do(context.Background(), http.MethodPost, path, nil, bytes.NewReader(payload), headers)
-	if e2 != nil {
-		return e2
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return &cerr.CustomError{Title: "Unable to create repository", Message: "HTTP status code: " + resp.Status}
-	}
-
-	// Nexus often returns 201 + an empty body for create.
-	return nil
-}
 
 func CreateRepository(reponame, blobname string) *cerr.CustomError {
 	a := strings.ToLower(StorageWritePolicy)
@@ -104,13 +52,14 @@ func CreateRepository(reponame, blobname string) *cerr.CustomError {
 		} else {
 			return sendPayload(reponame, blobname, payload)
 		}
-	case "maven":
+	case "maven", "maven2":
+		RepoFormat = "maven2"
 		if payload, e1 := createMaven(reponame, blobname); e1 != nil {
 			return e1
 		} else {
 			return sendPayload(reponame, blobname, payload)
 		}
-	case "raw", "helm", "cargo", "npm", "nuget", "pypi":
+	case "raw", "helm", "cargo", "npm", "nuget", "pypi", "swift", "terraform":
 		if payload, e1 := createGeneric(reponame, blobname); e1 != nil {
 			return e1
 		} else {
