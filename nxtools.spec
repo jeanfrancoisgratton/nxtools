@@ -61,6 +61,10 @@ install -Dpm 0755 %{_sourcedir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryn
 
 
 %changelog
+* Tue Mar 24 2026 Binary package builder <builder@famillegratton.net> 0.70.00-0
+- Completed the apt format repo creation (jean-francois@famillegratton.net)
+- Version bump (jean-francois@famillegratton.net)
+
 * Mon Mar 23 2026 Binary package builder <builder@famillegratton.net> 0.62.01-0
 - fixed a broken link (jean-francois@famillegratton.net)
 - Completed the assets doc (jean-francois@famillegratton.net)
