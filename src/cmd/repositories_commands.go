@@ -11,13 +11,8 @@ import (
 	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"github.com/spf13/cobra"
 	"nxtools/repositories"
-	"nxtools/shared"
 	"nxtools/tasks"
 )
-
-var repoFormat string
-var repoType string
-var repoJSONFile string
 
 var repoCmd = &cobra.Command{
 	Use:     "repo",
@@ -43,10 +38,11 @@ var repoListCmd = &cobra.Command{
 var repoCreateCmd = &cobra.Command{
 	Use:     "create",
 	Aliases: []string{"add"},
-	Example: "nxtools repo create [-e defaultEnv.json] --format yum --type hosted --json payload.json",
+	Example: "nxtools repo create [-e defaultEnv.json] --format FORMAT REPO_NAME BLOBSTORE_NAME",
 	Short:   "Creates a repository (payload is recipe-specific)",
+	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := repositories.CreateRepository(repoFormat, repoType, repoJSONFile); err != nil {
+		if err := repositories.CreateRepository(args[0], args[1]); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
@@ -87,10 +83,6 @@ var reindexRepoCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := tasks.ReindexRepo(args[0]); err != nil {
 			fmt.Println(err.Error())
-		} else {
-			if !shared.QuietOutput {
-				fmt.Println(hftx.EnabledSign("Repository " + args[0] + " was successfully reindexed"))
-			}
 		}
 	},
 }
@@ -100,10 +92,12 @@ func init() {
 
 	repoListCmd.Flags().BoolVar(&repositories.RepoListJSONOutput, "json", false, "Output repository information as JSON")
 
-	repoCreateCmd.Flags().StringVar(&repoFormat, "format", "", "Repository format/recipe family (e.g. yum, apt, maven, docker)")
-	repoCreateCmd.Flags().StringVar(&repoType, "type", "", "Repository type (hosted, proxy, group)")
-	repoCreateCmd.Flags().StringVar(&repoJSONFile, "json", "", "JSON payload file for the recipe (use '-' to read from stdin)")
+	repoCreateCmd.Flags().StringVarP(&repositories.RepoFormat, "format", "f", "", "Repository format/recipe family (e.g. yum, apt, maven, docker)")
+	repoCreateCmd.Flags().StringVarP(&repositories.RepoType, "type", "t", "hosted", "Repository type (hosted, proxy, group)")
+	repoCreateCmd.Flags().StringVarP(&repositories.RepoSigningFile, "keyfile", "k", "", "Private key location")
+	repoCreateCmd.Flags().StringVarP(&repositories.RepoSigningPassphrase, "passphrase", "p", "", "Private key passphrase")
+	repoCreateCmd.Flags().StringVarP(&repositories.RepoAptDistro, "distro", "d", "nexus", "Debian-like distribution")
+	repoCreateCmd.Flags().StringVarP(&repositories.StorageWritePolicy, "writepolicy", "w", "ALLOW", "Blob storage policy")
+	repoCreateCmd.Flags().BoolVarP(&repositories.StorageStrictContentValidation, "validation", "V", true, "Set this to disable strict content validation")
 	_ = repoCreateCmd.MarkFlagRequired("format")
-	_ = repoCreateCmd.MarkFlagRequired("type")
-	_ = repoCreateCmd.MarkFlagRequired("json")
 }

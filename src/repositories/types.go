@@ -5,22 +5,20 @@
 
 package repositories
 
-var RepoListJSONOutput bool
-
 // RepositorySummary is the (limited) repository representation returned by:
 //
 //	GET /service/rest/v1/repositories
 //
 // Fields may vary depending on format/type.
 type RepositorySummary struct {
-	Name       string         `json:"name"`
-	Format     string         `json:"format"`
-	Type       string         `json:"type"`
-	URL        string         `json:"url"`
-	Size       uint64         `json:"size,omitempty"`
-	Attributes map[string]any `json:"attributes,omitempty"`
-	Storage    StorageSpec    `json:"storage,omitempty"`
-	AssetCount int            `json:"asset_count,omitempty"`
+	Name       string            `json:"name"`
+	Format     string            `json:"format"`
+	Type       string            `json:"type"`
+	URL        string            `json:"url"`
+	Size       uint64            `json:"size,omitempty"`
+	Attributes map[string]any    `json:"attributes,omitempty"`
+	Storage    StorageSpecStruct `json:"storage,omitempty"`
+	AssetCount int               `json:"asset_count,omitempty"`
 }
 
 // YumHostedRepository contains the fields needed by upload helpers when

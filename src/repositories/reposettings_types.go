@@ -5,134 +5,154 @@
 
 package repositories
 
+var RepoListJSONOutput bool
+var RepoFormat string
+var RepoType = "hosted"
+var RepoSigningFile string
+var RepoAptDistro = "nexus"
+var RepoSigningPassphrase = ""
+var StorageWritePolicy = "ALLOW"
+var StorageStrictContentValidation = true
+
 // The data types in this file deal with service/rest/v1/repositories/$REPOFORMAT/hosted/$REPONAME API endpoints
 
 // ---------------------------
 // COMMON TYPES TO ALL FORMATS
 // ---------------------------
 
-// StorageSpec describes the blog store associated with the repo
+// StorageSpecStruct describes the blog store associated with the repo
 
-type StorageSpec struct {
+type StorageSpecStruct struct {
 	BlobStoreName               string `json:"blobStoreName"`
 	StrictContentTypeValidation bool   `json:"strictContentTypeValidation,omitempty"`
 	WritePolicy                 string `json:"writePolicy,omitempty"`
 }
 
-// CleanupPolicySpec deals with the repo's cleanup policies, if any
-type CleanupPolicySpec struct {
+// CleanupPolicySpecStruct deals with the repo's cleanup policies, if any
+type CleanupPolicySpecStruct struct {
 	PolicyNames []string `json:"policyNames,omitempty"`
 }
 
-// ComponentSpec details if the repo allows for proprietary components
-type ComponentSpec struct {
+// ComponentSpecStruct details if the repo allows for proprietary components
+type ComponentSpecStruct struct {
 	ProprietaryComponents bool `json:"proprietaryComponents,omitempty"`
+}
+
+// RepoSigningStruct is the structure used for repos needing gpg key signing (APT, TF)
+type RepoSigningStruct struct {
+	Keypair    string `json:"keypair,omitempty"`
+	Passphrase string `json:"passphrase,omitempty"`
 }
 
 // ============================================================
 // COMMON REPO FORMAT SHARED FIELDS
 
-type HostedRepoCommonSettings struct {
-	Name      string            `json:"name"`
-	Format    string            `json:"format"`
-	Type      string            `json:"type"`
-	Url       string            `json:"url"`
-	Online    bool              `json:"online"`
-	Storage   StorageSpec       `json:"storage,omitempty"`
-	Cleanup   CleanupPolicySpec `json:"cleanup,omitempty"`
-	Component ComponentSpec     `json:"component,omitempty"`
+type HostedRepoCommonSettingsStruct struct {
+	Name      string                   `json:"name"`
+	Format    string                   `json:"format,omitempty"`
+	Type      string                   `json:"type,omitempty"`
+	Url       string                   `json:"url,omitempty"`
+	Online    bool                     `json:"online,omitempty"`
+	Storage   StorageSpecStruct        `json:"storage,omitempty"`
+	Cleanup   *CleanupPolicySpecStruct `json:"cleanup,omitempty"`
+	Component *ComponentSpecStruct     `json:"component,omitempty"`
 }
 
 // ============================================================
 // RAW FORMAT
 
-type RawRepoSettings struct {
-	HostedRepoCommonSettings
+type RawRepoSettingsStruct struct {
+	HostedRepoCommonSettingsStruct
 }
 
 // ============================================================
 // HELM FORMAT
 
-type HelmRepoSettings struct {
-	HostedRepoCommonSettings
+type HelmRepoSettingsStruct struct {
+	HostedRepoCommonSettingsStruct
 }
 
 // ============================================================
 // CARGO FORMAT
 
-type CargoRepoSettings struct {
-	HostedRepoCommonSettings
+type CargoRepoSettingsStruct struct {
+	HostedRepoCommonSettingsStruct
 }
 
 // ============================================================
 // NPM FORMAT
 
-type NpmRepoSettings struct {
-	HostedRepoCommonSettings
+type NpmRepoSettingsStruct struct {
+	HostedRepoCommonSettingsStruct
 }
 
 // ============================================================
 // NUGET FORMAT
 
-type NugetRepoSettings struct {
-	HostedRepoCommonSettings
+type NugetRepoSettingsStruct struct {
+	HostedRepoCommonSettingsStruct
 }
 
 // ============================================================
 // PYPI FORMAT
 
-type PypiRepoSettings struct {
-	HostedRepoCommonSettings
+type PypiRepoSettingsStruct struct {
+	HostedRepoCommonSettingsStruct
 }
 
 // ============================================================
 // APT FORMAT
 
-type AptRepoSettings struct {
-	HostedRepoCommonSettings
+type AptRepoSettingsStruct struct {
+	HostedRepoCommonSettingsStruct
 	Apt struct {
-		Distribution string `json:"distribution,omitempty"`
-	} `json:"apt,omitempty"`
-	AptSigning struct {
-		Keypair    string `json:"keypair,omitempty"`
-		Passphrase string `json:"passphrase,omitempty"`
-	} `json:"aptsigning,omitempty"`
+		Distribution string `json:"distribution"`
+	} `json:"apt"`
+	AptSigning RepoSigningStruct `json:"aptSigning"`
 }
 
 // ============================================================
 // YUM FORMAT
 
-type YumRepoSettings struct {
-	HostedRepoCommonSettings
+type YumRepoSettingsStruct struct {
+	HostedRepoCommonSettingsStruct
 	Yum struct {
-		RepodataDepth int    `json:"repodataDepth"`
-		DeployPolicy  string `json:"deployPolicy"`
+		RepodataDepth int    `json:"repodataDepth,omitempty"`
+		DeployPolicy  string `json:"deployPolicy,omitempty"`
 	} `json:"yum"`
 }
 
 // ============================================================
 // DOCKER FORMAT
 
-type DockerRepoSettings struct {
-	HostedRepoCommonSettings
+type DockerRepoSettingsStruct struct {
+	HostedRepoCommonSettingsStruct
 	Docker struct {
-		V1Enabled      bool   `json:"v1Enabled"`
-		ForceBasicAuth bool   `json:"forceBasicAuth"`
-		HttpPort       int    `json:"httpPort"`
-		HttpsPort      int    `json:"httpsPort"`
-		Subdomain      string `json:"subdomain"`
-		PathEnabled    bool   `json:"pathEnabled"`
+		V1Enabled      bool   `json:"v1Enabled,omitempty"`
+		ForceBasicAuth bool   `json:"forceBasicAuth,omitempty"`
+		HttpPort       int    `json:"httpPort,omitempty"`
+		HttpsPort      int    `json:"httpsPort,omitempty"`
+		Subdomain      string `json:"subdomain,omitempty"`
+		PathEnabled    bool   `json:"pathEnabled,omitempty"`
 	} `json:"docker"`
 }
 
 // ============================================================
 // MAVEN FORMAT
 
-type MavenRepoSettings struct {
-	HostedRepoCommonSettings
+type MavenRepoSettingsStruct struct {
+	HostedRepoCommonSettingsStruct
 	Maven struct {
 		VersionPolicy      string `json:"versionPolicy"`
 		LayoutPolicy       string `json:"layoutPolicy"`
 		ContentDisposition string `json:"contentDisposition"`
 	} `json:"maven"`
+}
+
+// ============================================================
+// TERRAFORM FORMAT
+
+type TerraformRepoSettingsStruct struct {
+	HostedRepoCommonSettingsStruct
+	RepoSigningStruct
 }

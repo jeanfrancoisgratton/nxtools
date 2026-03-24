@@ -3,15 +3,16 @@
 ## Current version
 ```bash
 # nxtools -v
-nxtools version 0.30.00 (2026.03.10), Go version = go1.26.1
+nxtools version 0.70.00 (2026.03.24), Go version = v1.26.1
 ```
 ## Supported repo formats
-- [x] docker
-- [x] yum
+=> a format is considered *supported* once we can create a repo in this format
+- [ ] docker
+- [ ] yum
 - [x] apt
-- [x] raw
-- [x] helm
-- [x] cargo
+- [ ] raw
+- [ ] helm
+- [ ] cargo
 - [ ] maven
 - [ ] npm
 - [ ] nuget

@@ -121,77 +121,77 @@ func getStorageSpecs(c *rest.Client, repos []RepositorySummary) ([]RepositorySum
 
 		switch strings.ToLower(repos[i].Format) {
 		case "apt":
-			var repoSettings AptRepoSettings
+			var repoSettings AptRepoSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 			}
 			repos[i].Storage = repoSettings.Storage
 		case "yum":
-			var repoSettings YumRepoSettings
+			var repoSettings YumRepoSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 			}
 			repos[i].Storage = repoSettings.Storage
 		case "docker":
-			var repoSettings DockerRepoSettings
+			var repoSettings DockerRepoSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 			}
 			repos[i].Storage = repoSettings.Storage
 		case "maven", "maven2":
-			var repoSettings MavenRepoSettings
+			var repoSettings MavenRepoSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 			}
 			repos[i].Storage = repoSettings.Storage
 		case "raw":
-			var repoSettings RawRepoSettings
+			var repoSettings RawRepoSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 			}
 			repos[i].Storage = repoSettings.Storage
 		case "helm":
-			var repoSettings HelmRepoSettings
+			var repoSettings HelmRepoSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 			}
 			repos[i].Storage = repoSettings.Storage
 		case "cargo":
-			var repoSettings CargoRepoSettings
+			var repoSettings CargoRepoSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 			}
 			repos[i].Storage = repoSettings.Storage
 		case "npm":
-			var repoSettings NpmRepoSettings
+			var repoSettings NpmRepoSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 			}
 			repos[i].Storage = repoSettings.Storage
 		case "nuget":
-			var repoSettings NugetRepoSettings
+			var repoSettings NugetRepoSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 			}
 			repos[i].Storage = repoSettings.Storage
 		case "pypi":
-			var repoSettings PypiRepoSettings
+			var repoSettings PypiRepoSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 			}
 			repos[i].Storage = repoSettings.Storage
 		default:
-			var repoSettings HostedRepoCommonSettings
+			var repoSettings HostedRepoCommonSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
@@ -208,29 +208,44 @@ func getStorageSpecs(c *rest.Client, repos []RepositorySummary) ([]RepositorySum
 // getNumberOfAssets returns the number of assets in the specified repository
 
 func getNumberOfAssets(c *rest.Client, repos []RepositorySummary) ([]RepositorySummary, *cerr.CustomError) {
-	var rs []RepositorySummary
+	for i := range repos {
+		count := 0
+		var continuationToken *string
 
-	for _, r := range repos {
-		q := url.Values{}
-		q.Set("repository", r.Name)
+		for {
+			q := url.Values{}
+			q.Set("repository", repos[i].Name)
+			if continuationToken != nil {
+				q.Set("continuationToken", *continuationToken)
+			}
 
-		resp, ee := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/assets", q, nil, nil)
-		if ee != nil {
-			return nil, ee
-		}
-		defer resp.Body.Close()
+			resp, err := c.Do(context.Background(), http.MethodGet, "/service/rest/v1/assets", q, nil, nil)
+			if err != nil {
+				return nil, err
+			}
 
-		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			return nil, &cerr.CustomError{Title: "Unable to list blobs", Message: "HTTP status code: " + resp.Status}
+			if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+				resp.Body.Close()
+				return nil, &cerr.CustomError{Title: "Unable to list assets", Message: "HTTP status code: " + resp.Status}
+			}
+
+			var lr shared.ListAssetResponse
+			if e := json.NewDecoder(resp.Body).Decode(&lr); e != nil {
+				resp.Body.Close()
+				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: e.Error()}
+			}
+			resp.Body.Close()
+
+			count += len(lr.Items)
+
+			if lr.ContinuationToken == nil {
+				break
+			}
+			continuationToken = lr.ContinuationToken
 		}
-		var lr shared.ListAssetResponse
-		dec := json.NewDecoder(resp.Body)
-		if eee := dec.Decode(&lr); eee != nil {
-			return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: eee.Error()}
-		}
-		r.AssetCount = len(lr.Items)
-		rs = append(rs, r)
+
+		repos[i].AssetCount = count
 	}
 
-	return rs, nil
+	return repos, nil
 }
