@@ -12,10 +12,11 @@ nxtools version 0.30.00 (2026.03.10), Go version = go1.26.1
 - [x] raw
 - [x] helm
 - [x] cargo
-- [ ] maven2
+- [ ] maven
 - [ ] npm
 - [ ] nuget
 - [ ] pypi
+- [ ] terraform
 ___
 ## Supported blob stores
 - [x] file-based
