@@ -8,17 +8,18 @@ nxtools version 0.75.00 (2026.03.24), Go version = v1.26.1
 ## Supported repo formats
 => a format is considered *supported* once we can create a repo in this format
 - [ ] docker
-- [ ] yum
+- [x] yum
 - [x] apt
+- [x] maven
 - [x] raw
 - [x] helm
 - [x] cargo
-- [ ] maven2
 - [x] npm
 - [x] nuget
 - [x] pypi
 - [x] terraform
 - [x] swift
+~~- [ ] cocoapods~~
 ___
 ## Supported blob stores
 - [x] file-based

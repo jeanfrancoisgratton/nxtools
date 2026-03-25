@@ -29,6 +29,10 @@ func Execute() {
 }
 
 func init() {
+	// remove the -v flag from rootCmd so I can use it elsewhere
+	if f := rootCmd.Flags().Lookup("version"); f != nil {
+		f.Shorthand = ""
+	}
 	rootCmd.DisableAutoGenTag = true
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 

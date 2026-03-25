@@ -8,6 +8,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"github.com/spf13/cobra"
@@ -31,23 +32,6 @@ var repoListCmd = &cobra.Command{
 	Short:   "Lists all repositories visible to the configured user",
 	Run: func(cmd *cobra.Command, args []string) {
 		if _, err := repositories.ListRepositories(true); err != nil {
-			fmt.Println(err.Error())
-		}
-	},
-}
-
-var repoCreateCmd = &cobra.Command{
-	Use:     "create",
-	Aliases: []string{"add"},
-	Example: "nxtools repo create [-e defaultEnv.json] --format FORMAT REPO_NAME BLOBSTORE_NAME",
-	Short:   "Creates a repository (payload is recipe-specific)",
-	Args:    cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		if repositories.RepoFormat == "apt" && repositories.RepoSigningFile == "" {
-			hftx.ErrorSign("You need to provide a PGP private key file (flag -k) when using the APT format")
-			os.Exit(1)
-		}
-		if err := repositories.CreateRepository(args[0], args[1]); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
@@ -92,6 +76,33 @@ var reindexRepoCmd = &cobra.Command{
 	},
 }
 
+var repoCreateCmd = &cobra.Command{
+	Use:     "create",
+	Aliases: []string{"add"},
+	Example: "nxtools repo create [-e defaultEnv.json] --format FORMAT REPO_NAME BLOBSTORE_NAME",
+	Short:   "Creates a repository (payload is recipe-specific)",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// some sanity checks before going ahead
+		writepol := strings.ToLower(repositories.StorageWritePolicy)
+		if writepol != "allow" && writepol != "deny" && writepol != "allow_once" {
+			hftx.ErrorSign("Supported policies are ALLOW, ALLOW_ONCE and DENY; you selected " + repositories.StorageWritePolicy)
+			os.Exit(1)
+		} else {
+			repositories.StorageWritePolicy = strings.ToUpper(writepol)
+		}
+		if strings.ToLower(repositories.RepoFormat) == "apt" && repositories.RepoSigningFile == "" {
+			hftx.ErrorSign("You need to provide a PGP private key file (flag -k) when using the APT format")
+			os.Exit(1)
+		}
+
+		// ok, let's go
+		if err := repositories.CreateRepository(args[0], args[1]); err != nil {
+			fmt.Println(err.Error())
+		}
+	},
+}
+
 func init() {
 	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, reindexRepoCmd)
 
@@ -102,7 +113,13 @@ func init() {
 	repoCreateCmd.Flags().StringVarP(&repositories.RepoSigningFile, "keyfile", "k", "", "Private key location")
 	repoCreateCmd.Flags().StringVarP(&repositories.RepoSigningPassphrase, "passphrase", "p", "", "Private key passphrase")
 	repoCreateCmd.Flags().StringVarP(&repositories.RepoAptDistro, "distro", "d", "nexus", "Debian-like distribution")
-	repoCreateCmd.Flags().StringVarP(&repositories.StorageWritePolicy, "writepolicy", "w", "ALLOW", "Blob storage policy")
-	repoCreateCmd.Flags().BoolVarP(&repositories.StorageStrictContentValidation, "validation", "V", true, "Set this to disable strict content validation")
+	repoCreateCmd.Flags().StringVarP(&repositories.StorageWritePolicy, "writepolicy", "w", "ALLOW", "Blob storage policy: ALLOW, ALLOW_ONCE, DENY")
+	repoCreateCmd.Flags().BoolVarP(&repositories.StorageStrictContentValidation, "strict", "s", true, "Set this to disable strict content validation")
+	repoCreateCmd.Flags().StringVarP(&repositories.MavenVersionPolicy, "versionpolicy", "v", "RELEASE", "Maven version policy")
+	repoCreateCmd.Flags().StringVarP(&repositories.MavenLayoutPolicy, "layoutpolicy", "l", "STRICT", "Maven layout policy")
+	repoCreateCmd.Flags().StringVarP(&repositories.MavenContentDisposition, "contentdisposition", "c", "INLINE", "Maven content disposition")
+	repoCreateCmd.Flags().UintVarP(&repositories.YumRepodataDepth, "repodepth", "r", 0, "Yum repository data depth")
+	repoCreateCmd.Flags().StringVarP(&repositories.YumDeployPolicy, "deploypolicy", "d", "PERMISSIVE", "Maven content disposition")
+
 	_ = repoCreateCmd.MarkFlagRequired("format")
 }

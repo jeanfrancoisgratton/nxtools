@@ -148,49 +148,7 @@ func getStorageSpecs(c *rest.Client, repos []RepositorySummary) ([]RepositorySum
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 			}
 			repos[i].Storage = repoSettings.Storage
-		case "raw":
-			var repoSettings RawRepoSettingsStruct
-			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
-				_ = resp.Body.Close()
-				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
-			}
-			repos[i].Storage = repoSettings.Storage
-		case "helm":
-			var repoSettings HelmRepoSettingsStruct
-			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
-				_ = resp.Body.Close()
-				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
-			}
-			repos[i].Storage = repoSettings.Storage
-		case "cargo":
-			var repoSettings CargoRepoSettingsStruct
-			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
-				_ = resp.Body.Close()
-				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
-			}
-			repos[i].Storage = repoSettings.Storage
-		case "npm":
-			var repoSettings NpmRepoSettingsStruct
-			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
-				_ = resp.Body.Close()
-				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
-			}
-			repos[i].Storage = repoSettings.Storage
-		case "nuget":
-			var repoSettings NugetRepoSettingsStruct
-			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
-				_ = resp.Body.Close()
-				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
-			}
-			repos[i].Storage = repoSettings.Storage
-		case "pypi":
-			var repoSettings PypiRepoSettingsStruct
-			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
-				_ = resp.Body.Close()
-				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
-			}
-			repos[i].Storage = repoSettings.Storage
-		default:
+		case "raw", "helm", "cargo", "npm", "nuget", "pypi", "terraform", "swift":
 			var repoSettings HostedRepoCommonSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
