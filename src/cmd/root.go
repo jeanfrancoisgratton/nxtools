@@ -29,15 +29,12 @@ func Execute() {
 }
 
 func init() {
-	// remove the -v flag from rootCmd so I can use it elsewhere
-	if f := rootCmd.Flags().Lookup("version"); f != nil {
-		f.Shorthand = ""
-	}
 	rootCmd.DisableAutoGenTag = true
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	rootCmd.AddCommand(envCmd, repoCmd, blobCmd, assetsCmd, assetsUploadCmd, assetsDownloadCmd, assetsComponentInfoCmd, reindexRepoCmd)
 
+	rootCmd.Flags().BoolP("version", "V", false, "Show version and exit")
 	rootCmd.PersistentFlags().StringVarP(&shared.Envfile, "env", "e", "defaultEnv.json", "Environment file to load in from $HOME/.config/JFG/nxtools")
 	rootCmd.PersistentFlags().BoolVarP(&shared.QuietOutput, "quiet", "q", false, "Output will be as quiet as possible")
 }
