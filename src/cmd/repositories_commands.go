@@ -119,7 +119,7 @@ func init() {
 	repoCreateCmd.Flags().StringVarP(&repositories.MavenLayoutPolicy, "layoutpolicy", "l", "STRICT", "Maven layout policy")
 	repoCreateCmd.Flags().StringVarP(&repositories.MavenContentDisposition, "contentdisposition", "c", "INLINE", "Maven content disposition")
 	repoCreateCmd.Flags().UintVarP(&repositories.YumRepodataDepth, "repodepth", "r", 0, "Yum repository data depth")
-	repoCreateCmd.Flags().StringVarP(&repositories.YumDeployPolicy, "deploypolicy", "d", "PERMISSIVE", "Maven content disposition")
+	repoCreateCmd.Flags().StringVarP(&repositories.YumDeployPolicy, "deploypolicy", "D", "PERMISSIVE", "Maven content disposition")
 
 	_ = repoCreateCmd.MarkFlagRequired("format")
 }
