@@ -13,6 +13,7 @@ var LatestAssetsOnly bool
 var AlternateInfo bool
 var UploadDirectory string
 var JsonOutput bool
+var ReindexRepo = false
 
 const (
 	rpmLeadSize      = 96
