@@ -61,6 +61,10 @@ install -Dpm 0755 %{_sourcedir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryn
 
 
 %changelog
+* Wed Mar 25 2026 Binary package builder <builder@famillegratton.net> 0.80.00-1
+- Minor tweak on showing version number (jean-francois@famillegratton.net)
+- Added shorthand flag for directory (jean-francois@famillegratton.net)
+
 * Wed Mar 25 2026 Binary package builder <builder@famillegratton.net> 0.80.00-0
 - Repos can now be reindexed after uploads (jean-francois@famillegratton.net)
 
