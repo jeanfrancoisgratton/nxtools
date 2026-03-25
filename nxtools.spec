@@ -61,6 +61,9 @@ install -Dpm 0755 %{_sourcedir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryn
 
 
 %changelog
+* Wed Mar 25 2026 Binary package builder <builder@famillegratton.net> 0.80.00-0
+- Repos can now be reindexed after uploads (jean-francois@famillegratton.net)
+
 * Wed Mar 25 2026 Binary package builder <builder@famillegratton.net> 0.75.01-0
 - Fixed flag duplicated usage in repo create (jean-francois@famillegratton.net)
 
