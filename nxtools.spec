@@ -61,6 +61,13 @@ install -Dpm 0755 %{_sourcedir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryn
 
 
 %changelog
+* Wed Mar 25 2026 Binary package builder <builder@famillegratton.net> 0.75.00-0
+- Completed all repo formats except docker (jean-francois@famillegratton.net)
+- version bump, completed all generic formats (jean-
+  francois@famillegratton.net)
+- verbosity fixes, response handling fixed in blob create (jean-
+  francois@famillegratton.net)
+
 * Tue Mar 24 2026 Binary package builder <builder@famillegratton.net> 0.70.00-0
 - Completed the apt format repo creation (jean-francois@famillegratton.net)
 - Version bump (jean-francois@famillegratton.net)
