@@ -7,9 +7,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"nxtools/assets"
+	"nxtools/tasks"
 )
 
 var assetsCmd = &cobra.Command{
@@ -49,12 +51,19 @@ var assetInfoCmd = &cobra.Command{
 var assetsUploadCmd = &cobra.Command{
 	Use:     "upload REPO_NAME FILE_NAME",
 	Aliases: []string{"push"},
-	Example: "nxtools assets upload [-e defaultEnv.json] my-repository /path/to/file",
+	Example: "nxtools assets upload [-e defaultEnv.json] REPO_NAME /path/to/file",
 	Args:    cobra.ExactArgs(2),
 	Short:   "Uploads a file to a supported hosted repository",
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := assets.UploadAsset(args[0], args[1], assets.UploadDirectory); err != nil {
 			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+		if assets.ReindexRepo {
+			if err := tasks.ReindexRepo(args[0]); err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
 		}
 	},
 }
@@ -109,6 +118,7 @@ func init() {
 	assetsListCmd.Flags().BoolVarP(&assets.LatestAssetsOnly, "latest", "l", false, "Only list the latest version of each logical asset/component")
 	assetsListCmd.Flags().BoolVarP(&assets.AlternateInfo, "alternate", "a", false, "Show alternate asset information")
 	assetsUploadCmd.Flags().StringVar(&assets.UploadDirectory, "directory", "", "Target directory inside the repository (optional; defaults are inferred for raw and yum)")
+	assetsUploadCmd.Flags().BoolVarP(&assets.ReindexRepo, "reindex", "r", false, "Reindex repo after the upload")
 
 	assetInfoCmd.Flags().BoolVarP(&assets.JsonOutput, "json", "j", false, "Output asset information as JSON")
 	assetsComponentInfoCmd.Flags().BoolVarP(&assets.JsonOutput, "json", "j", false, "Output asset information as JSON")
