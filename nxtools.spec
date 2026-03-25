@@ -61,6 +61,9 @@ install -Dpm 0755 %{_sourcedir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryn
 
 
 %changelog
+* Wed Mar 25 2026 Binary package builder <builder@famillegratton.net> 0.75.01-0
+- Fixed flag duplicated usage in repo create (jean-francois@famillegratton.net)
+
 * Wed Mar 25 2026 Binary package builder <builder@famillegratton.net> 0.75.00-0
 - Completed all repo formats except docker (jean-francois@famillegratton.net)
 - version bump, completed all generic formats (jean-
