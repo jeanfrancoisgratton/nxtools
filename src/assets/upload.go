@@ -44,7 +44,7 @@ func UploadAsset(repoName, filePath, directory string) *cerr.CustomError {
 	case "helm":
 		return uploadHelm(repoName, filePath)
 	case "raw":
-		return uploadRaw(repoName, filePath, directory)
+		return uploadRaw(repoName, filePath, inferRawDirectory(directory))
 	case "yum":
 		return uploadYum(repoName, filePath, directory)
 	default:
