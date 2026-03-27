@@ -225,22 +225,6 @@ func uploadApt(repoName, filePath string) *cerr.CustomError {
 	return nil
 }
 
-func uploadHelm(repoName, filePath string) *cerr.CustomError {
-	if !shared.QuietOutput {
-		fmt.Println(hftx.InProgressSign("Uploading " + filepath.Base(filePath) + " to " + repoName))
-	}
-	if e := shared.UploadComponentMultipart(repoName, "helm.asset", filePath, nil); e != nil {
-		if !shared.QuietOutput {
-			fmt.Println(hftx.ErrorSign("Failed to upload " + hftx.Red(filePath) + " to " + hftx.Red(repoName)))
-		}
-		return e
-	}
-	if !shared.QuietOutput {
-		fmt.Println(hftx.EnabledSign("Uploaded " + hftx.Green(filePath) + " to " + hftx.Green(repoName)))
-	}
-	return nil
-}
-
 func uploadRaw(repoName, filePath, directory string) *cerr.CustomError {
 	fields := map[string]string{
 		"raw.directory":       inferRawDirectory(directory),

@@ -41,9 +41,7 @@ func UploadAsset(repoName, filePath, directory string) *cerr.CustomError {
 	switch strings.ToLower(strings.TrimSpace(repo.Format)) {
 	case "apt":
 		return uploadApt(repoName, filePath)
-	case "helm":
-		return uploadHelm(repoName, filePath)
-	case "raw":
+	case "raw", "helm", "cargo", "npm", "nuget", "pypi", "terraform", "swift", "gitlfs", "rubygems", "conane", "r":
 		return uploadRaw(repoName, filePath, inferRawDirectory(directory))
 	case "yum":
 		return uploadYum(repoName, filePath, directory)

@@ -59,7 +59,7 @@ func CreateRepository(reponame, blobname string) *cerr.CustomError {
 		} else {
 			return sendPayload(reponame, blobname, payload)
 		}
-	case "raw", "helm", "cargo", "npm", "nuget", "pypi", "terraform", "swift":
+	case "raw", "helm", "cargo", "npm", "nuget", "pypi", "terraform", "swift", "gitlfs", "rubygems", "conan", "r":
 		if payload, e1 := createGeneric(reponame, blobname); e1 != nil {
 			return e1
 		} else {
