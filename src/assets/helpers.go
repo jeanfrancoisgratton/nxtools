@@ -20,7 +20,22 @@ import (
 )
 
 func inferRawDirectory(directory string) string {
-	return shared.NormalizeDirectory(directory)
+	dir := strings.TrimSpace(directory)
+
+	if dir == "" {
+		return ""
+	}
+
+	// remove leading slash (critical: nexus might have inconsistent behaviour here, from version to version)
+	dir = strings.TrimPrefix(dir, "/")
+
+	// normalize separators
+	dir = filepath.ToSlash(dir)
+
+	// remove trailing slash
+	dir = strings.TrimSuffix(dir, "/")
+
+	return dir
 }
 
 func inferYumDirectory(repoName, filePath, directory string) (string, *cerr.CustomError) {
@@ -210,22 +225,6 @@ func uploadApt(repoName, filePath string) *cerr.CustomError {
 	return nil
 }
 
-func uploadHelm(repoName, filePath string) *cerr.CustomError {
-	if !shared.QuietOutput {
-		fmt.Println(hftx.InProgressSign("Uploading " + filepath.Base(filePath) + " to " + repoName))
-	}
-	if e := shared.UploadComponentMultipart(repoName, "helm.asset", filePath, nil); e != nil {
-		if !shared.QuietOutput {
-			fmt.Println(hftx.ErrorSign("Failed to upload " + hftx.Red(filePath) + " to " + hftx.Red(repoName)))
-		}
-		return e
-	}
-	if !shared.QuietOutput {
-		fmt.Println(hftx.EnabledSign("Uploaded " + hftx.Green(filePath) + " to " + hftx.Green(repoName)))
-	}
-	return nil
-}
-
 func uploadRaw(repoName, filePath, directory string) *cerr.CustomError {
 	fields := map[string]string{
 		"raw.directory":       inferRawDirectory(directory),
@@ -242,7 +241,10 @@ func uploadRaw(repoName, filePath, directory string) *cerr.CustomError {
 		return e
 	}
 	if !shared.QuietOutput {
-		fmt.Println(hftx.EnabledSign("Uploaded " + hftx.Green(filePath) + " to " + hftx.Green(repoName)))
+		if directory != "" {
+			directory = "/" + directory + "/"
+		}
+		fmt.Println(hftx.EnabledSign("Uploaded "+hftx.Green(filePath)+" in repository "+hftx.Green(repoName)) + " as " + hftx.Green(repoName+directory+filepath.Base(filePath)))
 	}
 	return nil
 }

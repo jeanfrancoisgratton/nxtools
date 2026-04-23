@@ -103,8 +103,17 @@ var repoCreateCmd = &cobra.Command{
 	},
 }
 
+var repoListSupportedCmd = &cobra.Command{
+	Use:     "supported",
+	Example: "nxtools repo supported [-e defaultEnv.json]",
+	Short:   "Lists all repositories formats, by type, and show their support status",
+	Run: func(cmd *cobra.Command, args []string) {
+		repositories.ListSupportedFormats()
+	},
+}
+
 func init() {
-	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, reindexRepoCmd)
+	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, reindexRepoCmd, repoListSupportedCmd)
 
 	repoListCmd.Flags().BoolVar(&repositories.RepoListJSONOutput, "json", false, "Output repository information as JSON")
 
@@ -117,9 +126,17 @@ func init() {
 	repoCreateCmd.Flags().BoolVarP(&repositories.StorageStrictContentValidation, "strict", "s", true, "Set this to disable strict content validation")
 	repoCreateCmd.Flags().StringVarP(&repositories.MavenVersionPolicy, "versionpolicy", "v", "RELEASE", "Maven version policy")
 	repoCreateCmd.Flags().StringVarP(&repositories.MavenLayoutPolicy, "layoutpolicy", "l", "STRICT", "Maven layout policy")
-	repoCreateCmd.Flags().StringVarP(&repositories.MavenContentDisposition, "contentdisposition", "c", "INLINE", "Maven content disposition")
+	repoCreateCmd.Flags().StringVarP(&repositories.RepoContentDisposition, "contentdisposition", "c", "INLINE", "Maven content disposition")
 	repoCreateCmd.Flags().UintVarP(&repositories.YumRepodataDepth, "repodepth", "r", 0, "Yum repository data depth")
 	repoCreateCmd.Flags().StringVarP(&repositories.YumDeployPolicy, "deploypolicy", "D", "PERMISSIVE", "Maven content disposition")
+	repoCreateCmd.Flags().BoolVarP(&repositories.DockerV1Enabled, "v1api", "1", false, "Allow v1 API calls")
+	repoCreateCmd.Flags().BoolVarP(&repositories.DockerForceBasicAuth, "basic", "b", false, "Allow basic http(s) auth")
+	repoCreateCmd.Flags().UintVar(&repositories.DockerHttpPort, "http", 0, "HTTPS port the registry listens on")
+	repoCreateCmd.Flags().UintVar(&repositories.DockerHttpsPort, "https", 0, "HTTP port the registry listens on")
+	repoCreateCmd.Flags().StringVarP(&repositories.DockerSubdomain, "subdomain", "S", "", "Subdomain to route registry to")
+	repoCreateCmd.Flags().BoolVarP(&repositories.DockerPathEnabled, "path", "P", false, "Path enabled")
 
+	// Mark "a" and "b" as mutually exclusive
+	repoCreateCmd.MarkFlagsMutuallyExclusive("http", "https")
 	_ = repoCreateCmd.MarkFlagRequired("format")
 }

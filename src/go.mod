@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/jeanfrancoisgratton/customError/v3 v3.0.0
-	github.com/jeanfrancoisgratton/helperFunctions/v5 v5.0.1
+	github.com/jeanfrancoisgratton/helperFunctions/v5 v5.0.2
 	github.com/jedib0t/go-pretty/v6 v6.7.8
 	github.com/spf13/cobra v1.10.2
 )

@@ -82,7 +82,7 @@ func createMaven(reponame, blobname string) ([]byte, *cerr.CustomError) {
 	if b != "strict" && b != "permissive" {
 		return nil, &cerr.CustomError{Title: "maven layout policy not supported", Message: fmt.Sprintf("unsupported layout: %s", b)}
 	}
-	c := strings.ToLower(MavenContentDisposition)
+	c := strings.ToLower(RepoContentDisposition)
 	if c != "inline" && c != "attachment" {
 		return nil, &cerr.CustomError{Title: "maven content disposition not supported", Message: fmt.Sprintf("unsupported disposition: %s", b)}
 	}
@@ -101,7 +101,7 @@ func createMaven(reponame, blobname string) ([]byte, *cerr.CustomError) {
 		Maven: MavenSettings{
 			VersionPolicy:      MavenVersionPolicy,
 			LayoutPolicy:       MavenLayoutPolicy,
-			ContentDisposition: MavenContentDisposition,
+			ContentDisposition: RepoContentDisposition,
 		},
 	}
 
@@ -113,7 +113,37 @@ func createMaven(reponame, blobname string) ([]byte, *cerr.CustomError) {
 }
 
 func createDocker(reponame, blobname string) ([]byte, *cerr.CustomError) {
-	return nil, nil
+	// some sanity checks
+	if DockerHttpPort == 0 && DockerHttpsPort == 0 && DockerSubdomain == "" {
+		return nil, &cerr.CustomError{Title: "Docker connection config missing", Message: "You need to set either of an http(s) port or a subdomain"}
+	}
+
+	// ok preflight is done, let's proceed
+	payload := DockerRepoSettingsStruct{
+		HostedRepoCommonSettingsStruct: HostedRepoCommonSettingsStruct{
+			Name:   reponame,
+			Online: true,
+			Storage: StorageSpecStruct{
+				BlobStoreName:               blobname,
+				StrictContentTypeValidation: StorageStrictContentValidation,
+				WritePolicy:                 StorageWritePolicy,
+			},
+		},
+		Docker: DockerSettings{
+			V1Enabled:      DockerV1Enabled,
+			ForceBasicAuth: DockerForceBasicAuth,
+			HttpPort:       DockerHttpPort,
+			HttpsPort:      DockerHttpsPort,
+			Subdomain:      DockerSubdomain,
+			PathEnabled:    DockerPathEnabled,
+		},
+	}
+
+	pload, e2 := json.MarshalIndent(payload, "", "  ")
+	if e2 != nil {
+		return nil, &cerr.CustomError{Title: "failed to marshal Docker repo payload", Message: e2.Error()}
+	}
+	return pload, nil
 }
 
 // this is the general-purpose repo generation function; most repo formats should use this one

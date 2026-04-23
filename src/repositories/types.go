@@ -5,6 +5,16 @@
 
 package repositories
 
+var TrueVal = true
+var FalseVal = false
+
+type FormatStatusStruct struct {
+	Name            string `json:"name"`
+	SupportsHosted  *bool  `json:"supports_host"`
+	SupportsGrouped *bool  `json:"supports_group"`
+	SupportsProxied *bool  `json:"supports_proxy"`
+}
+
 // RepositorySummary is the (limited) repository representation returned by:
 //
 //	GET /service/rest/v1/repositories

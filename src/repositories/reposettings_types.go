@@ -11,13 +11,19 @@ var RepoType = "hosted"
 var RepoSigningFile string
 var RepoAptDistro = "nexus"
 var RepoSigningPassphrase = ""
+var RepoContentDisposition = "INLINE"
 var StorageWritePolicy = "ALLOW"
 var StorageStrictContentValidation = true
 var MavenVersionPolicy = "RELEASE"
 var MavenLayoutPolicy = "STRICT"
-var MavenContentDisposition = "INLINE"
 var YumRepodataDepth uint = 0
 var YumDeployPolicy = "PERMISSIVE"
+var DockerV1Enabled = false
+var DockerForceBasicAuth = false
+var DockerHttpPort uint = 0
+var DockerHttpsPort uint = 0
+var DockerSubdomain = ""
+var DockerPathEnabled = false
 
 // The data types in this file deal with service/rest/v1/repositories/$REPOFORMAT/hosted/$REPONAME API endpoints
 
@@ -49,7 +55,7 @@ type RepoSigningStruct struct {
 	Passphrase string `json:"passphrase,omitempty"`
 }
 
-// APT FORMAT
+// GENERIC FORMAT
 
 type HostedRepoCommonSettingsStruct struct {
 	Name      string                   `json:"name"`
@@ -62,6 +68,8 @@ type HostedRepoCommonSettingsStruct struct {
 	Component *ComponentSpecStruct     `json:"component,omitempty"`
 }
 
+// APT FORMAT
+
 type AptRepoSettingsStruct struct {
 	HostedRepoCommonSettingsStruct
 	Apt struct {
@@ -70,7 +78,6 @@ type AptRepoSettingsStruct struct {
 	AptSigning RepoSigningStruct `json:"aptSigning"`
 }
 
-// ============================================================
 // YUM FORMAT
 
 type YumSettings struct {
@@ -83,14 +90,13 @@ type YumRepoSettingsStruct struct {
 	Yum YumSettings `json:"yum"`
 }
 
-// ============================================================
 // DOCKER FORMAT
 
 type DockerSettings struct {
 	V1Enabled      bool   `json:"v1Enabled,omitempty"`
 	ForceBasicAuth bool   `json:"forceBasicAuth,omitempty"`
-	HttpPort       int    `json:"httpPort,omitempty"`
-	HttpsPort      int    `json:"httpsPort,omitempty"`
+	HttpPort       uint   `json:"httpPort,omitempty"`
+	HttpsPort      uint   `json:"httpsPort,omitempty"`
 	Subdomain      string `json:"subdomain,omitempty"`
 	PathEnabled    bool   `json:"pathEnabled,omitempty"`
 }
@@ -99,7 +105,6 @@ type DockerRepoSettingsStruct struct {
 	Docker DockerSettings `json:"docker"`
 }
 
-// ============================================================
 // MAVEN FORMAT
 
 type MavenSettings struct {
