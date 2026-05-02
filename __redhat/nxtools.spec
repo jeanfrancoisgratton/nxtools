@@ -39,15 +39,16 @@ Nexus Repository Manager tools
 %autosetup
 
 %build
-cd %{_sourcedir}/%{_name}-%{_version}/src
-PATH=$PATH:/opt/go/bin CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -buildid=" -o %{_sourcedir}/%{_binaryname} .
+cd src
+go mod download
+PATH=$PATH:/opt/go/bin CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -buildid=" -o %{_builddir}/%{_binaryname} .
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %pre
 %install
-install -Dpm 0755 %{_sourcedir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryname}
+install -Dpm 0755 %{_builddir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryname}
 
 %post
 
