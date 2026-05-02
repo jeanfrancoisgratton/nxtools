@@ -7,7 +7,12 @@ package repositories
 
 var TrueVal = true
 var FalseVal = false
+var KeepSource = false
 
+// Structure to list member repos in a grouped-type repository
+type groupSettings struct {
+	MemberNames []string `json:"memberNames"`
+}
 type FormatStatusStruct struct {
 	Name            string `json:"name"`
 	SupportsHosted  *bool  `json:"supports_host"`
@@ -21,14 +26,14 @@ type FormatStatusStruct struct {
 //
 // Fields may vary depending on format/type.
 type RepositorySummary struct {
-	Name       string            `json:"name"`
-	Format     string            `json:"format"`
-	Type       string            `json:"type"`
-	URL        string            `json:"url"`
-	Size       uint64            `json:"size,omitempty"`
-	Attributes map[string]any    `json:"attributes,omitempty"`
-	Storage    StorageSpecStruct `json:"storage,omitempty"`
-	AssetCount int               `json:"asset_count,omitempty"`
+	Name       string                  `json:"name"`
+	Format     string                  `json:"format"`
+	Type       string                  `json:"type"`
+	URL        string                  `json:"url"`
+	Size       uint64                  `json:"size,omitempty"`
+	Attributes map[string]any          `json:"attributes,omitempty"`
+	Storage    StorageAttributesStruct `json:"storage,omitempty"`
+	AssetCount int                     `json:"asset_count,omitempty"`
 }
 
 // YumHostedRepository contains the fields needed by upload helpers when

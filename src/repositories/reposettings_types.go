@@ -25,15 +25,12 @@ var DockerHttpsPort uint = 0
 var DockerSubdomain = ""
 var DockerPathEnabled = false
 
-// The data types in this file deal with service/rest/v1/repositories/$REPOFORMAT/hosted/$REPONAME API endpoints
-
 // ---------------------------
 // COMMON TYPES TO ALL FORMATS
 // ---------------------------
 
-// StorageSpecStruct describes the blog store associated with the repo
-
-type StorageSpecStruct struct {
+// StorageAttributesStruct describes the blog store associated with the repo
+type StorageAttributesStruct struct {
 	BlobStoreName               string `json:"blobStoreName"`
 	StrictContentTypeValidation bool   `json:"strictContentTypeValidation,omitempty"`
 	WritePolicy                 string `json:"writePolicy,omitempty"`
@@ -57,13 +54,13 @@ type RepoSigningStruct struct {
 
 // GENERIC FORMAT
 
-type HostedRepoCommonSettingsStruct struct {
+type HostedRepoCommonAttributesStruct struct {
 	Name      string                   `json:"name"`
 	Format    string                   `json:"format,omitempty"`
 	Type      string                   `json:"type,omitempty"`
 	Url       string                   `json:"url,omitempty"`
 	Online    bool                     `json:"online,omitempty"`
-	Storage   StorageSpecStruct        `json:"storage,omitempty"`
+	Storage   StorageAttributesStruct  `json:"storage,omitempty"`
 	Cleanup   *CleanupPolicySpecStruct `json:"cleanup,omitempty"`
 	Component *ComponentSpecStruct     `json:"component,omitempty"`
 }
@@ -71,7 +68,7 @@ type HostedRepoCommonSettingsStruct struct {
 // APT FORMAT
 
 type AptRepoSettingsStruct struct {
-	HostedRepoCommonSettingsStruct
+	HostedRepoCommonAttributesStruct
 	Apt struct {
 		Distribution string `json:"distribution"`
 	} `json:"apt"`
@@ -86,7 +83,7 @@ type YumSettings struct {
 }
 
 type YumRepoSettingsStruct struct {
-	HostedRepoCommonSettingsStruct
+	HostedRepoCommonAttributesStruct
 	Yum YumSettings `json:"yum"`
 }
 
@@ -101,7 +98,7 @@ type DockerSettings struct {
 	PathEnabled    bool   `json:"pathEnabled,omitempty"`
 }
 type DockerRepoSettingsStruct struct {
-	HostedRepoCommonSettingsStruct
+	HostedRepoCommonAttributesStruct
 	Docker DockerSettings `json:"docker"`
 }
 
@@ -114,6 +111,6 @@ type MavenSettings struct {
 }
 
 type MavenRepoSettingsStruct struct {
-	HostedRepoCommonSettingsStruct
+	HostedRepoCommonAttributesStruct
 	Maven MavenSettings `json:"maven"`
 }

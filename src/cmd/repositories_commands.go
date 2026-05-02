@@ -7,13 +7,15 @@ package cmd
 
 import (
 	"fmt"
+	"nxtools/assets"
 	"os"
 	"strings"
 
-	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
-	"github.com/spf13/cobra"
 	"nxtools/repositories"
 	"nxtools/tasks"
+
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
+	"github.com/spf13/cobra"
 )
 
 var repoCmd = &cobra.Command{
@@ -64,7 +66,7 @@ var repoQueryTypeCmd = &cobra.Command{
 	},
 }
 
-var reindexRepoCmd = &cobra.Command{
+var repoReindexCmd = &cobra.Command{
 	Use:     "reindex",
 	Example: "nxtools repo reindex [-e defaultEnv.json] REPO_NAME",
 	Short:   "Rebuilds the repository metadata",
@@ -112,11 +114,23 @@ var repoListSupportedCmd = &cobra.Command{
 	},
 }
 
+var repoMigrateCmd = &cobra.Command{
+	Use:     "migrate",
+	Example: "nxtools repo migrate OLD_REPO NEW_REPO [-e defaultEnv.json] [-k]",
+	Short:   "Migrate OLD_REPO's contents to NEW_REPO",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := assets.MigrateRepo(args[0], args[1]); err != nil {
+			fmt.Println(err.Error())
+		}
+	},
+}
+
 func init() {
-	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, reindexRepoCmd, repoListSupportedCmd)
+	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, repoReindexCmd, repoListSupportedCmd, repoMigrateCmd)
 
 	repoListCmd.Flags().BoolVar(&repositories.RepoListJSONOutput, "json", false, "Output repository information as JSON")
-
+	repoMigrateCmd.Flags().BoolVarP(&repositories.KeepSource, "keep", "k", false, "Keep source repository assets")
 	repoCreateCmd.Flags().StringVarP(&repositories.RepoFormat, "format", "f", "", "Repository format/recipe family (e.g. yum, apt, maven, docker)")
 	repoCreateCmd.Flags().StringVarP(&repositories.RepoType, "type", "t", "hosted", "Repository type (hosted, proxy, group)")
 	repoCreateCmd.Flags().StringVarP(&repositories.RepoSigningFile, "keyfile", "k", "", "Private key location")

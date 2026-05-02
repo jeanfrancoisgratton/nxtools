@@ -1,11 +1,11 @@
 module nxtools
 
-go 1.26.1
+go 1.26.2
 
 require (
 	github.com/jeanfrancoisgratton/customError/v3 v3.0.0
 	github.com/jeanfrancoisgratton/helperFunctions/v5 v5.0.2
-	github.com/jedib0t/go-pretty/v6 v6.7.8
+	github.com/jedib0t/go-pretty/v6 v6.7.10
 	github.com/spf13/cobra v1.10.2
 )
 
@@ -14,11 +14,11 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jwalton/gchalk v1.3.0 // indirect
 	github.com/jwalton/go-supportscolor v1.2.0 // indirect
-	github.com/mattn/go-runewidth v0.0.21 // indirect
+	github.com/mattn/go-runewidth v0.0.23 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	golang.org/x/crypto v0.49.0 // indirect
-	golang.org/x/net v0.52.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/term v0.41.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/crypto v0.50.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/term v0.42.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 )

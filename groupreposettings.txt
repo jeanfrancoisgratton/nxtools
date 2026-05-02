@@ -1,0 +1,79 @@
+MAVEN, RUBYGEMS, YUM, CARGO
+{
+  "name": "internal",
+  "online": true,
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true
+  },
+  "group": {
+    "memberNames": [
+      "string"
+    ]
+  }
+}
+
+RAW
+{
+  "name": "internal",
+  "online": true,
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true
+  },
+  "group": {
+    "memberNames": [
+      "string"
+    ]
+  },
+  "raw": {
+    "contentDisposition": "ATTACHMENT"
+  }
+}
+
+DOCKER
+{
+  "name": "internal",
+  "format": "docker",
+  "type": "group",
+  "url": "http://localhost:8081/repository/docker-example",
+  "online": true,
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true
+  },
+  "group": {
+    "memberNames": [
+      "string"
+    ],
+    "writableMember": "string"
+  },
+  "docker": {
+    "v1Enabled": false,
+    "forceBasicAuth": true,
+    "httpPort": 8082,
+    "httpsPort": 8083,
+    "subdomain": "docker-a",
+    "pathEnabled": true
+  }
+}
+
+CONAN
+{
+  "name": "internal",
+  "format": "simpleapigroupdeployrepository",
+  "url": "http://localhost:8081/repository/simpleapigroupdeployrepository-example",
+  "online": true,
+  "storage": {
+    "blobStoreName": "default",
+    "strictContentTypeValidation": true
+  },
+  "group": {
+    "memberNames": [
+      "string"
+    ],
+    "writableMember": "string"
+  },
+  "type": "group"
+}
+
