@@ -41,7 +41,7 @@ func ListRepositories(displayOutput bool) ([]RepositorySummary, *cerr.CustomErro
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, &cerr.CustomError{Title: "Unable to list repositories", Message: "HTTP status code: " + resp.Status}
+		return nil, &cerr.CustomError{Title: "Unable to list repositories", Message: "HTTP status code: " + resp.Status, Code: resp.StatusCode}
 	}
 
 	var repos []RepositorySummary
@@ -116,7 +116,7 @@ func getStorageSpecs(c *rest.Client, repos []RepositorySummary) ([]RepositorySum
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			_ = resp.Body.Close()
-			return nil, &cerr.CustomError{Title: "Unable to fetch repository details", Message: "HTTP status code: " + resp.Status}
+			return nil, &cerr.CustomError{Title: "Unable to fetch repository details", Message: "HTTP status code: " + resp.Status, Code: resp.StatusCode}
 		}
 
 		switch strings.ToLower(repos[i].Format) {
@@ -149,7 +149,7 @@ func getStorageSpecs(c *rest.Client, repos []RepositorySummary) ([]RepositorySum
 			}
 			repos[i].Storage = repoSettings.Storage
 		case "raw", "helm", "cargo", "npm", "nuget", "pypi", "terraform", "swift":
-			var repoSettings HostedRepoCommonSettingsStruct
+			var repoSettings HostedRepoCommonAttributesStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
@@ -184,7 +184,7 @@ func getNumberOfAssets(c *rest.Client, repos []RepositorySummary) ([]RepositoryS
 
 			if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 				resp.Body.Close()
-				return nil, &cerr.CustomError{Title: "Unable to list assets", Message: "HTTP status code: " + resp.Status}
+				return nil, &cerr.CustomError{Title: "Unable to list assets", Message: "HTTP status code: " + resp.Status, Code: resp.StatusCode}
 			}
 
 			var lr shared.ListAssetResponse

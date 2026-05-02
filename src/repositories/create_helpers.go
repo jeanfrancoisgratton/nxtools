@@ -21,10 +21,10 @@ func createApt(reponame, blobname string) ([]byte, *cerr.CustomError) {
 	}
 
 	payload := AptRepoSettingsStruct{
-		HostedRepoCommonSettingsStruct: HostedRepoCommonSettingsStruct{
+		HostedRepoCommonAttributesStruct: HostedRepoCommonAttributesStruct{
 			Name:   reponame,
 			Online: true,
-			Storage: StorageSpecStruct{
+			Storage: StorageAttributesStruct{
 				BlobStoreName:               blobname,
 				StrictContentTypeValidation: StorageStrictContentValidation,
 				WritePolicy:                 StorageWritePolicy,
@@ -50,10 +50,10 @@ func createYum(reponame, blobname string) ([]byte, *cerr.CustomError) {
 		return nil, &cerr.CustomError{Title: "yum deploy policy not supported", Message: fmt.Sprintf("unsupported policy: %s", YumDeployPolicy)}
 	}
 	payload := YumRepoSettingsStruct{
-		HostedRepoCommonSettingsStruct: HostedRepoCommonSettingsStruct{
+		HostedRepoCommonAttributesStruct: HostedRepoCommonAttributesStruct{
 			Name:   reponame,
 			Online: true,
-			Storage: StorageSpecStruct{
+			Storage: StorageAttributesStruct{
 				BlobStoreName:               blobname,
 				StrictContentTypeValidation: StorageStrictContentValidation,
 				WritePolicy:                 StorageWritePolicy,
@@ -89,10 +89,10 @@ func createMaven(reponame, blobname string) ([]byte, *cerr.CustomError) {
 
 	// ok preflight is done, let's proceed
 	payload := MavenRepoSettingsStruct{
-		HostedRepoCommonSettingsStruct: HostedRepoCommonSettingsStruct{
+		HostedRepoCommonAttributesStruct: HostedRepoCommonAttributesStruct{
 			Name:   reponame,
 			Online: true,
-			Storage: StorageSpecStruct{
+			Storage: StorageAttributesStruct{
 				BlobStoreName:               blobname,
 				StrictContentTypeValidation: StorageStrictContentValidation,
 				WritePolicy:                 StorageWritePolicy,
@@ -120,10 +120,10 @@ func createDocker(reponame, blobname string) ([]byte, *cerr.CustomError) {
 
 	// ok preflight is done, let's proceed
 	payload := DockerRepoSettingsStruct{
-		HostedRepoCommonSettingsStruct: HostedRepoCommonSettingsStruct{
+		HostedRepoCommonAttributesStruct: HostedRepoCommonAttributesStruct{
 			Name:   reponame,
 			Online: true,
-			Storage: StorageSpecStruct{
+			Storage: StorageAttributesStruct{
 				BlobStoreName:               blobname,
 				StrictContentTypeValidation: StorageStrictContentValidation,
 				WritePolicy:                 StorageWritePolicy,
@@ -149,10 +149,10 @@ func createDocker(reponame, blobname string) ([]byte, *cerr.CustomError) {
 // this is the general-purpose repo generation function; most repo formats should use this one
 
 func createGeneric(reponame, blobname string) ([]byte, *cerr.CustomError) {
-	payload := HostedRepoCommonSettingsStruct{
+	payload := HostedRepoCommonAttributesStruct{
 		Name:   reponame,
 		Online: true,
-		Storage: StorageSpecStruct{
+		Storage: StorageAttributesStruct{
 			BlobStoreName:               blobname,
 			StrictContentTypeValidation: StorageStrictContentValidation,
 			WritePolicy:                 StorageWritePolicy,

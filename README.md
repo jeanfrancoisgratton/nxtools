@@ -25,6 +25,10 @@ This tool is a CLI-driven client to Nexus Repository Manager 3 servers.<br>It wi
 # Basic Nexus Concepts
 Nexus Repository Manager (NxRM) is a repository tool to host all of your development artifacts, whether they are distro-specific binary packages (rpm, deb, etc), docker images, free form artifacts, etc
 
+This tool is being developed while using NxRM OSS v3.90.2-06 so it does not support repo formats newer than that.
+The tool will eventually support newer types as I become aware of the new formats. If you think that support is needed ASAP, you can drop me a line at the [Nxtools support email address](mailto:nxtools-support@famillegratton.net).
+
+
 ## Blob stores
 The artifacts (called **assets**) are physically stored in blob stores; those stores can be filed-based (thus locally, on the NxRM host filesystem), or hosted on the cloud (GCP and AWS).<br>
 `nxtools` currently only supports file-based blob stores
