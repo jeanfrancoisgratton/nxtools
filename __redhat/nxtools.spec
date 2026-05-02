@@ -1,20 +1,10 @@
-%ifarch aarch64
-%global _arch aarch64
-%global BuildArchitectures aarch64
-%endif
-
-%ifarch x86_64
-%global _arch x86_64
-%global BuildArchitectures x86_64
-%endif
-
 %define debug_package   %{nil}
 %define _build_id_links none
 %define _name nxtools
 %define _prefix /opt
 %define _version 0.80.00
 %define _rel 1
-#%define _arch x86_64
+%define _arch x86_64
 %define _binaryname nxtools
 
 Name:       nxtools
