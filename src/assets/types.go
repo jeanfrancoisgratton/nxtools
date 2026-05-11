@@ -15,6 +15,25 @@ var UploadDirectory string
 var JsonOutput bool
 var ReindexRepo = false
 
+type componentUploadSpec struct {
+	FileField string
+}
+
+var singleAssetComponentUploadSpecs = map[string]componentUploadSpec{
+	"apt":       {FileField: "apt.asset"},
+	"helm":      {FileField: "helm.asset"},
+	"npm":       {FileField: "npm.asset"},
+	"nuget":     {FileField: "nuget.asset"},
+	"pypi":      {FileField: "pypi.asset"},
+	"r":         {FileField: "r.asset"},
+	"rubygems":  {FileField: "rubygems.asset"},
+	"cargo":     {FileField: "cargo.asset"},
+	"terraform": {FileField: "terraform.asset"},
+	"swift":     {FileField: "swift.asset"},
+	"gitlfs":    {FileField: "gitlfs.asset"},
+	"conan":     {FileField: "conan.asset"},
+}
+
 const (
 	rpmLeadSize      = 96
 	rpmTagArch       = 1022

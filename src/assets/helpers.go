@@ -19,23 +19,29 @@ import (
 	"nxtools/shared"
 )
 
-func inferRawDirectory(directory string) string {
-	dir := strings.TrimSpace(directory)
+func normalizeUploadFormat(format string) string {
+	format = strings.TrimSpace(strings.ToLower(format))
+	format = strings.ReplaceAll(format, "_", "")
+	format = strings.ReplaceAll(format, "-", "")
 
-	if dir == "" {
-		return ""
+	switch format {
+	case "ruby", "gem", "gems", "rubygem":
+		return "rubygems"
+	case "python":
+		return "pypi"
+	case "golang":
+		return "go"
+	case "git-lfs":
+		return "gitlfs"
+	case "conane": // historical typo in an older upload switch
+		return "conan"
+	default:
+		return format
 	}
+}
 
-	// remove leading slash (critical: nexus might have inconsistent behaviour here, from version to version)
-	dir = strings.TrimPrefix(dir, "/")
-
-	// normalize separators
-	dir = filepath.ToSlash(dir)
-
-	// remove trailing slash
-	dir = strings.TrimSuffix(dir, "/")
-
-	return dir
+func inferRawDirectory(directory string) string {
+	return shared.NormalizeDirectory(directory)
 }
 
 func inferYumDirectory(repoName, filePath, directory string) (string, *cerr.CustomError) {
@@ -209,25 +215,41 @@ func alignRPMSection(n int64) int64 {
 	return ((n / 8) + 1) * 8
 }
 
-func uploadApt(repoName, filePath string) *cerr.CustomError {
+func uploadSingleAssetComponent(repoName, filePath, format string) *cerr.CustomError {
+	format = normalizeUploadFormat(format)
+	spec, ok := singleAssetComponentUploadSpecs[format]
+	if !ok || strings.TrimSpace(spec.FileField) == "" {
+		return &cerr.CustomError{
+			Title:   "Unsupported repository format",
+			Message: "repository format " + format + " has no single-asset component upload route configured",
+		}
+	}
+
 	if !shared.QuietOutput {
 		fmt.Println(hftx.InProgressSign("Uploading " + filepath.Base(filePath) + " to " + repoName))
 	}
-	if e := shared.UploadComponentMultipart(repoName, "apt.asset", filePath, nil); e != nil {
+
+	if e := shared.UploadComponentMultipart(repoName, spec.FileField, filePath, nil); e != nil {
 		if !shared.QuietOutput {
 			fmt.Println(hftx.ErrorSign("Failed to upload " + hftx.Red(filePath) + " to " + hftx.Red(repoName)))
 		}
 		return e
 	}
+
 	if !shared.QuietOutput {
 		fmt.Println(hftx.EnabledSign("Uploaded " + hftx.Green(filePath) + " to " + hftx.Green(repoName)))
 	}
 	return nil
 }
 
+func uploadApt(repoName, filePath string) *cerr.CustomError {
+	return uploadSingleAssetComponent(repoName, filePath, "apt")
+}
+
 func uploadRaw(repoName, filePath, directory string) *cerr.CustomError {
+	resolvedDirectory := inferRawDirectory(directory)
 	fields := map[string]string{
-		"raw.directory":       inferRawDirectory(directory),
+		"raw.directory":       resolvedDirectory,
 		"raw.asset1.filename": filepath.Base(filePath),
 	}
 
@@ -241,10 +263,7 @@ func uploadRaw(repoName, filePath, directory string) *cerr.CustomError {
 		return e
 	}
 	if !shared.QuietOutput {
-		if directory != "" {
-			directory = "/" + directory + "/"
-		}
-		fmt.Println(hftx.EnabledSign("Uploaded "+hftx.Green(filePath)+" in repository "+hftx.Green(repoName)) + " as " + hftx.Green(repoName+directory+filepath.Base(filePath)))
+		fmt.Println(hftx.EnabledSign("Uploaded "+hftx.Green(filePath)+" in repository "+hftx.Green(repoName)) + " as " + hftx.Green(uploadedTarget(repoName, resolvedDirectory, filepath.Base(filePath))))
 	}
 	return nil
 }
@@ -259,14 +278,26 @@ func uploadYum(repoName, filePath, directory string) *cerr.CustomError {
 		return err
 	}
 
-	if e := shared.UploadRepositoryPath(repoName, filePath, resolvedDirectory); e != nil {
+	fields := map[string]string{
+		"yum.directory": resolvedDirectory,
+	}
+
+	if e := shared.UploadComponentMultipart(repoName, "yum.asset", filePath, fields); e != nil {
 		if !shared.QuietOutput {
 			fmt.Println(hftx.ErrorSign("Failed to upload " + hftx.Red(filePath) + " to " + hftx.Red(repoName)))
 		}
 		return e
 	}
 	if !shared.QuietOutput {
-		fmt.Println(hftx.EnabledSign("Uploaded " + hftx.Green(filePath) + " to " + hftx.Green(repoName)))
+		fmt.Println(hftx.EnabledSign("Uploaded "+hftx.Green(filePath)+" in repository "+hftx.Green(repoName)) + " as " + hftx.Green(uploadedTarget(repoName, resolvedDirectory, filepath.Base(filePath))))
 	}
 	return nil
+}
+
+func uploadedTarget(repoName, directory, filename string) string {
+	dir := shared.NormalizeDirectory(directory)
+	if dir == "/" {
+		return repoName + "/" + filename
+	}
+	return repoName + dir + "/" + filename
 }

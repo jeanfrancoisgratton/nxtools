@@ -38,13 +38,14 @@ func UploadAsset(repoName, filePath, directory string) *cerr.CustomError {
 		return err
 	}
 
-	switch strings.ToLower(strings.TrimSpace(repo.Format)) {
-	case "apt":
-		return uploadApt(repoName, filePath)
-	case "raw", "helm", "cargo", "npm", "nuget", "pypi", "terraform", "swift", "gitlfs", "rubygems", "conane", "r":
-		return uploadRaw(repoName, filePath, inferRawDirectory(directory))
+	format := normalizeUploadFormat(repo.Format)
+	switch format {
+	case "raw":
+		return uploadRaw(repoName, filePath, directory)
 	case "yum":
 		return uploadYum(repoName, filePath, directory)
+	case "apt", "helm", "npm", "nuget", "pypi", "r", "rubygems", "cargo", "terraform", "swift", "gitlfs", "conan":
+		return uploadSingleAssetComponent(repoName, filePath, format)
 	default:
 		return &cerr.CustomError{
 			Title:   "Unsupported repository format",

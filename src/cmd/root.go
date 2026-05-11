@@ -7,7 +7,6 @@ import (
 	"os"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"nxtools/shared"
@@ -17,7 +16,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:     "nxtools",
 	Short:   "Nexus Repository Manager 3 CLI tool",
-	Version: "0.85.00 (" + time.Now().Format("2006.01.02") + "), Go version = v" + strings.TrimPrefix(runtime.Version(), "go"),
+	Version: "DEBUG0.85.00 (2026.05.10), Go version = v" + strings.TrimPrefix(runtime.Version(), "go"),
 	Long:    `This tools allows you to manage many actions on an NxRM server`,
 }
 

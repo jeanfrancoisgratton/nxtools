@@ -51,7 +51,7 @@ var assetInfoCmd = &cobra.Command{
 var assetsUploadCmd = &cobra.Command{
 	Use:     "upload REPO_NAME FILE_NAME",
 	Aliases: []string{"push"},
-	Example: "nxtools assets upload [-e defaultEnv.json] REPO_NAME /path/to/file",
+	Example: "nxtools assets upload [-e defaultEnv.json] [-r] REPO_NAME /path/to/file",
 	Args:    cobra.ExactArgs(2),
 	Short:   "Uploads a file to a supported hosted repository",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -117,7 +117,7 @@ func init() {
 
 	assetsListCmd.Flags().BoolVarP(&assets.LatestAssetsOnly, "latest", "l", false, "Only list the latest version of each logical asset/component")
 	assetsListCmd.Flags().BoolVarP(&assets.AlternateInfo, "alternate", "a", false, "Show alternate asset information")
-	assetsUploadCmd.Flags().StringVarP(&assets.UploadDirectory, "directory", "d", "", "Target directory inside the repository (optional; defaults are inferred for raw and yum)")
+	assetsUploadCmd.Flags().StringVarP(&assets.UploadDirectory, "directory", "d", "/", "Target directory inside the repository (optional; defaults are inferred for raw and yum)")
 	assetsUploadCmd.Flags().BoolVarP(&assets.ReindexRepo, "reindex", "r", false, "Reindex repo after the upload")
 
 	assetInfoCmd.Flags().BoolVarP(&assets.JsonOutput, "json", "j", false, "Output asset information as JSON")

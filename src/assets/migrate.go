@@ -196,6 +196,8 @@ func updateGroups(old, new, rformat string) *cerr.CustomError {
 			continue
 		}
 	}
+
+	return nil
 }
 
 //
