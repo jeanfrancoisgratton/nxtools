@@ -51,6 +51,20 @@ install -Dpm 0755 %{_builddir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryna
 
 
 %changelog
+* Tue May 12 2026 Binary package builder <builder@famillegratton.net> 0.85.00-0
+- interim submit
+- changed perms on file
+- Added a build script
+- Merge remote-tracking branch 'refs/remotes/origin/develop' into develop
+- Merge branch 'repositories' into develop
+- interim commit before it gets too messy to merge branches
+- Removed un-needed vars from specfile
+- prepped nxtools for the new rpmbuilder
+- Added ArchLinux packaging support
+- Merge pull request 'repositories' (#1) from repositories into develop
+- added an helper function, repo supported
+- ensure that uploads to raw repos properly handle directories
+
 * Wed Mar 25 2026 Binary package builder <builder@famillegratton.net> 0.80.00-1
 - Minor tweak on showing version number (jean-francois@famillegratton.net)
 - Added shorthand flag for directory (jean-francois@famillegratton.net)
