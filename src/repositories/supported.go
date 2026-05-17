@@ -18,26 +18,28 @@ import (
 
 var supportedformats = []FormatStatusStruct{
 	{Name: "apt", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: nil},
-	{Name: "yum", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
-	{Name: "maven", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
-	{Name: "docker", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
-	{Name: "raw", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
-	{Name: "helm", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
 	{Name: "cargo", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
-	{Name: "npm", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
-	{Name: "nuget", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
-	{Name: "pypi", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
-	{Name: "terraform", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
-	{Name: "swift", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
-	{Name: "gitlfs", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
-	{Name: "rubygems", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
 	{Name: "cocoapods", SupportsHosted: nil, SupportsGrouped: nil, SupportsProxied: &FalseVal},
 	{Name: "composer", SupportsHosted: nil, SupportsGrouped: nil, SupportsProxied: &FalseVal},
 	{Name: "conan", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
+	{Name: "conda", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
+	{Name: "docker", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
+	{Name: "gitlfs", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
 	{Name: "go", SupportsHosted: nil, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
+	{Name: "helm", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
 	{Name: "huggingface", SupportsHosted: nil, SupportsGrouped: nil, SupportsProxied: &FalseVal},
+	{Name: "maven", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
+	{Name: "npm", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
+	{Name: "nuget", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
 	{Name: "p2", SupportsHosted: nil, SupportsGrouped: nil, SupportsProxied: &FalseVal},
+	{Name: "pub", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
+	{Name: "pypi", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
 	{Name: "r", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
+	{Name: "raw", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
+	{Name: "rubygems", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
+	{Name: "swift", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
+	{Name: "terraform", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
+	{Name: "yum", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
 }
 
 func getLogicalVal(supportedField *bool) string {
@@ -56,7 +58,7 @@ func getLogicalVal(supportedField *bool) string {
 func ListSupportedFormats() {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"Repository name", "Supports hosted", "Supports grouped", "Supports proxied"})
+	t.AppendHeader(table.Row{"Repository format", "Supports hosted", "Supports grouped", "Supports proxied"})
 
 	for _, sf := range supportedformats {
 		t.AppendRow([]interface{}{sf.Name, getLogicalVal(sf.SupportsHosted), getLogicalVal(sf.SupportsGrouped), getLogicalVal(sf.SupportsProxied)})
