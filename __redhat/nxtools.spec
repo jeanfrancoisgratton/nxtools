@@ -2,7 +2,7 @@
 %define _build_id_links none
 %define _name nxtools
 %define _prefix /opt
-%define _version 0.85.00
+%define _version 0.90.00~DEBUG
 %define _rel 0
 %define _binaryname nxtools
 

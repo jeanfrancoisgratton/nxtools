@@ -1,5 +1,5 @@
 Package: nxtools
-Version: 0.85.00-0
+Version: 0.90.00~debug-0
 Architecture: amd64
 Maintainer: J.F.Gratton <jean-francois@famillegratton.net>
 Description: Nexus Repository Manager tools
