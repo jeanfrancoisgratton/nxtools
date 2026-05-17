@@ -12,12 +12,14 @@ license=('GPL-2.0-only')
 makedepends=('go')
 depends=()
 
-optdepends=()
+optdepends=('zsh: zsh completion support')
 
 options=('!debug')
 
 _binaryname='nxtools'
 _builddir="${pkgname}-${pkgver}"
+
+install=nxtools.install
 
 prepare() {
   rm -rf "${srcdir:?}/${_builddir}"

@@ -5,4 +5,4 @@ Maintainer: J.F.Gratton <jean-francois@famillegratton.net>
 Description: Nexus Repository Manager tools
 Section: CI/CD
 Depends: 
-
+Suggests: zsh

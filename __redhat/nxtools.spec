@@ -18,8 +18,7 @@ URL:        https://git.famillegratton.net:3000/devops/nxtools.git
 Source0:    %{name}-%{_version}.tar.gz
 #BuildArchitectures: x86_64
 BuildRequires: gcc
-#Requires: sudo
-#Obsoletes: vmman1 > 1.140
+Recommends: zsh
 
 %description
 Nexus Repository Manager tools
@@ -40,10 +39,23 @@ rm -rf $RPM_BUILD_ROOT
 install -Dpm 0755 %{_builddir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryname}
 
 %post
+# Bash completion — always install
+nxtools completion bash > %{_datadir}/bash-completion/completions/nxtools
+
+# Zsh completion — only if zsh is present
+if command -v zsh > /dev/null 2>&1; then
+    mkdir -p %{_datadir}/zsh/site-functions
+    nxtools completion zsh > %{_datadir}/zsh/site-functions/_nxtools
+fi
 
 %preun
 
 %postun
+if [ $1 -eq 0 ]; then
+    # $1 == 0 means this is a full uninstall, not an upgrade
+    rm -f %{_datadir}/bash-completion/completions/nxtools
+    rm -f %{_datadir}/zsh/site-functions/_nxtools
+fi
 
 %files
 %defattr(0755,root,root,-)
