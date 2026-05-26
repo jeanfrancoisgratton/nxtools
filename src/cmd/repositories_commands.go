@@ -7,9 +7,10 @@ package cmd
 
 import (
 	"fmt"
-	"nxtools/assets"
 	"os"
 	"strings"
+
+	"nxtools/assets"
 
 	"nxtools/repositories"
 	"nxtools/tasks"
@@ -23,7 +24,7 @@ var repoCmd = &cobra.Command{
 	Aliases: []string{"repos", "repositories"},
 	Short:   "Repository-related sub-command",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Valid subcommands are: { list | create | delete | type | reindex }")
+		fmt.Println("Valid subcommands are: { list | create | delete | type | reindex | supported | migrate }")
 	},
 }
 
@@ -34,6 +35,33 @@ var repoListCmd = &cobra.Command{
 	Short:   "Lists all repositories visible to the configured user",
 	Run: func(cmd *cobra.Command, args []string) {
 		if _, err := repositories.ListRepositories(true); err != nil {
+			fmt.Println(err.Error())
+		}
+	},
+}
+
+var repoCreateCmd = &cobra.Command{
+	Use:     "create",
+	Aliases: []string{"add"},
+	Example: "nxtools repo create [-e defaultEnv.json] --format FORMAT REPO_NAME BLOBSTORE_NAME",
+	Short:   "Creates a repository (payload is recipe-specific)",
+	Args:    cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+		// some sanity checks before going ahead
+		writepol := strings.ToLower(repositories.StorageWritePolicy)
+		if writepol != "allow" && writepol != "deny" && writepol != "allow_once" {
+			hftx.ErrorSign("Supported policies are ALLOW, ALLOW_ONCE and DENY; you selected " + repositories.StorageWritePolicy)
+			os.Exit(1)
+		} else {
+			repositories.StorageWritePolicy = strings.ToUpper(writepol)
+		}
+		if strings.ToLower(repositories.RepoFormat) == "apt" && repositories.RepoSigningFile == "" {
+			hftx.ErrorSign("You need to provide a PGP private key file (flag -k) when using the APT format")
+			os.Exit(1)
+		}
+
+		// ok, let's go
+		if err := repositories.CreateRepository(args[0], args[1]); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
@@ -73,33 +101,6 @@ var repoReindexCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := tasks.ReindexRepo(args[0]); err != nil {
-			fmt.Println(err.Error())
-		}
-	},
-}
-
-var repoCreateCmd = &cobra.Command{
-	Use:     "create",
-	Aliases: []string{"add"},
-	Example: "nxtools repo create [-e defaultEnv.json] --format FORMAT REPO_NAME BLOBSTORE_NAME",
-	Short:   "Creates a repository (payload is recipe-specific)",
-	Args:    cobra.ExactArgs(2),
-	Run: func(cmd *cobra.Command, args []string) {
-		// some sanity checks before going ahead
-		writepol := strings.ToLower(repositories.StorageWritePolicy)
-		if writepol != "allow" && writepol != "deny" && writepol != "allow_once" {
-			hftx.ErrorSign("Supported policies are ALLOW, ALLOW_ONCE and DENY; you selected " + repositories.StorageWritePolicy)
-			os.Exit(1)
-		} else {
-			repositories.StorageWritePolicy = strings.ToUpper(writepol)
-		}
-		if strings.ToLower(repositories.RepoFormat) == "apt" && repositories.RepoSigningFile == "" {
-			hftx.ErrorSign("You need to provide a PGP private key file (flag -k) when using the APT format")
-			os.Exit(1)
-		}
-
-		// ok, let's go
-		if err := repositories.CreateRepository(args[0], args[1]); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
