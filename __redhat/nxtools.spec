@@ -2,6 +2,8 @@
 %define _build_id_links none
 %define _name nxtools
 %define _prefix /opt
+%define _bash_completionsdir /usr/share/bash-completion/completions
+%define _zsh_completionsdir  /usr/share/zsh/site-functions
 %define _version 0.90.00~DEBUG
 %define _rel 0
 %define _binaryname nxtools
@@ -19,6 +21,7 @@ Source0:    %{name}-%{_version}.tar.gz
 #BuildArchitectures: x86_64
 BuildRequires: gcc
 Recommends: zsh
+Requires: bash-completion
 
 %description
 Nexus Repository Manager tools
@@ -40,12 +43,12 @@ install -Dpm 0755 %{_builddir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryna
 
 %post
 # Bash completion — always install
-nxtools completion bash > %{_datadir}/bash-completion/completions/nxtools
+/opt/bin/nxtools completion bash > %{_bash_completionsdir}/nxtools
 
 # Zsh completion — only if zsh is present
 if command -v zsh > /dev/null 2>&1; then
-    mkdir -p %{_datadir}/zsh/site-functions
-    nxtools completion zsh > %{_datadir}/zsh/site-functions/_nxtools
+    mkdir -p %{_zsh_completionsdir}/zsh/site-functions
+    /opt/bin/nxtools completion zsh > %{_zsh_completionsdir}/_nxtools
 fi
 
 %preun
@@ -53,8 +56,8 @@ fi
 %postun
 if [ $1 -eq 0 ]; then
     # $1 == 0 means this is a full uninstall, not an upgrade
-    rm -f %{_datadir}/bash-completion/completions/nxtools
-    rm -f %{_datadir}/zsh/site-functions/_nxtools
+    rm -f %{_bash_completionsdir}/nxtools
+    rm -f %{_zsh_completionsdir}/_nxtools
 fi
 
 %files
