@@ -279,7 +279,8 @@ func uploadYum(repoName, filePath, directory string) *cerr.CustomError {
 	}
 
 	fields := map[string]string{
-		"yum.directory": resolvedDirectory,
+		"yum.directory":      resolvedDirectory,
+		"yum.asset.filename": filepath.Base(filePath),
 	}
 
 	if e := shared.UploadComponentMultipart(repoName, "yum.asset", filePath, fields); e != nil {
