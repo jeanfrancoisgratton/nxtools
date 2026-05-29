@@ -2,7 +2,6 @@
 # Packager: Package builder <builder@famillegratton.net>
 pkgname=nxtools
 pkgver=0.90.00_pre
-pkgrel=0
 pkgrel=1
 pkgdir=/data/packages
 pkgdesc="Nexus Repository Manager tools"
