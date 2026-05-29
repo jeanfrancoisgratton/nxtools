@@ -3,6 +3,8 @@
 set -e
 
 # Bash completion — always install
+
+
 nxtools completion bash > /etc/bash_completion.d/nxtools
 
 # Zsh completion — only if zsh is present
