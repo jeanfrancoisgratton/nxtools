@@ -66,6 +66,36 @@ fi
 
 
 %changelog
+* Thu May 28 2026 Binary package builder <builder@famillegratton.net> 0.90.00~DEBUG-1
+- Merge branch 'repositories' into develop
+- version bump
+- Merge branch 'repositories' into develop
+- cosmetic changes
+- Fixed version number for APK
+- release number bump
+- chore: update changelog for 0.90.00~DEBUG-0
+- fixed yum upload silently disrepecting specs
+- Merge branch 'repositories' into develop
+- updated build scripts
+- Merge branch 'develop' of ssh://git.famillegratton.net:9722/devops/nxtools into develop
+- moved a build script in a proper directory
+- version bump
+- command completion support enabled at install time
+- update the list of supported repo formats
+- aligned nxtools with RH packaging
+- interim submit
+- changed perms on file
+- Added a build script
+- Merge remote-tracking branch 'refs/remotes/origin/develop' into develop
+- Merge branch 'repositories' into develop
+- interim commit before it gets too messy to merge branches
+- Removed un-needed vars from specfile
+- prepped nxtools for the new rpmbuilder
+- Added ArchLinux packaging support
+- Merge pull request 'repositories' (#1) from repositories into develop
+- added an helper function, repo supported
+- ensure that uploads to raw repos properly handle directories
+
 * Thu May 28 2026 Binary package builder <builder@famillegratton.net> 0.90.00~DEBUG-0
 - fixed yum upload silently disrepecting specs
 - Merge branch 'repositories' into develop
