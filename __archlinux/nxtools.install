@@ -1,11 +1,11 @@
 post_install() {
     # Bash completion — always install
-    nxtools completion bash > /etc/bash_completion.d/nxtools
+    /opt/bin/nxtools completion bash > /etc/bash_completion.d/nxtools
 
     # Zsh completion — only if zsh is present
     if command -v zsh > /dev/null 2>&1; then
         mkdir -p /usr/share/zsh/site-functions
-       nxtools completion zsh > /usr/share/zsh/site-functions/_nxtools
+      /opt/bin/ nxtools completion zsh > /usr/share/zsh/site-functions/_nxtools
     fi
 }
 
