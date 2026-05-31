@@ -1,8 +1,8 @@
 # Maintainer: J.F.Gratton <jean-francois@famillegratton.net>
 # Packager: Package builder <builder@famillegratton.net>
 pkgname=nxtools
-pkgver=0.90.00_pre
-pkgrel=2
+pkgver=0.91.00_pre
+pkgrel=0
 pkgdir=/data/packages
 pkgdesc="Nexus Repository Manager tools"
 url="https://git.famillegratton.net:3000/devops/nxtools.git"

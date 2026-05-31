@@ -16,7 +16,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:     "nxtools",
 	Short:   "Nexus Repository Manager 3 CLI tool",
-	Version: "DEBUG0.90.00 (2026.05.28), Go version = v" + strings.TrimPrefix(runtime.Version(), "go"),
+	Version: "DEBUG0.91.00 (2026.05.30), Go version = v" + strings.TrimPrefix(runtime.Version(), "go"),
 	Long:    `This tools allows you to manage many actions on an NxRM server`,
 }
 
@@ -31,7 +31,7 @@ func init() {
 	rootCmd.DisableAutoGenTag = true
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
-	rootCmd.AddCommand(envCmd, repoCmd, blobCmd, assetsCmd, assetsUploadCmd, assetsDownloadCmd, assetsComponentInfoCmd, repoReindexCmd, repoMigrateCmd)
+	rootCmd.AddCommand(envCmd, repoCmd, blobCmd, completionCmd, assetsCmd, assetsUploadCmd, assetsDownloadCmd, assetsComponentInfoCmd, repoReindexCmd, repoMigrateCmd)
 
 	rootCmd.Flags().BoolP("version", "V", false, "Show version and exit")
 	rootCmd.PersistentFlags().StringVarP(&shared.Envfile, "env", "e", "defaultEnv.json", "Environment file to load in from $HOME/.config/JFG/nxtools")
