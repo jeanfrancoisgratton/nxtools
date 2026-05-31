@@ -47,8 +47,9 @@ install -Dpm 0755 %{_builddir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryna
 
 # Zsh completion — only if zsh is present
 if command -v zsh > /dev/null 2>&1; then
-    mkdir -p %{_zsh_completionsdir}/zsh/site-functions
-    /opt/bin/nxtools completion zsh > %{_zsh_completionsdir}/_nxtools
+    mkdir -p /usr/share/zsh/site-functions
+    /opt/bin/nxtools completion zsh > /usr/share/zsh/site-functions/_nxtools
+    zsh -c 'autoload -Uz compinit && compinit' 2>/dev/null || true
 fi
 
 %preun
