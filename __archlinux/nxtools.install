@@ -1,6 +1,8 @@
 post_install() {
     # Bash completion — always install
-    /opt/bin/nxtools completion bash > /etc/bash_completion.d/nxtools
+    if [ -d /etc/bash_completion.d ]; then
+        /opt/bin/nxtools completion bash > /etc/bash_completion.d/nxtools
+    fi
 
     # Zsh completion — only if zsh is present
     if command -v zsh > /dev/null 2>&1; then

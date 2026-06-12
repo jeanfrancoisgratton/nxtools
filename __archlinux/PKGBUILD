@@ -10,7 +10,7 @@ url="https://git.famillegratton.net:3000/devops/nxtools.git"
 license=('GPL-2.0-only')
 
 makedepends=('go')
-depends=()
+depends=('bash-completion')
 
 optdepends=('zsh: zsh completion support')
 
