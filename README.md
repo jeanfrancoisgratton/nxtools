@@ -1,4 +1,4 @@
-# <img src="./images/nxtools_logo.png" alt="nxtools logo" height="256" width="512" />
+# <img src="./images/nxtools_logo.png" alt="nxtools logo" height="384" width="768" />
 ___
 
 This tool is a CLI-driven client to Nexus Repository Manager 3 servers.<br>It will allow:
@@ -52,7 +52,7 @@ Roles and privileges (or user management, for that matter) are not yet implement
 You have three alternatives:
 - [Install from source](#install-from-source)
 - [Install from a binary package](#install-from-a-binary-package)
-- [Build your own APK, DEB, RPM packages, then manually install those packages](#build-your-own-package)
+- [Build your own APK/DEB/RPM/PKGBUILD packages, then manually install those packages](#build-your-own-package)
 
 Installing from source requires a bit more work in the sense that GO has to be installed on your system
 
@@ -65,41 +65,41 @@ Installing from source requires a bit more work in the sense that GO has to be i
 
 <a id="install-from-a-binary-package"></a>
 ## Install from a binary package
-The simplest way : just go in the RELEASES tab of the repo, select your format, download it, and then install throught you package manager
+The simplest way : just go in the RELEASES tab of the repo, select your format, download it, and then install through your package manager
 
 <a id="build-your-own-package"></a>
 ## Build your own package
-The scripts and files (__alpine/, __debian, nxtools.spec) are there for my own ease of work; I usually build my tools using "builder containers" for each format: `apkbuilder`, `debbuilder`, `rpmbuilder`
-I'll leave you with homeworks, and will show you how to roughly reproduce my environment
-
-**The three methods below assume that you have forked (not just cloned) the repo somewhere**
+All format/distro-specific packaging scripts live under their own directories: __alpine (APK), __debian (DEB), __redhat (RPM), __archlinux (PKGBUILD).
+I usually build my tools using "builder containers" for each format: `apkbuilder`, `debbuilder`, `rpmbuilder` and `archbuilder`. I'll leave you with homeworks, and will show you how to roughly reproduce my environment
 
 ### APKBUILDER : Alpine Linux
-1. In an Alpine container or VM, you need the following packages: `abuild-doc pax-utils git alpine-sdk`. Some other packages might be needed, depending on the config in __alpine/APKBUILD
-2. From the `__alpine`, run: `abuild -r`
+> Package requirements: abuild, alpine-keys, alpine-sdk, apk-tools, cpp, gcc, git, pax-utils
+1. From the `__alpine` directory, run: `abuild -r`
 
-This should give you an Alpine package
+This should give you an Alpine package located in the directory defined by `pkgdir` from the `APKBUILD` file
 
 ### DEBBUILDER : Debian-based distros (Debian, Ubuntu, Mint, etc)
+> Package requirements: binutils, cpp, debhelper, devscripts, gcc
 1. cd to `__debian`
-2. Besides binutils, you do not need any specific package, and of course the required GO version. Have a look at `../go.version`, and `./1.install-build-deps.sh`.
+2. Besides *binutils* (and of course the required GO version), you do not need any specific package. Have a look at `../go.version`, and `./1.install-build-deps.sh`.
 3. Run `./2.build_binary.sh`
 4. Copy the .deb file in a safe space, then run `./restore_repo.sh`
 
 ### RPMBUILDER : RedHat-based distros (RedHat, CentOS, Fedora, RockyLinux, OpenSUSE)
-**FORK OR COPY the repo, do not CLONE** it; there's a step there that would fail, otherwise (see step #4)
-1. Ensure that tito is installed; the easy way is with pip: `pip install tito`
-2. Ensure that all other build deps are installed; from the nxtools root directory, run: `./rpmbuild-deps.sh`
-3. Run the following: `tito tag --keep-version`
-4. Run the following: `git push --follow-tags origin` --> **This has to be done from a forked repo, otherwise if you point at my own repo, it will likely fail**
-5. Run the following: `tito build --rpm` : the result will be in /tmp/tito/ copy the files (SRPM, RPM) in a safe place
+> Package requirements: binutils, cpp, gcc, make, rpm, rpmbuild, rpmdevtools
+1. Most used operation will most likely be `make rpmcl`. Everything that needs to be known is in the Makefile.
+
+### ARCHBUILDER : Archlinux-based distros
+> Package requirements: base-devel, binutils, cpp, gcc, make
+1. run `1.install-build-deps.sh` to ensure that all dependencies are installed
+2. run `2.build-package.sh` to, well, build the package
 
 <a id="using-the-tool"></a>
 # USING THE TOOL
 
 ## Creating the environment file
-This tool constantly works in "admin mode", and in order to avoid having to repeatedly log in, you must create a credential file (called an environment file here).<br>
-You can have as many environment files as you wish, for as many users, servers, etc, that you need. If no filename or `-e` flag is set, the default `defaultEnv.json` file will be created in `$HOME/.config/JFG/nxtools/`
+This tool constantly works in "admin mode", and in order to avoid having to repeatedly log in, you must create a credential file (called an *environment file* here).<br>
+You can have as many environment files as you wish, for as many users, servers, etc, that you need. If no filename or `-e` flag are set, the default `defaultEnv.json` file will be created in `$HOME/.config/JFG/nxtools/`
 
 To create the environment file, it's simple as `nxtools env create [ENVIRONMENTFILE_NAME]`; remember that you choose a name other than `defaultEnv` you will need to provide that name whenever you invoke nxtools, like this:<br>
 `nxtools -e ENVIRONMENTFILE_NAME command`
@@ -244,7 +244,7 @@ This goes this way: `nxtools [repos] reindex REPONAME`
 ✅ Repository aptLocal was successfully reindexed
 ```
 
-You use this operation after having uploaded a package to the named repository.
+You use this operation after having uploaded a package to the named repository or the reverse, having deleted an asset from a repo
 #### PRE-REQUISITES
 `nxtools` has not yet implemented tasks creation, and might never do so (unsure of that, yet), so it calls upon tasks that **have to already be present through the webUI**
 The task names have to follow this naming scheme: `_reindex_$REPONAME`, thus to reindex the repo `dnfLocal`, you would need to have a task named `_reindex_dnfLocal` already present
