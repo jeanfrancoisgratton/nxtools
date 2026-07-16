@@ -4,7 +4,7 @@ set -e
 
 # Bash completion — always install
 
-
+mkdir -p /etc/bash_completion.d
 /opt/bin/nxtools completion bash > /etc/bash_completion.d/nxtools
 
 # Zsh completion — only if zsh is present
