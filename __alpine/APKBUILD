@@ -2,14 +2,14 @@
 # Packager: Package builder <builder@famillegratton.net>
 pkgname=nxtools
 pkgver=0.91.00_pre
-pkgrel=1
+pkgrel=3
 pkgdir=/data/packages
 pkgdesc="Nexus Repository Manager tools"
 url="https://git.famillegratton.net:3000/devops/nxtools.git"
 arch=x86_64
 license=GPL2
 #depends="gcompat"
-install="$pkgname.pre-install $pkgname.post-install"
+install="$pkgname.post-deinstall $pkgname.post-install"
 #source="$pkgname-$pkgver-$pkgrel.tar.bz2::http://localhost/$pkgname-$pkgver-$pkgrel.tar.bz2"
 builddir="$startdir/src/BUILD"
 

@@ -38,6 +38,7 @@ PATH=$PATH:/opt/go/bin CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -buildid
 rm -rf $RPM_BUILD_ROOT
 
 %pre
+
 %install
 install -Dpm 0755 %{_builddir}/%{_binaryname} %{buildroot}%{_bindir}/%{_binaryname}
 
