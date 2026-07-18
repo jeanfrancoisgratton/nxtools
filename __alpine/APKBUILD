@@ -3,7 +3,7 @@
 pkgname=nxtools
 pkgver=1.0.0
 pkgrel=1
-pkgdir=/data/packages
+pkgdir=/data
 pkgdesc="Nexus Repository Manager tools"
 url="https://git.famillegratton.net:3000/devops/nxtools.git"
 arch=x86_64

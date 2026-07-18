@@ -21,3 +21,5 @@
 src/.depupdate*
 
 .depupdate-backup*/
+
+.idea/claudeCodeEditorTabs.xml
