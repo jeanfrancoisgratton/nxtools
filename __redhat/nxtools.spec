@@ -68,6 +68,161 @@ fi
 
 
 %changelog
+* Sat Jul 18 2026 Binary package builder <builder@famillegratton.net> 1.0.0-1
+- more rpmbuild enhancements
+- decoupled the version subcommand from COBRA
+- updated docs, version bump
+- test: add unit tests across packages; fix yum deploy-policy check
+- reindex: skip Alpine (no rebuild-metadata task; APKINDEX is auto-generated) Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+- Claude Code integration -- Alpine would not be there without it
+- added Alpine repository format
+- more apk fixes
+- Merge remote-tracking branch 'refs/remotes/origin/develop' into develop
+- buildscripts fixes
+- Go version bump
+- Fixed alpinebuild
+- doc update
+- arch linux dependencies fixes
+- fixed post-inst for zsh
+- chore: update changelog for 0.91.00~DEBUG-0
+- fixed typo in post-inst
+- fixed typo in archlinux post-inst
+- Fixed missing wiring of completionCmd to rootCmd
+- Release bump
+- fixed path in autocompletion tasks
+- bumped release number
+- chore: update changelog for 0.90.00~DEBUG-1
+- Merge branch 'repositories' into develop
+- version bump
+- Merge branch 'repositories' into develop
+- cosmetic changes
+- Fixed version number for APK
+- release number bump
+- chore: update changelog for 0.90.00~DEBUG-0
+- fixed yum upload silently disrepecting specs
+- Merge branch 'repositories' into develop
+- updated build scripts
+- Merge branch 'develop' of ssh://git.famillegratton.net:9722/devops/nxtools into develop
+- moved a build script in a proper directory
+- version bump
+- command completion support enabled at install time
+- update the list of supported repo formats
+- aligned nxtools with RH packaging
+- interim submit
+- changed perms on file
+- Added a build script
+- Merge remote-tracking branch 'refs/remotes/origin/develop' into develop
+- Merge branch 'repositories' into develop
+- interim commit before it gets too messy to merge branches
+- Removed un-needed vars from specfile
+- prepped nxtools for the new rpmbuilder
+- Added ArchLinux packaging support
+- Merge pull request 'repositories' (#1) from repositories into develop
+- added an helper function, repo supported
+- ensure that uploads to raw repos properly handle directories
+- Automatic commit of package [nxtools] release [0.80.00-1].
+- Minor tweak on showing version number
+- Added shorthand flag for directory
+- Automatic commit of package [nxtools] release [0.80.00-0].
+- Merge branch 'repositories' into develop
+- Repos can now be reindexed after uploads
+- Automatic commit of package [nxtools] release [0.75.01-0].
+- Fixed flag duplicated usage in repo create
+- Automatic commit of package [nxtools] release [0.75.00-0].
+- Completed all repo formats except docker
+- version bump, completed all generic formats
+- verbosity fixes, response handling fixed in blob create
+- Automatic commit of package [nxtools] release [0.70.00-0].
+- Merge branch 'repositories' into develop
+- Completed the apt format repo creation
+- Version bump
+- Automatic commit of package [nxtools] release [0.62.01-0].
+- fixed a broken link
+- Completed the assets doc
+- updated doc
+- Fixed assets rm
+- links fix so they now (...should) work properly
+- doc phase 2
+- added a comments field in the environment file, and removed the NEXUS_HOST env var
+- Merge branch 'documentation' into develop
+- bugfix to asset ls
+- Automatic commit of package [nxtools] release [0.62.00-0].
+- completed doc, for now
+- Merge branch 'develop' into documentation
+- added verbosity to repo rm
+- foolproofed blob rm
+- doc update, version bump
+- Merge branch 'develop' into documentation
+- Merge branch 'develop' into documentation
+- Merge branch 'develop' into blobStores
+- fixed path issue in blob ls
+- fixed path issue in blob ls
+- Merge branch 'develop' into documentation
+- Merge branch 'repositories' into develop
+- Added the assets count column to repo ls
+- interim update
+- Merge branch 'develop' into documentation
+- Merge branch 'repositories' into develop
+- simplified output of repo ls
+- interim commit
+- Merge branch 'blobStores' into repositories
+- preparing to refactor repositories
+- doc update
+- Automatic commit of package [nxtools] release [0.60.00-0].
+- Implement extra info and --json flag for repo ls
+- added repositorySettings json payloads doc
+- Added extra information to blobstore ls
+- Automatic commit of package [nxtools] release [0.50.00-0].
+- Version bump, ready to merge
+- completed the assets commands
+- completed most of assets
+- fixed error handling in c.Do()
+- Merge branch 'assets' into develop
+- Completed the assets commands
+- Automatic commit of package [nxtools] release [0.40.00-0].
+- version bump
+- Major refactoring, completed the assets subcommand
+- Added the 'assets ls' subcommand
+- types corrections
+- Automatic commit of package [nxtools] release [0.30.00-1].
+- Merge branch 'repositories' into develop
+- Bumped release number for all packages
+- Fixed perm on build script
+- Automatic commit of package [nxtools] release [0.30.00-0].
+- Fixed reindex task
+- version bump
+- completed repo reindex tasks
+- Completed upload
+- completed but untested the upload command
+- simplified error output
+- Automatic commit of package [nxtools] release [0.20.00-0].
+- Initialized to use tito.
+- Fixed result output on blob create
+- Merge branch 'blobStores' into develop
+- Completed blobstores
+- Merge branch 'main' into develop
+- added completion and completed blob rm
+- doc update
+- added icon image
+- go version update
+- Implemented blob ls
+- refactored the rest client
+- minor UX changes
+- Completed (not tested) the repositories subpackage
+- interim commit
+- cosmetic change to headers of all files
+- Adapted the http client from dtools to nxtools
+- another image fix
+- image update
+- updated README to properly render logo
+- added logos and icons
+- adapted code from dtools to nxtools
+- builddeps updates
+- removed duped files from botched rebase, builddeps update
+- Fixed sync to wrong target
+- interim commit
+- fixed issue where cmd/ had been moved into another package
+
 * Sat May 30 2026 Binary package builder <builder@famillegratton.net> 0.91.00~DEBUG-0
 - fixed typo in post-inst
 - fixed typo in archlinux post-inst
