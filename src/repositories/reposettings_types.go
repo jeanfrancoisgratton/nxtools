@@ -75,6 +75,17 @@ type AptRepoSettingsStruct struct {
 	AptSigning RepoSigningStruct `json:"aptSigning"`
 }
 
+// ALPINE (APK) FORMAT
+//
+// Alpine hosted repos need an RSA signing key pair (PEM-armored private key),
+// carried in the aptSigning-like "alpineSigning" block. Unlike APT there is no
+// distribution field.
+
+type AlpineRepoSettingsStruct struct {
+	HostedRepoCommonAttributesStruct
+	AlpineSigning RepoSigningStruct `json:"alpineSigning"`
+}
+
 // YUM FORMAT
 
 type YumSettings struct {

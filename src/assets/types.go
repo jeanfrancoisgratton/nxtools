@@ -21,6 +21,7 @@ type componentUploadSpec struct {
 
 var singleAssetComponentUploadSpecs = map[string]componentUploadSpec{
 	"apt":       {FileField: "apt.asset"},
+	"alpine":    {FileField: "alpine.asset"},
 	"helm":      {FileField: "helm.asset"},
 	"npm":       {FileField: "npm.asset"},
 	"nuget":     {FileField: "nuget.asset"},

@@ -44,6 +44,35 @@ func createApt(reponame, blobname string) ([]byte, *cerr.CustomError) {
 	return pload, nil
 }
 
+func createAlpine(reponame, blobname string) ([]byte, *cerr.CustomError) {
+	kp, err := readFileAsString(RepoSigningFile)
+	if err != nil {
+		return nil, err
+	}
+
+	payload := AlpineRepoSettingsStruct{
+		HostedRepoCommonAttributesStruct: HostedRepoCommonAttributesStruct{
+			Name:   reponame,
+			Online: true,
+			Storage: StorageAttributesStruct{
+				BlobStoreName:               blobname,
+				StrictContentTypeValidation: StorageStrictContentValidation,
+				WritePolicy:                 StorageWritePolicy,
+			},
+		},
+		AlpineSigning: RepoSigningStruct{
+			Keypair:    kp,
+			Passphrase: RepoSigningPassphrase,
+		},
+	}
+
+	pload, e2 := json.MarshalIndent(payload, "", "  ")
+	if e2 != nil {
+		return nil, &cerr.CustomError{Title: "failed to marshal Alpine repo payload", Message: e2.Error()}
+	}
+	return pload, nil
+}
+
 func createYum(reponame, blobname string) ([]byte, *cerr.CustomError) {
 	// preflight
 	if strings.ToLower(YumDeployPolicy) != "PERMISSIVE" && strings.ToLower(YumDeployPolicy) != "STRICT" {

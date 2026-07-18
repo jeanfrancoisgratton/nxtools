@@ -17,6 +17,7 @@ import (
 // The closest Nexus' API has to offer is the /service/rest/v1/formats/upload-specs endpoint
 
 var supportedformats = []FormatStatusStruct{
+	{Name: "alpine", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
 	{Name: "apt", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: nil},
 	{Name: "cargo", SupportsHosted: &TrueVal, SupportsGrouped: &FalseVal, SupportsProxied: &FalseVal},
 	{Name: "cocoapods", SupportsHosted: nil, SupportsGrouped: nil, SupportsProxied: &FalseVal},

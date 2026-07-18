@@ -10,6 +10,7 @@ nxtools version 0.75.00 (2026.03.24), Go version = v1.26.1
 - [x] docker
 - [x] yum
 - [x] apt
+- [x] alpine
 - [x] maven
 - [x] raw
 - [x] helm

@@ -40,6 +40,13 @@ func CreateRepository(reponame, blobname string) *cerr.CustomError {
 		} else {
 			return sendPayload(reponame, blobname, payload)
 		}
+	case "alpine", "apk":
+		RepoFormat = "alpine"
+		if payload, e1 := createAlpine(reponame, blobname); e1 != nil {
+			return e1
+		} else {
+			return sendPayload(reponame, blobname, payload)
+		}
 	case "yum":
 		if payload, e1 := createYum(reponame, blobname); e1 != nil {
 			return e1

@@ -153,7 +153,7 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 		nMovedAssets++
 
 		// The following repo formats do not support grouped type repositories
-		if repositories.RepoFormat == "apt" || repositories.RepoFormat == "gitlfs" || repositories.RepoFormat == "cocoapods" ||
+		if repositories.RepoFormat == "apt" || repositories.RepoFormat == "alpine" || repositories.RepoFormat == "gitlfs" || repositories.RepoFormat == "cocoapods" ||
 			repositories.RepoFormat == "composer" || repositories.RepoFormat == "helm" || repositories.RepoFormat == "hugginface" ||
 			repositories.RepoFormat == "p2" || repositories.RepoFormat == "swift" {
 			return nMovedAssets, nTotalAssets, nil

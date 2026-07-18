@@ -59,6 +59,10 @@ var repoCreateCmd = &cobra.Command{
 			hftx.ErrorSign("You need to provide a PGP private key file (flag -k) when using the APT format")
 			os.Exit(1)
 		}
+		if fmtLower := strings.ToLower(repositories.RepoFormat); (fmtLower == "alpine" || fmtLower == "apk") && repositories.RepoSigningFile == "" {
+			hftx.ErrorSign("You need to provide an RSA private key file (flag -k) when using the Alpine format")
+			os.Exit(1)
+		}
 
 		// ok, let's go
 		if err := repositories.CreateRepository(args[0], args[1]); err != nil {

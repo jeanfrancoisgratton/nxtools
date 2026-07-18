@@ -206,6 +206,8 @@ func shouldIncludeAsset(repoFormat string, item shared.AssetSummary) bool {
 	switch repoFormat {
 	case "apt":
 		return strings.HasSuffix(name, ".deb") || strings.HasSuffix(name, ".udeb")
+	case "alpine":
+		return strings.HasSuffix(name, ".apk")
 	case "yum":
 		return strings.HasSuffix(name, ".rpm")
 	case "helm":

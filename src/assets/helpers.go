@@ -25,6 +25,8 @@ func normalizeUploadFormat(format string) string {
 	format = strings.ReplaceAll(format, "-", "")
 
 	switch format {
+	case "apk":
+		return "alpine"
 	case "ruby", "gem", "gems", "rubygem":
 		return "rubygems"
 	case "python":
