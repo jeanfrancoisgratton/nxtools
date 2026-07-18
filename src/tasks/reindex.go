@@ -26,6 +26,13 @@ import (
 // - the name of the repo is needed to look up the repo format.
 // - once the repo format is set, we can build the query parameter to fetch the list of repos
 
+// formatsWithoutReindexTask lists repo formats whose metadata Nexus rebuilds
+// automatically on every upload/delete, and which therefore expose no
+// rebuild-metadata scheduled task. Reindexing these is a no-op.
+var formatsWithoutReindexTask = map[string]bool{
+	"alpine": true,
+}
+
 func ReindexRepo(reponame string) *cerr.CustomError {
 	var id string
 	var ce *cerr.CustomError
@@ -35,7 +42,22 @@ func ReindexRepo(reponame string) *cerr.CustomError {
 		return err
 	}
 
-	if id, ce = findTaskByRepoName(reponame); ce != nil {
+	// Look up the format once, up front: some formats (e.g. Alpine) have no
+	// rebuild-metadata task because Nexus maintains their index automatically.
+	// For those, skip with an informative note rather than failing.
+	repoFormat, ce := repositories.QueryRepoType(reponame)
+	if ce != nil {
+		return ce
+	}
+	if formatsWithoutReindexTask[repoFormat] {
+		if !shared.QuietOutput {
+			fmt.Println(hftx.WarningSign("Repository " + reponame + " uses the " + repoFormat +
+				" format; its metadata is rebuilt automatically on upload, so no reindex is needed"))
+		}
+		return nil
+	}
+
+	if id, ce = findTaskByRepoName(repoFormat, reponame); ce != nil {
 		return ce
 	}
 
@@ -55,12 +77,9 @@ func ReindexRepo(reponame string) *cerr.CustomError {
 	return nil
 }
 
-func findTaskByRepoName(reponame string) (string, *cerr.CustomError) {
-	var taskType, repoFormat, taskID string
+func findTaskByRepoName(repoFormat, reponame string) (string, *cerr.CustomError) {
+	var taskType, taskID string
 	var err *cerr.CustomError
-	if repoFormat, err = repositories.QueryRepoType(reponame); err != nil {
-		return "", err
-	}
 
 	switch repoFormat {
 	case "yum":
