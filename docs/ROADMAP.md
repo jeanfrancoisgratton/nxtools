@@ -3,7 +3,7 @@
 ## Current version
 ```bash
 # nxtools -v
-nxtools version 0.75.00 (2026.03.24), Go version = v1.26.1
+nxtools version 1.0.0 (2026.07.18), Go version = v1.26.5
 ```
 ## Supported repo formats
 => a format is considered *supported* once we can create a repo in this format

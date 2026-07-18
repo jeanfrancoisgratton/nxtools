@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-PKGDIR="nxtools-0.91.00~debug-0_amd64"
+PKGDIR="nxtools-1.0.0-1_amd64"
 
 mkdir -p ${PKGDIR}/opt/bin ${PKGDIR}/DEBIAN
 mkdir -p ${PKGDIR}/opt/bin ${PKGDIR}/DEBIAN

@@ -1,5 +1,6 @@
 | Release | Date       | Comments                                                                             |
 |---------|------------|--------------------------------------------------------------------------------------|
+| 1.0.0   | 2026.07.18 | First stable (1.0.0) release<br>Added Alpine/APK repo format<br>REST client honours NEXUS_* environment variables<br>Added unit tests across packages; fixed yum deploy-policy check | 
 | 0.91.00 | 2026.05.30 | Added missing wiring of completionCmd to rootCmd                                     | 
 | 0.85.00 | 2026.03.25 | Added support to the docker repo format<br>Added a repo migration feature            | 
 | 0.80.00 | 2026.03.25 | `repo reindex` can now be called from `repo upload`                                  |

@@ -8,15 +8,16 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"nxtools/shared"
+
+	"github.com/spf13/cobra"
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:     "nxtools",
 	Short:   "Nexus Repository Manager 3 CLI tool",
-	Version: "DEBUG0.91.00 (2026.05.30), Go version = v" + strings.TrimPrefix(runtime.Version(), "go"),
+	Version: "1.0.0 (2026.07.18), Go version = v" + strings.TrimPrefix(runtime.Version(), "go"),
 	Long:    `This tools allows you to manage many actions on an NxRM server`,
 }
 

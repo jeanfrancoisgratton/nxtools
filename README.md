@@ -4,8 +4,8 @@ ___
 This tool is a CLI-driven client to Nexus Repository Manager 3 servers.<br>It will allow:
 - authentication
 - blob store ops (list, delete, create)
-- user + role ops (list, delete, create, edit)
-- repo ops (list, delete, create, edit, upload+download package)
+- repo ops (list, create, delete, reindex, migrate, query type/supported formats)
+- asset ops (list, info, upload, download, delete)
 - more to come
 
 **TABLE OF CONTENTS**<br>
@@ -166,7 +166,7 @@ A few notes, here:
 <a id="assets-ops"></a>
 ## Assets operations
 Some of the assets operations here work against repositories; both assets and repositories are kind of tightly-coupled. The supported (so far) operations are:
-<img src="./images/assets_h.png alt="nxtools assets -h"/>
+<img src="./images/assets_h.png" alt="nxtools assets -h"/>
 
 ### Assets listing
 Lists assets in a given repo
@@ -224,13 +224,34 @@ You first need to fetch the asset ID from `nxtools assets REPOSITORY_NAME`. This
 
 <a id="repos-ops"></a>
 ## Repositories operations
-Refresh the repo metadata (reindex), remove and list operations are currently supported. Other operations are forthcoming.
+The following operations are currently supported: list, create, delete, reindex, migrate, and querying a repo's type or the list of supported formats. Editing an existing repo is forthcoming.
 <img src="./images/repos_-h.png" alt="repos -h">
 
 
 ### List repos
 Again, very simply: `nxtools repos ls`
 <img src="./images/repo_ls.png" alt="nxtools repos ls"/>
+
+Add `--json` to emit the repository list as JSON instead of a table.
+
+### List supported formats
+`nxtools repos supported` lists every repository format known to Nexus, grouped by type, along with `nxtools`' support status for each.
+
+### Create a repo
+The syntax is: `nxtools repo create --format FORMAT REPO_NAME BLOBSTORE_NAME`
+
+The most useful flags:
+- `-f, --format` : recipe family (e.g. `yum`, `apt`, `maven`, `docker`, `alpine`, `npm`, ...) — mandatory
+- `-t, --type` : `hosted` (default), `proxy` or `group`
+- `-w, --writepolicy` : `ALLOW` (default), `ALLOW_ONCE` or `DENY`
+- `-k, --keyfile` : PGP/RSA private key file — **mandatory** for the `apt` and `alpine` formats
+- format-specific flags are also available (Maven version/layout policy, Yum repodata depth, Docker ports/subdomain, etc.); run `nxtools repo create -h` for the full list
+
+### Query a repo's type
+`nxtools repo type REPO_NAME` returns the format/recipe of an existing repository.
+
+### Migrate a repo
+`nxtools repo migrate OLD_REPO NEW_REPO` copies the contents of `OLD_REPO` into `NEW_REPO`. By default the source assets are removed after a successful migration; pass `-k, --keep` to keep them.
 
 ### Remove repos
 Follows the usual pattern: `nxtools repo rm REPONAME`
@@ -248,3 +269,5 @@ You use this operation after having uploaded a package to the named repository o
 #### PRE-REQUISITES
 `nxtools` has not yet implemented tasks creation, and might never do so (unsure of that, yet), so it calls upon tasks that **have to already be present through the webUI**
 The task names have to follow this naming scheme: `_reindex_$REPONAME`, thus to reindex the repo `dnfLocal`, you would need to have a task named `_reindex_dnfLocal` already present
+
+*Note:* Alpine (APK) repositories are skipped — Nexus regenerates their `APKINDEX` metadata automatically on upload, so no reindex task is required.
