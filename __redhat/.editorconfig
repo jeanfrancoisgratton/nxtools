@@ -1,0 +1,4 @@
+# __redhat/.editorconfig
+root = true
+[Makefile*]
+indent_style = tab
