@@ -75,7 +75,7 @@ func createAlpine(reponame, blobname string) ([]byte, *cerr.CustomError) {
 
 func createYum(reponame, blobname string) ([]byte, *cerr.CustomError) {
 	// preflight
-	if strings.ToLower(YumDeployPolicy) != "PERMISSIVE" && strings.ToLower(YumDeployPolicy) != "STRICT" {
+	if strings.ToLower(YumDeployPolicy) != "permissive" && strings.ToLower(YumDeployPolicy) != "strict" {
 		return nil, &cerr.CustomError{Title: "yum deploy policy not supported", Message: fmt.Sprintf("unsupported policy: %s", YumDeployPolicy)}
 	}
 	payload := YumRepoSettingsStruct{
