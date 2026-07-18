@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "WebFetch",
+      "WebSearch"
+    ],
+    "deny": [
+      "Bash(git commit:*)"
+    ],
+    "additionalDirectories": [
+      "/"
+    ]
+  }
+}
