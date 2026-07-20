@@ -248,6 +248,74 @@ func uploadApt(repoName, filePath string) *cerr.CustomError {
 	return uploadSingleAssetComponent(repoName, filePath, "apt")
 }
 
+// uploadAlpine uploads an .apk into an Alpine hosted repository. Unlike the
+// plain single-asset formats, Nexus requires two component coordinates on every
+// Alpine upload — the Alpine version (e.g. edge, v3.21) and the repository
+// section (e.g. main, community). Those cannot be inferred from the .apk itself,
+// so they are supplied through the -d/--directory flag as "<version>/<repository>".
+func uploadAlpine(repoName, filePath, directory string) *cerr.CustomError {
+	version, section, err := parseAlpineCoordinates(directory)
+	if err != nil {
+		return err
+	}
+
+	if !shared.QuietOutput {
+		fmt.Println(hftx.InProgressSign("Uploading " + filepath.Base(filePath) + " to " + repoName))
+	}
+
+	fields := map[string]string{
+		"alpine.version":    version,
+		"alpine.repository": section,
+	}
+
+	if e := shared.UploadComponentMultipart(repoName, "alpine.asset", filePath, fields); e != nil {
+		if !shared.QuietOutput {
+			fmt.Println(hftx.ErrorSign("Failed to upload " + hftx.Red(filePath) + " to " + hftx.Red(repoName)))
+		}
+		return e
+	}
+
+	if !shared.QuietOutput {
+		fmt.Println(hftx.EnabledSign("Uploaded " + hftx.Green(filePath) + " to " + hftx.Green(repoName) + " (" + version + "/" + section + ")"))
+	}
+	return nil
+}
+
+const (
+	defaultAlpineVersion    = "edge"
+	defaultAlpineRepository = "main"
+)
+
+// parseAlpineCoordinates splits the -d/--directory value into the Alpine
+// version and repository section. It expects exactly two non-empty path
+// segments, e.g. "edge/main" or "v3.21/community". When -d is omitted (the
+// flag's "/" default) or empty, it falls back to edge/main so existing
+// tooling that never passed -d keeps working. A value with the wrong number
+// of segments (e.g. a single "community") is rejected rather than guessed.
+func parseAlpineCoordinates(directory string) (string, string, *cerr.CustomError) {
+	cleaned := strings.ReplaceAll(strings.TrimSpace(directory), "\\", "/")
+
+	segments := make([]string, 0, 2)
+	for _, segment := range strings.Split(cleaned, "/") {
+		if segment = strings.TrimSpace(segment); segment != "" {
+			segments = append(segments, segment)
+		}
+	}
+
+	if len(segments) == 0 {
+		return defaultAlpineVersion, defaultAlpineRepository, nil
+	}
+
+	if len(segments) != 2 {
+		return "", "", &cerr.CustomError{
+			Title:   "Invalid Alpine coordinates",
+			Message: "alpine uploads expect -d <version>/<repository> (e.g. -d edge/main or -d v3.21/community); omit -d to default to edge/main",
+		}
+	}
+
+	return segments[0], segments[1], nil
+}
+
 func uploadRaw(repoName, filePath, directory string) *cerr.CustomError {
 	resolvedDirectory := inferRawDirectory(directory)
 	fields := map[string]string{

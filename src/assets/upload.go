@@ -44,7 +44,9 @@ func UploadAsset(repoName, filePath, directory string) *cerr.CustomError {
 		return uploadRaw(repoName, filePath, directory)
 	case "yum":
 		return uploadYum(repoName, filePath, directory)
-	case "apt", "alpine", "helm", "npm", "nuget", "pypi", "r", "rubygems", "cargo", "terraform", "swift", "gitlfs", "conan":
+	case "alpine":
+		return uploadAlpine(repoName, filePath, directory)
+	case "apt", "helm", "npm", "nuget", "pypi", "r", "rubygems", "cargo", "terraform", "swift", "gitlfs", "conan":
 		return uploadSingleAssetComponent(repoName, filePath, format)
 	default:
 		return &cerr.CustomError{

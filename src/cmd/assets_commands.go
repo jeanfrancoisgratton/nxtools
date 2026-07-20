@@ -117,7 +117,7 @@ func init() {
 
 	assetsListCmd.Flags().BoolVarP(&assets.LatestAssetsOnly, "latest", "l", false, "Only list the latest version of each logical asset/component")
 	assetsListCmd.Flags().BoolVarP(&assets.AlternateInfo, "alternate", "a", false, "Show alternate asset information")
-	assetsUploadCmd.Flags().StringVarP(&assets.UploadDirectory, "directory", "d", "/", "Target directory inside the repository (optional; defaults are inferred for raw and yum)")
+	assetsUploadCmd.Flags().StringVarP(&assets.UploadDirectory, "directory", "d", "/", "Target directory inside the repository (defaults inferred for raw and yum; for alpine, <version>/<repository>, e.g. edge/main; defaults to edge/main if omitted)")
 	assetsUploadCmd.Flags().BoolVarP(&assets.ReindexRepo, "reindex", "r", false, "Reindex repo after the upload")
 
 	assetInfoCmd.Flags().BoolVarP(&assets.JsonOutput, "json", "j", false, "Output asset information as JSON")
