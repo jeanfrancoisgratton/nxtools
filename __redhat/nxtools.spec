@@ -68,6 +68,13 @@ fi
 
 
 %changelog
+* Mon Jul 20 2026 Binary package builder <builder@famillegratton.net> 1.0.1-1
+- version bump
+- Fixed alpine upload feature
+- Merge remote-tracking branch 'refs/remotes/origin/develop' into develop
+- Updated apkbuilder
+- Moved packages in the docker volume
+
 * Sat Jul 18 2026 Binary package builder <builder@famillegratton.net> 1.0.0-1
 - more rpmbuild enhancements
 - decoupled the version subcommand from COBRA
