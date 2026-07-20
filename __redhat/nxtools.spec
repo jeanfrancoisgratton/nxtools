@@ -68,6 +68,9 @@ fi
 
 
 %changelog
+* Mon Jul 20 2026 Binary package builder <builder@famillegratton.net> 1.0.2-1
+- automated debbuild, apkbuild, archbuild the same way I did with rpmbuild
+
 * Mon Jul 20 2026 Binary package builder <builder@famillegratton.net> 1.0.1-1
 - version bump
 - Fixed alpine upload feature
