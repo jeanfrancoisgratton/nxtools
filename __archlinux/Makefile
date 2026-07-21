@@ -58,6 +58,7 @@ release: build
 	  $(NXTOOLS) upload $(NEXUSREPO) $(REPONAME).$$f; \
 	done
 	rm -rf $(STAGING)
+	${MAKE} clean
 
 clean:
 	rm -rf src pkg
