@@ -68,6 +68,17 @@ fi
 
 
 %changelog
+* Mon Jul 20 2026 Binary package builder <builder@famillegratton.net> 1.1.0-1
+- added new assets latest command
+- DEBBUILDER: fixed makefile dependency tree
+- Added a clean step to release
+- removed --reindex flag from nxtools upload
+- Merge remote-tracking branch 'refs/remotes/origin/develop' into develop
+- ARCHBUILDER: updated Makefile to fold deploy_package.sh from the container into it
+- fixed pkgdest
+- fixed buildscript (debian)
+- updated needed build dependencies
+
 * Mon Jul 20 2026 Binary package builder <builder@famillegratton.net> 1.0.2-1
 - automated debbuild, apkbuild, archbuild the same way I did with rpmbuild
 
