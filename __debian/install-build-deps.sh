@@ -7,7 +7,7 @@
 # sudo apt install -y g++ fakeroot devscripts build-essential
 
 echo "Installing dependencies";echo
-sudo apt-get update && sudo apt update -y && apt install -y make
+sudo apt-get update && sudo apt update -y && sudo apt install -y make
 echo;echo;echo "Done. Now installing the Go binaries"
 sudo rm -rf /opt/go-versions ; sudo mkdir -p /opt/go-versions
 sudo /opt/bin/goget.sh `cat ../go.version` amd64
