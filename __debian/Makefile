@@ -38,11 +38,17 @@ build:
 	sudo chown -R 0:0 "$(STAGING)/opt/bin/$(BINARY)"
 	dpkg-deb -b "$(STAGING)" "$(DEB)"
 
-release: build
+upload:
 	/opt/bin/nxtools upload -r $(NEXUSREPO) $(DEB)
+
 
 clean:
 	rm -rf "$(STAGING)" "$(DEB)"
+
+release:
+	${MAKE} build
+	${MAKE} upload
+	${MAKE} clean
 
 info:
 	@echo "NAME    = $(NAME)"
