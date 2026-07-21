@@ -53,7 +53,7 @@ release: build
 	  cp $(REPONAME).db.tar.zst $(REPONAME).db && \
 	  cp $(REPONAME).files.tar.zst $(REPONAME).files
 	# --- upload the package (with reindex), then the refreshed database files ---
-	$(NXTOOLS) upload -r $(NEXUSREPO) $(PKG)
+	$(NXTOOLS) upload $(NEXUSREPO) $(PKG)
 	cd $(STAGING) && for f in files files.tar.zst db db.tar.zst; do \
 	  $(NXTOOLS) upload $(NEXUSREPO) $(REPONAME).$$f; \
 	done
