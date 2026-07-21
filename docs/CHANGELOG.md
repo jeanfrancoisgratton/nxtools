@@ -1,5 +1,6 @@
 | Release | Date        | Comments                                                                                                                                                                             |
 |---------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.1.0   | 2026.07.20  | Added `assets latest` to get the latest version of `PACKAGE` in `REPO`                                                                                                               |
 | 1.0.2   | 2026.07.20  | cicd nearly automated                                                                                                                                                                |
 | 1.0.1   | 2026.07.20  | fixed apkbuild upload specs                                                                                                                                                          |
 | 1.0.0   | 2026.07.18  | First stable (1.0.0) release<br>Added Alpine/APK repo format<br>REST client honours NEXUS_* environment variables<br>Added unit tests across packages; fixed yum deploy-policy check | 

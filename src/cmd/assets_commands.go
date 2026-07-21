@@ -9,9 +9,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spf13/cobra"
 	"nxtools/assets"
 	"nxtools/tasks"
+
+	"github.com/spf13/cobra"
 )
 
 var assetsCmd = &cobra.Command{
@@ -85,6 +86,21 @@ var assetsDownloadCmd = &cobra.Command{
 	},
 }
 
+var assetsLatestCmd = &cobra.Command{
+	Use:     "fetch REPO_NAME PKG_NAME",
+	Example: "nxtools assets latest [-e defaultEnv.json] REPO_NAME PKG_NAME",
+	Args:    cobra.ExactArgs(2),
+	Short:   "Downloads the latest version of a package from a repository",
+	Long: `This subcommand downloads the latest version of the named package from the given repository.
+Unlike "download", it takes a package name (not a URL): it resolves the latest version and
+saves its asset(s) to the current directory.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := assets.FetchLatestAsset(args[0], args[1]); err != nil {
+			fmt.Println(err.Error())
+		}
+	},
+}
+
 var assetsDeleteCmd = &cobra.Command{
 	Use:     "delete ASSET_ID1 [ASSET_ID2 ...]",
 	Aliases: []string{"rm"},
@@ -113,7 +129,7 @@ and the name of the repository where the package is housed.`,
 }
 
 func init() {
-	assetsCmd.AddCommand(assetsListCmd, assetInfoCmd, assetsUploadCmd, assetsDownloadCmd, assetsDeleteCmd, assetsComponentInfoCmd)
+	assetsCmd.AddCommand(assetsListCmd, assetInfoCmd, assetsUploadCmd, assetsDownloadCmd, assetsLatestCmd, assetsDeleteCmd, assetsComponentInfoCmd)
 
 	assetsListCmd.Flags().BoolVarP(&assets.LatestAssetsOnly, "latest", "l", false, "Only list the latest version of each logical asset/component")
 	assetsListCmd.Flags().BoolVarP(&assets.AlternateInfo, "alternate", "a", false, "Show alternate asset information")

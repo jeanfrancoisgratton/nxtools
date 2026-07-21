@@ -5,7 +5,7 @@ This tool is a CLI-driven client to Nexus Repository Manager 3 servers.<br>It wi
 - authentication
 - blob store ops (list, delete, create)
 - repo ops (list, create, delete, reindex, migrate, query type/supported formats)
-- asset ops (list, info, upload, download, delete)
+- asset ops (list, info, upload, download, fetch, delete)
 - more to come
 
 **TABLE OF CONTENTS**<br>
@@ -191,6 +191,11 @@ A few notes worthy of attention :
 ### Download an asset (package) from a repo
 All you need is the download url, from `ntxools assets ls REPO_NAME`, as shown below:
 <img src="./images/assets_download.png" alt="nxtools download"/>
+
+### Fetch the latest version of a package from a repo
+When you just want the newest build of a package and don't care to look up its download URL first, use `fetch`. It takes a repository and a package name (not a URL), resolves the latest version, and downloads its asset(s) into the current directory:
+
+`nxtools assets latest REPO_NAME PACKAGE_NAME`
 
 ### Assets information
 
