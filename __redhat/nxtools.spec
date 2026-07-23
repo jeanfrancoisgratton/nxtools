@@ -5,7 +5,7 @@
 %define _bash_completionsdir /usr/share/bash-completion/completions
 %define _zsh_completionsdir  /usr/share/zsh/site-functions
 %define _version 1.1.3
-%define _rel 1
+%define _rel 2
 %define _arch x86_64
 %define _binaryname nxtools
 
@@ -59,8 +59,8 @@ fi
 %postun
 if [ $1 -eq 0 ]; then
     # $1 == 0 means this is a full uninstall, not an upgrade
-    rm -f %{_bash_completionsdir}/{_binaryname
-    rm -f %{_zsh_completionsdir}/_{_binaryname
+    rm -f %{_bash_completionsdir}/%{_binaryname}
+    rm -f %{_zsh_completionsdir}/_%{_binaryname}
 fi
 
 %files
