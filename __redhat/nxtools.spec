@@ -68,6 +68,11 @@ fi
 
 
 %changelog
+* Thu Jul 23 2026 Binary package builder <builder@famillegratton.net> 1.1.1-1
+- fixed typo in test
+- Fixed default rootpath for Alpine repos
+- APKBUILDER : version bump
+
 * Mon Jul 20 2026 Binary package builder <builder@famillegratton.net> 1.1.0-1
 - added new assets latest command
 - DEBBUILDER: fixed makefile dependency tree
