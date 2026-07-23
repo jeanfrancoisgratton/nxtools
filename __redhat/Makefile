@@ -1,9 +1,3 @@
-# Run recipes under bash with pipefail so a failing command in a pipeline
-# (e.g. `git archive | gzip`) fails the whole line instead of being masked
-# by the exit status of the last command in the pipe.
-SHELL       := /bin/bash
-.SHELLFLAGS := -o pipefail -c
-
 SPEC      := nxtools.spec
 NAME      := $(shell rpmspec -q --qf '%{name}\n'    $(SPEC) | head -1)
 VERSION   := $(shell rpmspec -q --qf '%{version}\n' $(SPEC) | head -1)
@@ -13,28 +7,15 @@ RPMS      := $(HOME)/rpmbuild/RPMS
 DEST      := /data
 REPOROOT  := $(shell git rev-parse --show-toplevel)
 NEXUSREPO := dnfLocal
-TAG       := v$(VERSION)
-TARBALL   := $(SOURCES)/$(NAME)-$(VERSION).tar.gz
+TAG       := v1.1.2
 
-.PHONY: tag release tarball check-tags changelog rpm rpmcl upload commitcl clean FORCE
-
-# If a recipe fails partway through, delete the (possibly truncated) target
-# file it was building, so a corrupt artifact isn't left looking up-to-date.
-.DELETE_ON_ERROR:
+.PHONY: tag release tarball check-tags changelog rpm rpmcl upload commitcl clean
 
 # Intended workflow: make release
 
-# Real file target: this is what .DELETE_ON_ERROR protects. The FORCE
-# prerequisite keeps the previous behaviour of regenerating the tarball on
-# every invocation (important when rebuilding the same VERSION after amending).
-$(TARBALL): FORCE
+tarball:
 	git -C $(REPOROOT) archive --prefix=$(NAME)-$(VERSION)/ HEAD \
-	  | gzip > $@
-
-# Friendly alias so `make tarball` still works.
-tarball: $(TARBALL)
-
-FORCE:
+	  | gzip > $(SOURCES)/$(NAME)-$(VERSION).tar.gz
 
 check-tags:
 	@# 1. The condition that silently breaks changelog generation:
@@ -52,31 +33,39 @@ check-tags:
 	   exit 1; \
 	 fi
 
-changelog: check-tags $(TARBALL)
+changelog: check-tags tarball
 	$(REPOROOT)/__redhat/updateChangelog.sh
 
-rpm: $(TARBALL)
+rpm: tarball
 	rpmbuild -bb $(SPEC)
 	find $(RPMS) -name '*.rpm' -exec cp {} $(DEST)/ \;
 
-rpmcl: $(TARBALL) changelog
+rpmcl: tarball changelog
 	rpmbuild -bb $(SPEC)
 	find $(RPMS) -name '*.rpm' -exec cp {} $(DEST)/ \;
 
 upload:
-	nxtools upload -r $(NEXUSREPO) $(DEST)/$(NAME)-$(VERSION)-$(RELEASE).x86_64.rpm
+	/opt/bin/nxtools upload -r $(NEXUSREPO) $(DEST)/$(NAME)-$(VERSION)-$(RELEASE).x86_64.rpm
 
 commitcl:
 	git add ${SPEC}
 	git commit -m "chore: update changelog for $(VERSION)-$(RELEASE)"
 
 clean:
-	rm -f  $(TARBALL)
+	rm -f  $(SOURCES)/$(NAME)-$(VERSION).tar.gz
 	rm -rf $(HOME)/rpmbuild/BUILD/$(NAME)-$(VERSION)
 
 tag:
-	git tag -a v${VERSION} -m 'v${VERSION}'
-	git push origin v${VERSION}
+	@if git rev-parse -q --verify "refs/tags/$(TAG)" >/dev/null 2>&1; then \
+	  echo "NOTE: $(TAG) already exists locally, skipping tag creation (release-only bump, version unchanged)."; \
+	else \
+	  git tag -a $(TAG) -m '$(TAG)'; \
+	fi
+	@if git ls-remote --tags origin "refs/tags/$(TAG)" 2>/dev/null | grep -q .; then \
+	  echo "NOTE: $(TAG) already on origin, skipping push."; \
+	else \
+	  git push origin $(TAG); \
+	fi
 
 release:
 	${MAKE} rpmcl

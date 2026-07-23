@@ -16,4 +16,3 @@ echo "Unarchiving..."
 cd /opt ; sudo rm -rf go;sudo tar zxf go.tar.gz; sudo rm -f go.tar.gz
 
 echo "Completed."
-

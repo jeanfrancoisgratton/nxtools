@@ -2,24 +2,22 @@
 # Packager: Package builder <builder@famillegratton.net>
 
 pkgname=nxtools
-pkgver=1.1.1
+pkgver=1.1.2
 pkgrel=1
-pkgdesc="Nexus Repository Manager CLI management tool"
+pkgdesc="Nexus Repository Management tools"
 arch=('x86_64')
-url="https://git.famillegratton.net:3000/devops/nxtools.git"
+url="{{ URL }}"
 license=('GPL-2.0-only')
 
 makedepends=('go')
-depends=('bash-completion')
+depends=()
 
-optdepends=('zsh: zsh completion support')
+optdepends=()
 
 options=('!debug')
 
 _binaryname='nxtools'
 _builddir="${pkgname}-${pkgver}"
-
-install=nxtools.install
 
 prepare() {
   rm -rf "${srcdir:?}/${_builddir}"

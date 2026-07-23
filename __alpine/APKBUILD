@@ -1,15 +1,15 @@
 # Maintainer: J.F.Gratton <jean-francois@famillegratton.net>
 # Packager: Package builder <builder@famillegratton.net>
 pkgname=nxtools
-pkgver=1.1.1
+pkgver=1.1.2
 pkgrel=1
 pkgdir=/data/packages
-pkgdesc="Nexus Repository Manager tools"
-url="https://git.famillegratton.net:3000/devops/nxtools.git"
+pkgdesc="Nexus Repository Management tools"
+url="https://git.famillegratton.net:3000/devops/nxtools"
 arch=x86_64
 license=GPL2
 #depends="gcompat"
-install="$pkgname.post-deinstall $pkgname.post-install"
+install="$pkgname.pre-install $pkgname.post-install $pkgname.pre-upgrade $pkgname.post-upgrade $pkgname.pre-deinstall $pkgname.post-deinstall"
 #source="$pkgname-$pkgver-$pkgrel.tar.bz2::http://localhost/$pkgname-$pkgver-$pkgrel.tar.bz2"
 builddir="$startdir/src/BUILD"
 
@@ -26,7 +26,7 @@ build() {
 	go env | egrep 'GOFLAGS|CGO_ENABLED|GOOS|GOARCH' || true
 
 	# Static, non-PIE, internal linker
-	CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -buildid= -linkmode=internal" -o "$binaryname" .
+	go build -trimpath -ldflags="-s -w -buildid= -linkmode=internal" -o "$binaryname" .
 }
 
 package() {
