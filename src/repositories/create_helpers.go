@@ -49,6 +49,10 @@ func createAlpine(reponame, blobname string) ([]byte, *cerr.CustomError) {
 	if err != nil {
 		return nil, err
 	}
+	kp, err = toPKCS1RSAKey(kp)
+	if err != nil {
+		return nil, err
+	}
 
 	payload := AlpineRepoSettingsStruct{
 		HostedRepoCommonAttributesStruct: HostedRepoCommonAttributesStruct{

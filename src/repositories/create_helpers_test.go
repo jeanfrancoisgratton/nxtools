@@ -7,11 +7,45 @@
 package repositories
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"os"
 	"path/filepath"
 	"testing"
 )
+
+// genPKCS1RSAKeyPEM generates a throwaway RSA key and returns it PEM-encoded
+// in PKCS1 ("RSA PRIVATE KEY") form, alongside the key itself for comparison.
+func genPKCS1RSAKeyPEM(t *testing.T) (*rsa.PrivateKey, string) {
+	t.Helper()
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pemStr := string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}))
+	return priv, pemStr
+}
+
+// genPKCS8RSAKeyPEM generates a throwaway RSA key and returns it PEM-encoded
+// in PKCS8 ("PRIVATE KEY") form, alongside the key itself for comparison.
+func genPKCS8RSAKeyPEM(t *testing.T) (*rsa.PrivateKey, string) {
+	t.Helper()
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	der, err := x509.MarshalPKCS8PrivateKey(priv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pemStr := string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der}))
+	return priv, pemStr
+}
 
 // writeKeyFile writes a throwaway signing key and points RepoSigningFile at it.
 func writeKeyFile(t *testing.T, contents string) {
@@ -84,7 +118,8 @@ func TestCreateApt_MissingKeyFile(t *testing.T) {
 }
 
 func TestCreateAlpine(t *testing.T) {
-	writeKeyFile(t, "ALPINE-RSA-KEY")
+	_, pkcs1Pem := genPKCS1RSAKeyPEM(t)
+	writeKeyFile(t, pkcs1Pem)
 	swap(t, &RepoSigningPassphrase, "secret")
 	swap(t, &StorageWritePolicy, "ALLOW_ONCE")
 	swapBool(t, &StorageStrictContentValidation, true)
@@ -104,7 +139,8 @@ func TestCreateAlpine(t *testing.T) {
 	if out.Storage.BlobStoreName != "alpineblob" || out.Storage.WritePolicy != "ALLOW_ONCE" {
 		t.Errorf("storage = %+v", out.Storage)
 	}
-	if out.AlpineSigning.Keypair != "ALPINE-RSA-KEY" || out.AlpineSigning.Passphrase != "secret" {
+	// A key already in PKCS1 form must pass through unchanged.
+	if out.AlpineSigning.Keypair != pkcs1Pem || out.AlpineSigning.Passphrase != "secret" {
 		t.Errorf("alpineSigning = %+v", out.AlpineSigning)
 	}
 
@@ -121,6 +157,57 @@ func TestCreateAlpine(t *testing.T) {
 	}
 	if _, ok := keys["aptSigning"]; ok {
 		t.Error("alpine payload must not contain an aptSigning block")
+	}
+}
+
+func TestCreateAlpine_ConvertsPKCS8ToPKCS1(t *testing.T) {
+	priv, pkcs8Pem := genPKCS8RSAKeyPEM(t)
+	writeKeyFile(t, pkcs8Pem)
+
+	payload, err := createAlpine("r", "b")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var out AlpineRepoSettingsStruct
+	if e := json.Unmarshal(payload, &out); e != nil {
+		t.Fatalf("payload not valid JSON: %v", e)
+	}
+
+	block, _ := pem.Decode([]byte(out.AlpineSigning.Keypair))
+	if block == nil || block.Type != "RSA PRIVATE KEY" {
+		t.Fatalf("expected key converted to PKCS1 PEM, got block = %+v", block)
+	}
+	parsed, e := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if e != nil {
+		t.Fatalf("converted key does not parse as PKCS1: %v", e)
+	}
+	if parsed.N.Cmp(priv.N) != 0 {
+		t.Error("converted key material does not match original key")
+	}
+}
+
+func TestCreateAlpine_RejectsNonRSAKey(t *testing.T) {
+	ecKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	der, err := x509.MarshalPKCS8PrivateKey(ecKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ecPem := string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der}))
+	writeKeyFile(t, ecPem)
+
+	if _, err := createAlpine("r", "b"); err == nil {
+		t.Fatal("expected error for non-RSA signing key")
+	}
+}
+
+func TestCreateAlpine_RejectsInvalidPEM(t *testing.T) {
+	writeKeyFile(t, "this is not a PEM-encoded key")
+
+	if _, err := createAlpine("r", "b"); err == nil {
+		t.Fatal("expected error for non-PEM signing key file")
 	}
 }
 
