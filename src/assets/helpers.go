@@ -13,10 +13,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	cerr "github.com/jeanfrancoisgratton/customError/v3"
-	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"nxtools/repositories"
 	"nxtools/shared"
+
+	cerr "github.com/jeanfrancoisgratton/customError/v3"
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 )
 
 func normalizeUploadFormat(format string) string {
@@ -35,7 +36,7 @@ func normalizeUploadFormat(format string) string {
 		return "go"
 	case "git-lfs":
 		return "gitlfs"
-	case "conane": // historical typo in an older upload switch
+	case "conan": // historical typo in an older upload switch
 		return "conan"
 	default:
 		return format
@@ -282,14 +283,14 @@ func uploadAlpine(repoName, filePath, directory string) *cerr.CustomError {
 }
 
 const (
-	defaultAlpineVersion    = "edge"
-	defaultAlpineRepository = "main"
+	defaultAlpineVersion    = "nexus"
+	defaultAlpineRepository = "home"
 )
 
 // parseAlpineCoordinates splits the -d/--directory value into the Alpine
 // version and repository section. It expects exactly two non-empty path
 // segments, e.g. "edge/main" or "v3.21/community". When -d is omitted (the
-// flag's "/" default) or empty, it falls back to edge/main so existing
+// flag's "/" default) or empty, it falls back to nexus/home so existing
 // tooling that never passed -d keeps working. A value with the wrong number
 // of segments (e.g. a single "community") is rejected rather than guessed.
 func parseAlpineCoordinates(directory string) (string, string, *cerr.CustomError) {
@@ -309,7 +310,7 @@ func parseAlpineCoordinates(directory string) (string, string, *cerr.CustomError
 	if len(segments) != 2 {
 		return "", "", &cerr.CustomError{
 			Title:   "Invalid Alpine coordinates",
-			Message: "alpine uploads expect -d <version>/<repository> (e.g. -d edge/main or -d v3.21/community); omit -d to default to edge/main",
+			Message: "alpine uploads expect -d <version>/<repository> (e.g. -d edge/main or -d v3.21/community); omit -d to default to nexus/home",
 		}
 	}
 

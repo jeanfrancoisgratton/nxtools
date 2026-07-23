@@ -1,5 +1,6 @@
 | Release | Date        | Comments                                                                                                                                                                             |
 |---------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.1.1   | 2026.07.23  | Fixed the default root path in Alpine repos                                                                                                                                          |
 | 1.1.0   | 2026.07.20  | Added `assets latest` to get the latest version of `PACKAGE` in `REPO`                                                                                                               |
 | 1.0.2   | 2026.07.20  | cicd nearly automated                                                                                                                                                                |
 | 1.0.1   | 2026.07.20  | fixed apkbuild upload specs                                                                                                                                                          |
