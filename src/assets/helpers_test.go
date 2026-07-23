@@ -24,7 +24,6 @@ func TestNormalizeUploadFormat(t *testing.T) {
 		"golang":  "go",
 		"git-lfs": "gitlfs",
 		"gitlfs":  "gitlfs",
-		"conane":  "conan",
 		"conan":   "conan",
 		"Apt":     "apt",
 		"  yum ":  "yum",
