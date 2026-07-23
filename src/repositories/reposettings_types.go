@@ -11,6 +11,7 @@ var RepoType = "hosted"
 var RepoSigningFile string
 var RepoAptDistro = "nexus"
 var RepoSigningPassphrase = ""
+var AlpineSignKeyDir string
 var RepoContentDisposition = "INLINE"
 var StorageWritePolicy = "ALLOW"
 var StorageStrictContentValidation = true

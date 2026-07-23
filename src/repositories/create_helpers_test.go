@@ -84,12 +84,15 @@ func TestCreateApt_MissingKeyFile(t *testing.T) {
 }
 
 func TestCreateAlpine(t *testing.T) {
-	writeKeyFile(t, "ALPINE-RSA-KEY")
+	// Unlike APT, Alpine's payload builder takes the keypair directly rather
+	// than reading RepoSigningFile: Nexus re-labels whatever key it's given
+	// under its own internal identifier, so there is no supported "bring
+	// your own keyfile" path for this format (see assets.CreateSignedAlpineRepo).
 	swap(t, &RepoSigningPassphrase, "secret")
 	swap(t, &StorageWritePolicy, "ALLOW_ONCE")
 	swapBool(t, &StorageStrictContentValidation, true)
 
-	payload, err := createAlpine("alpinerepo", "alpineblob")
+	payload, err := createAlpine("alpinerepo", "alpineblob", "ALPINE-RSA-KEY")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -121,16 +124,6 @@ func TestCreateAlpine(t *testing.T) {
 	}
 	if _, ok := keys["aptSigning"]; ok {
 		t.Error("alpine payload must not contain an aptSigning block")
-	}
-}
-
-func TestCreateAlpine_MissingKeyFile(t *testing.T) {
-	prev := RepoSigningFile
-	RepoSigningFile = filepath.Join(t.TempDir(), "nope.pem")
-	t.Cleanup(func() { RepoSigningFile = prev })
-
-	if _, err := createAlpine("r", "b"); err == nil {
-		t.Fatal("expected error when signing key file is missing")
 	}
 }
 

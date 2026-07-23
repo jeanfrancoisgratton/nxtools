@@ -41,11 +41,10 @@ func CreateRepository(reponame, blobname string) *cerr.CustomError {
 			return sendPayload(reponame, blobname, payload)
 		}
 	case "alpine", "apk":
-		RepoFormat = "alpine"
-		if payload, e1 := createAlpine(reponame, blobname); e1 != nil {
-			return e1
-		} else {
-			return sendPayload(reponame, blobname, payload)
+		return &cerr.CustomError{
+			Title: "Alpine repos must be created via --sign",
+			Message: "Alpine hosted repos need a generated-and-registered signing key; " +
+				"use `repo create --format alpine ... --sign[=PATH]` instead of calling this path directly",
 		}
 	case "yum":
 		if payload, e1 := createYum(reponame, blobname); e1 != nil {

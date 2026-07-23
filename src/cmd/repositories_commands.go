@@ -59,9 +59,26 @@ var repoCreateCmd = &cobra.Command{
 			hftx.ErrorSign("You need to provide a PGP private key file (flag -k) when using the APT format")
 			os.Exit(1)
 		}
-		if fmtLower := strings.ToLower(repositories.RepoFormat); (fmtLower == "alpine" || fmtLower == "apk") && repositories.RepoSigningFile == "" {
-			hftx.ErrorSign("You need to provide an RSA private key file (flag -k) when using the Alpine format")
-			os.Exit(1)
+
+		// Alpine hosted repos are handled by an entirely separate path: Nexus
+		// re-labels whatever signing key it's given under its own internal
+		// identifier, so there's no point accepting a caller-supplied keyfile
+		// (-k) here — it would look accepted but would never actually be the
+		// key apk-tools ends up trusting. --sign generates a fresh keypair,
+		// registers it, learns Nexus's identifier for it, and saves both
+		// halves locally under that name.
+		if fmtLower := strings.ToLower(repositories.RepoFormat); fmtLower == "alpine" || fmtLower == "apk" {
+			if repositories.RepoSigningFile != "" {
+				fmt.Println(hftx.WarningSign("-k/--keyfile is ignored for the Alpine format; use --sign instead"))
+			}
+			if !cmd.Flags().Changed("sign") {
+				hftx.ErrorSign("You need to pass --sign (optionally --sign=PATH) when using the Alpine format")
+				os.Exit(1)
+			}
+			if err := assets.CreateSignedAlpineRepo(args[0], args[1], repositories.AlpineSignKeyDir); err != nil {
+				fmt.Println(err.Error())
+			}
+			return
 		}
 
 		// ok, let's go
@@ -154,6 +171,13 @@ func init() {
 	repoCreateCmd.Flags().UintVar(&repositories.DockerHttpsPort, "https", 0, "HTTP port the registry listens on")
 	repoCreateCmd.Flags().StringVarP(&repositories.DockerSubdomain, "subdomain", "S", "", "Subdomain to route registry to")
 	repoCreateCmd.Flags().BoolVarP(&repositories.DockerPathEnabled, "path", "P", false, "Path enabled")
+	// Alpine only. No shorthand: -S is already taken by --subdomain on this
+	// same command. Bare --sign saves the generated keypair in the current
+	// directory; --sign=PATH (note the required "=" — see NoOptDefVal below)
+	// saves it under PATH instead, creating it if absent.
+	repoCreateCmd.Flags().StringVar(&repositories.AlpineSignKeyDir, "sign", "",
+		"Alpine only: generate a signing keypair, register it with Nexus, and save both halves locally under the name Nexus assigns (optionally --sign=PATH to choose the save directory, default is the current directory)")
+	repoCreateCmd.Flags().Lookup("sign").NoOptDefVal = "."
 
 	// Mark "a" and "b" as mutually exclusive
 	repoCreateCmd.MarkFlagsMutuallyExclusive("http", "https")

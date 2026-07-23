@@ -44,12 +44,13 @@ func createApt(reponame, blobname string) ([]byte, *cerr.CustomError) {
 	return pload, nil
 }
 
-func createAlpine(reponame, blobname string) ([]byte, *cerr.CustomError) {
-	kp, err := readFileAsString(RepoSigningFile)
-	if err != nil {
-		return nil, err
-	}
-
+// createAlpine builds the Alpine hosted-repo creation payload from an
+// already-in-hand keypair. Unlike the other formats, Alpine signing keys are
+// never read from a user-supplied file (see CreateAlpineHostedRepo) — Nexus
+// assigns its own internal identifier to whatever key it's given, discarding
+// the caller's filename, so there is no point letting the operator "bring
+// their own key" here.
+func createAlpine(reponame, blobname, keypair string) ([]byte, *cerr.CustomError) {
 	payload := AlpineRepoSettingsStruct{
 		HostedRepoCommonAttributesStruct: HostedRepoCommonAttributesStruct{
 			Name:   reponame,
@@ -61,7 +62,7 @@ func createAlpine(reponame, blobname string) ([]byte, *cerr.CustomError) {
 			},
 		},
 		AlpineSigning: RepoSigningStruct{
-			Keypair:    kp,
+			Keypair:    keypair,
 			Passphrase: RepoSigningPassphrase,
 		},
 	}
@@ -71,6 +72,21 @@ func createAlpine(reponame, blobname string) ([]byte, *cerr.CustomError) {
 		return nil, &cerr.CustomError{Title: "failed to marshal Alpine repo payload", Message: e2.Error()}
 	}
 	return pload, nil
+}
+
+// CreateAlpineHostedRepo creates the Nexus-side Alpine hosted repository
+// given an already-generated PKCS8 keypair PEM. It only performs the create
+// call; it does not upload anything or learn the key identifier Nexus
+// assigns — that's handled by assets.CreateSignedAlpineRepo, which is the
+// only supported entry point for Alpine repo creation (see the -S/--sign
+// flag on `repo create`).
+func CreateAlpineHostedRepo(reponame, blobname, keypairPEM string) *cerr.CustomError {
+	RepoFormat = "alpine"
+	payload, err := createAlpine(reponame, blobname, keypairPEM)
+	if err != nil {
+		return err
+	}
+	return sendPayload(reponame, blobname, payload)
 }
 
 func createYum(reponame, blobname string) ([]byte, *cerr.CustomError) {
