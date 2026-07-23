@@ -5,7 +5,7 @@
 %define _bash_completionsdir /usr/share/bash-completion/completions
 %define _zsh_completionsdir  /usr/share/zsh/site-functions
 %define _version 1.1.3
-%define _rel 2
+%define _rel 3
 %define _arch x86_64
 %define _binaryname nxtools
 
