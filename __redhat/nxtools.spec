@@ -69,3 +69,8 @@ fi
 
 
 %changelog
+* Thu Jul 23 2026 Binary package builder <builder@famillegratton.net> 1.1.2-1
+- Merge remote-tracking branch 'refs/remotes/origin/develop' into develop
+- refreshed version
+- Enforce PKCS1 key format to sign APK packages
+
