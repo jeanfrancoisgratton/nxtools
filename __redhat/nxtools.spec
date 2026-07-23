@@ -69,6 +69,14 @@ fi
 
 
 %changelog
+* Thu Jul 23 2026 Binary package builder <builder@famillegratton.net> 1.1.3-2
+- fixed multiple post-inst issues
+- chore: update changelog for 1.1.3-1
+- version bump
+- fixed the signing keys generation for Alpine repos
+- Revert "Enforce PKCS1 key format to sign APK packages"
+- removed un-needed scripts
+
 * Thu Jul 23 2026 Binary package builder <builder@famillegratton.net> 1.1.3-1
 - version bump
 - fixed the signing keys generation for Alpine repos
