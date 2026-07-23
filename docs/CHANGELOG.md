@@ -1,5 +1,7 @@
 | Release | Date        | Comments                                                                                                                                                                             |
 |---------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.1.3   | 2026.07.26  | Fixed private/public signing keypair generation for APK packages                                                                                                                     |
+| 1.1.2   | _n/a_       | First attempt at signing APK repo                                                                                                                                                    |
 | 1.1.1   | 2026.07.23  | Fixed the default root path in Alpine repos                                                                                                                                          |
 | 1.1.0   | 2026.07.20  | Added `assets latest` to get the latest version of `PACKAGE` in `REPO`                                                                                                               |
 | 1.0.2   | 2026.07.20  | cicd nearly automated                                                                                                                                                                |
