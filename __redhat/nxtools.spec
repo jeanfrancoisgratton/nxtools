@@ -69,6 +69,9 @@ fi
 
 
 %changelog
+* Fri Jul 24 2026 Binary package builder <builder@famillegratton.net> 1.1.4-1
+- added assets fetch support for raw-format repos
+
 * Thu Jul 23 2026 Binary package builder <builder@famillegratton.net> 1.1.3-3
 - Other makefile fixes
 - Merge remote-tracking branch 'refs/remotes/origin/develop' into develop
