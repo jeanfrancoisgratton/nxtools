@@ -5,6 +5,7 @@
 package repositories
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -63,4 +64,45 @@ func GetGroupRepository(name, format string) (GroupedRepoCommonAttributesStruct,
 	}
 
 	return group, nil
+}
+
+// UpdateGroupRepository persists an amended group-type repository configuration,
+// typically after adding or removing entries from its member list.
+//
+// Endpoint:
+//
+//	PUT /service/rest/v1/repositories/{format}/group/{repositoryName}
+func UpdateGroupRepository(group GroupedRepoCommonAttributesStruct, format string) *cerr.CustomError {
+	name := strings.TrimSpace(group.Name)
+	if name == "" || strings.TrimSpace(format) == "" {
+		return &cerr.CustomError{Title: "Missing parameters", Message: "repository name and format are required"}
+	}
+
+	payload, e1 := json.Marshal(group)
+	if e1 != nil {
+		return &cerr.CustomError{Title: "Unable to encode group repository", Message: e1.Error()}
+	}
+
+	c, err := rest.NewClientFromEnvFile(shared.Envfile)
+	if err != nil {
+		return err
+	}
+
+	path := "/service/rest/v1/repositories/" + groupAPIFormat(format) + "/group/" + url.PathEscape(name)
+	headers := http.Header{}
+	headers.Set("Accept", "application/json")
+	headers.Set("Content-Type", "application/json")
+
+	resp, e2 := c.Do(context.Background(), http.MethodPut, path, nil, bytes.NewReader(payload), headers)
+	if e2 != nil {
+		return e2
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return &cerr.CustomError{Title: "Unable to update group repository", Message: "HTTP status code: " + resp.Status + ": " + string(body), Code: resp.StatusCode}
+	}
+
+	return nil
 }
