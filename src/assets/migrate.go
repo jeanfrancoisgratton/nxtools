@@ -116,8 +116,16 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 
 	nTotalAssets = uint(len(items))
 
+	// Download/upload each asset through a scratch directory so we never clobber files in
+	// the caller's working directory and never leave stragglers behind if a transfer fails.
+	tmpDir, mkErr := os.MkdirTemp("", "nxtools-migrate-")
+	if mkErr != nil {
+		return nMovedAssets, nTotalAssets, &cerr.CustomError{Title: "Failed to create temporary directory", Message: mkErr.Error()}
+	}
+	defer os.RemoveAll(tmpDir)
+
 	for _, item := range items {
-		targetFile := path.Base(item.Path)
+		targetFile := path.Join(tmpDir, path.Base(item.Path))
 
 		// Get the file from the source repository
 		if !shared.QuietOutput {
@@ -134,8 +142,9 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 		}
 
 		// File has been downloaded, time to upload
+		displayName := path.Base(targetFile)
 		if !shared.QuietOutput {
-			fmt.Println(hftx.InProgressSign("Uploading " + hftx.Green(targetFile)))
+			fmt.Println(hftx.InProgressSign("Uploading " + hftx.Green(displayName)))
 		}
 		shared.QuietOutput = false
 		if me3 := UploadAsset(newrepo, targetFile, ""); me3 != nil {
@@ -143,12 +152,12 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 		}
 		shared.QuietOutput = quiet
 		if !shared.QuietOutput {
-			fmt.Println(hftx.EnabledSign("Uploaded "+hftx.Green(targetFile)) + " to " + hftx.Green(newrepo))
+			fmt.Println(hftx.EnabledSign("Uploaded "+hftx.Green(displayName)) + " to " + hftx.Green(newrepo))
 		}
 
 		// Ok, everything went fine, erasing the file and incrementing the counter
 		if me4 := os.Remove(targetFile); me4 != nil {
-			return nMovedAssets, nTotalAssets, &cerr.CustomError{Title: "Failed to remove " + hftx.Red(targetFile), Message: me4.Error()}
+			return nMovedAssets, nTotalAssets, &cerr.CustomError{Title: "Failed to remove " + hftx.Red(displayName), Message: me4.Error()}
 		}
 		nMovedAssets++
 	}
