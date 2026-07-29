@@ -175,18 +175,12 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 	return nMovedAssets, nTotalAssets, nil
 }
 
-// This is where we remove oldrepo from all groups it belongs to, unless repositories.KeepSource is set
-// This is how it goes :
-//		1. we loop through all the repos
-//		2. is the repo of the "grouped" type ? no -> return to step 1
-//		3. is that grouped repo of the same format as old/new repo ? no -> return to step 1
-//		4. is that reponame "newrepo" ?
-//			yes -> add newrepo to members in that repo
-//		5. is that reponame "oldrepo" ? no -> return to step 1
-//			yes -> remove from member list if KeepSource is false
-//
-
-func updateGroups(old, new, rformat string) *cerr.CustomError {
+// updateGroups makes the migrated repository take the source repository's place in every
+// same-format group it belonged to. For each group repo of the matching format that lists
+// oldName as a member, we add newName (if not already present) and drop oldName unless the
+// source is being kept (repositories.KeepSource). Groups that never referenced oldName are
+// left untouched.
+func updateGroups(oldName, newName, rformat string) *cerr.CustomError {
 	repogrps, uge1 := repositories.ListRepositories(false)
 	if uge1 != nil {
 		return uge1
@@ -199,19 +193,58 @@ func updateGroups(old, new, rformat string) *cerr.CustomError {
 		if strings.ToLower(repo.Format) != strings.ToLower(rformat) {
 			continue
 		}
+
+		group, ge := repositories.GetGroupRepository(repo.Name, repo.Format)
+		if ge != nil {
+			return ge
+		}
+
+		// Only touch groups that actually referenced the source repository.
+		members := group.Group.MemberNames
+		oldIdx := -1
+		hasNew := false
+		for i, m := range members {
+			if m == oldName {
+				oldIdx = i
+			}
+			if m == newName {
+				hasNew = true
+			}
+		}
+		if oldIdx == -1 {
+			continue
+		}
+
+		changed := false
+		if !hasNew {
+			members = append(members, newName)
+			changed = true
+		}
+		if !repositories.KeepSource {
+			// oldName's index may have shifted if we appended, so locate it again.
+			out := members[:0]
+			for _, m := range members {
+				if m == oldName {
+					changed = true
+					continue
+				}
+				out = append(out, m)
+			}
+			members = out
+		}
+
+		if !changed {
+			continue
+		}
+
+		group.Group.MemberNames = members
+		if ue := repositories.UpdateGroupRepository(group, repo.Format); ue != nil {
+			return ue
+		}
+		if !shared.QuietOutput {
+			fmt.Println(hftx.EnabledSign("Updated group " + hftx.Green(repo.Name) + " membership"))
+		}
 	}
 
 	return nil
 }
-
-//
-//	if !repositories.KeepSource {
-//		for _, repo := range repogrps {
-//			if repo.Format == repositories.RepoFormat {
-//				if repo.Name == old {
-//					repo.
-//				}
-//			}
-//		}
-//	}
-//}
