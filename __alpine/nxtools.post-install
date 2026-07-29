@@ -1,3 +1,4 @@
 #!/usr/bin/env ash
 
-exit 0
+set -e
+
