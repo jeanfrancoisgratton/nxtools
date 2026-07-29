@@ -57,6 +57,18 @@ install -Dpm 0755 %{_builddir}/%{name}-%{version}/%{_binaryname} %{buildroot}%{_
 
 
 %changelog
+* Wed Jul 29 2026 Binary package builder <builder@famillegratton.net> 1.2.0-1
+- Version bump
+- Updated doc, removed the reindex feature
+- feat(assets): implement group membership updates during migration
+- feat(repositories): add UpdateGroupRepository to persist group config
+- feat(repositories): add GetGroupRepository to read a group's config
+- fix: migrate assets through a temp dir instead of the working directory
+- fix: correct MigrateRepo sanity-check order and move group cleanup out of asset loop
+- builddeps update
+- Removed all shell completion packaging scripts to eliminate complicated dependencies issues
+- DEBBUILDER: re-added mistakenly removed packaging scripts
+
 * Fri Jul 24 2026 Binary package builder <builder@famillegratton.net> 1.1.4-1
 - added assets fetch support for raw-format repos
 
