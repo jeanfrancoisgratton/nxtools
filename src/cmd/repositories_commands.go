@@ -13,7 +13,6 @@ import (
 	"nxtools/assets"
 
 	"nxtools/repositories"
-	"nxtools/tasks"
 
 	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"github.com/spf13/cobra"
@@ -24,7 +23,7 @@ var repoCmd = &cobra.Command{
 	Aliases: []string{"repos", "repositories"},
 	Short:   "Repository-related sub-command",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Valid subcommands are: { list | create | delete | type | reindex | supported | migrate }")
+		fmt.Println("Valid subcommands are: { list | create | delete | type | supported | migrate }")
 	},
 }
 
@@ -115,17 +114,19 @@ var repoQueryTypeCmd = &cobra.Command{
 	},
 }
 
-var repoReindexCmd = &cobra.Command{
-	Use:     "reindex",
-	Example: "nxtools repo reindex [-e defaultEnv.json] REPO_NAME",
-	Short:   "Rebuilds the repository metadata",
-	Args:    cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		if err := tasks.ReindexRepo(args[0]); err != nil {
-			fmt.Println(err.Error())
-		}
-	},
-}
+// repoReindexCmd is retired: reindexing is no longer exposed as a command. The underlying
+// implementation still lives in tasks.ReindexRepo if this needs to come back.
+// var repoReindexCmd = &cobra.Command{
+// 	Use:     "reindex",
+// 	Example: "nxtools repo reindex [-e defaultEnv.json] REPO_NAME",
+// 	Short:   "Rebuilds the repository metadata",
+// 	Args:    cobra.ExactArgs(1),
+// 	Run: func(cmd *cobra.Command, args []string) {
+// 		if err := tasks.ReindexRepo(args[0]); err != nil {
+// 			fmt.Println(err.Error())
+// 		}
+// 	},
+// }
 
 var repoListSupportedCmd = &cobra.Command{
 	Use:     "supported",
@@ -149,7 +150,7 @@ var repoMigrateCmd = &cobra.Command{
 }
 
 func init() {
-	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, repoReindexCmd, repoListSupportedCmd, repoMigrateCmd)
+	repoCmd.AddCommand(repoListCmd, repoCreateCmd, repoDeleteCmd, repoQueryTypeCmd, repoListSupportedCmd, repoMigrateCmd)
 
 	repoListCmd.Flags().BoolVar(&repositories.RepoListJSONOutput, "json", false, "Output repository information as JSON")
 	repoMigrateCmd.Flags().BoolVarP(&repositories.KeepSource, "keep", "k", false, "Keep source repository assets")
