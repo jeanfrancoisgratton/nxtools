@@ -47,14 +47,14 @@ func MigrateRepo(oldrepo, newrepo string) *cerr.CustomError {
 		}
 	}
 
-	// Sanity check : we do not allow migrations of proxied or grouped repos
-	if strings.ToLower(oldr.Type) != "hosted" {
-		return &cerr.CustomError{Fatality: cerr.Warning, Title: "Migration not allowed", Message: "Migrations are only allowed for hosted type repositories"}
-	}
-
 	// The source repo has not been found
 	if oldr.Name == "" {
 		return &cerr.CustomError{Title: "The source repository does not exist.", Message: "It might have been misspelled ?"}
+	}
+
+	// Sanity check : we do not allow migrations of proxied or grouped repos
+	if strings.ToLower(oldr.Type) != "hosted" {
+		return &cerr.CustomError{Fatality: cerr.Warning, Title: "Migration not allowed", Message: "Migrations are only allowed for hosted type repositories"}
 	}
 
 	// If the target repo does not exist, we have to create it, based on oldrepo's config
@@ -151,22 +151,17 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 			return nMovedAssets, nTotalAssets, &cerr.CustomError{Title: "Failed to remove " + hftx.Red(targetFile), Message: me4.Error()}
 		}
 		nMovedAssets++
+	}
 
-		// The following repo formats do not support grouped type repositories
-		if repositories.RepoFormat == "apt" || repositories.RepoFormat == "alpine" || repositories.RepoFormat == "gitlfs" || repositories.RepoFormat == "cocoapods" ||
-			repositories.RepoFormat == "composer" || repositories.RepoFormat == "helm" || repositories.RepoFormat == "hugginface" ||
-			repositories.RepoFormat == "p2" || repositories.RepoFormat == "swift" {
-			return nMovedAssets, nTotalAssets, nil
-		}
-		if me5 := updateGroups(oldrepo, newrepo, rformat); me5 != nil {
-			return nMovedAssets, nTotalAssets, me5
-		} else {
-			if !repositories.KeepSource {
-				if me6 := repositories.DeleteRepository(oldrepo); me6 != nil {
-					return nMovedAssets, nTotalAssets, me6
-				}
-			}
-		}
+	// All assets have been migrated. The following repo formats do not support grouped
+	// type repositories, so there are no group memberships to update for them.
+	if repositories.RepoFormat == "apt" || repositories.RepoFormat == "alpine" || repositories.RepoFormat == "gitlfs" || repositories.RepoFormat == "cocoapods" ||
+		repositories.RepoFormat == "composer" || repositories.RepoFormat == "helm" || repositories.RepoFormat == "huggingface" ||
+		repositories.RepoFormat == "p2" || repositories.RepoFormat == "swift" {
+		return nMovedAssets, nTotalAssets, nil
+	}
+	if me5 := updateGroups(oldrepo, newrepo, rformat); me5 != nil {
+		return nMovedAssets, nTotalAssets, me5
 	}
 	return nMovedAssets, nTotalAssets, nil
 }
@@ -189,10 +184,10 @@ func updateGroups(old, new, rformat string) *cerr.CustomError {
 	}
 
 	for _, repo := range repogrps {
-		if repo.Type != "group" {
+		if strings.ToLower(repo.Type) != "group" {
 			continue
 		}
-		if repo.Format != rformat {
+		if strings.ToLower(repo.Format) != strings.ToLower(rformat) {
 			continue
 		}
 	}
