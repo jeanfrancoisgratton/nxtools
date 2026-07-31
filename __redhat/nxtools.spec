@@ -56,6 +56,10 @@ install -Dpm 0755 %{_builddir}/%{name}-%{version}/%{_binaryname} %{buildroot}%{_
 
 
 %changelog
+* Fri Jul 31 2026 Binary package builder <builder@famillegratton.net> 1.2.1-1
+- changed hardcoded path for GO
+- hardcoded GO path, reverted first-class citizenship of assets upload and assets download
+
 * Wed Jul 29 2026 Binary package builder <builder@famillegratton.net> 1.2.0-1
 - Version bump
 - Updated doc, removed the reindex feature
