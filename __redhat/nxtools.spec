@@ -31,8 +31,8 @@ Nexus Repository Management tools
 
 %build
 cd src
-/projects/.GO-VERSIONS/go/bin/go mod download
-PATH=$PATH:/opt/go/bin CGO_ENABLED=0 /projects/.GO-VERSIONS/go/bin/go build -trimpath -ldflags="-s -w -buildid=" -o %{_builddir}/%{name}-%{version}/%{_binaryname} .
+/opt/go/bin/go mod download
+PATH=$PATH:/opt/go/bin CGO_ENABLED=0 /opt/go/bin/go build -trimpath -ldflags="-s -w -buildid=" -o %{_builddir}/%{name}-%{version}/%{_binaryname} .
 
 %clean
 rm -rf $RPM_BUILD_ROOT

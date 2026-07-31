@@ -33,12 +33,12 @@ build() {
   export GOPATH="${srcdir}/gopath"
   export GOMODCACHE="${GOPATH}/pkg/mod"
 
-  /projects/.GO-VERSIONS/go/bin/go build -trimpath -mod=readonly -modcacherw -ldflags="-s -w -buildid=" -o "${_binaryname}" .
+  /opt/go/bin/go build -trimpath -mod=readonly -modcacherw -ldflags="-s -w -buildid=" -o "${_binaryname}" .
 }
 
 check() {
   cd "${srcdir}/${_builddir}"
-  /projects/.GO-VERSIONS/go/bin/go test -modcacherw ./...
+  /opt/go/bin/go test -modcacherw ./...
 }
 
 package() {

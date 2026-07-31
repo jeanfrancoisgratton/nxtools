@@ -33,7 +33,7 @@ build:
 	rm -rf "$(STAGING)"
 	install -d "$(STAGING)/DEBIAN" "$(STAGING)/opt/bin"
 	cp control preinst prerm postinst postrm "$(STAGING)/DEBIAN/"
-	cd $(SRCDIR) && CGO_ENABLED=0 /projects/.GO-VERSIONS/go/bin/go build -trimpath -ldflags="-s -w -buildid=" \
+	cd $(SRCDIR) && CGO_ENABLED=0 /opt/go/bin/go build -trimpath -ldflags="-s -w -buildid=" \
 	  -o "$(CURDIR)/$(STAGING)/opt/bin/$(BINARY)" .
 	sudo chown -R 0:0 "$(STAGING)/opt/bin/$(BINARY)"
 	dpkg-deb -b "$(STAGING)" "$(DEB)"
