@@ -4,7 +4,7 @@
 %define _prefix /opt
 %define _bash_completionsdir /usr/share/bash-completion/completions
 %define _zsh_completionsdir  /usr/share/zsh/site-functions
-%define _version 1.2.0
+%define _version 1.2.1
 %define _rel 1
 %define _arch x86_64
 %define _binaryname nxtools
@@ -19,7 +19,6 @@ License:    GPL2.0
 URL:        https://git.famillegratton.net:3000/devops/nxtools
 
 Source0:    %{name}-%{_version}.tar.gz
-#BuildArchitectures: x86_64
 BuildRequires: gcc
 #Requires: sudo
 #Obsoletes: vmman1 > 1.140
@@ -32,8 +31,8 @@ Nexus Repository Management tools
 
 %build
 cd src
-go mod download
-PATH=$PATH:/opt/go/bin CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -buildid=" -o %{_builddir}/%{name}-%{version}/%{_binaryname} .
+/projects/.GO-VERSIONS/go/bin/go mod download
+PATH=$PATH:/opt/go/bin CGO_ENABLED=0 /projects/.GO-VERSIONS/go/bin/go build -trimpath -ldflags="-s -w -buildid=" -o %{_builddir}/%{name}-%{version}/%{_binaryname} .
 
 %clean
 rm -rf $RPM_BUILD_ROOT

@@ -2,11 +2,11 @@
 # Packager: Package builder <builder@famillegratton.net>
 
 pkgname=nxtools
-pkgver=1.2.0
+pkgver=1.2.1
 pkgrel=1
 pkgdesc="Nexus Repository Management tools"
 arch=('x86_64')
-url="{{ URL }}"
+url="https://git.famillegratton.net:3000/devops/nxtools.git"
 license=('GPL-2.0-only')
 
 makedepends=('go')
@@ -33,12 +33,12 @@ build() {
   export GOPATH="${srcdir}/gopath"
   export GOMODCACHE="${GOPATH}/pkg/mod"
 
-  go build -trimpath -mod=readonly -modcacherw -ldflags="-s -w -buildid=" -o "${_binaryname}" .
+  /projects/.GO-VERSIONS/go/bin/go build -trimpath -mod=readonly -modcacherw -ldflags="-s -w -buildid=" -o "${_binaryname}" .
 }
 
 check() {
   cd "${srcdir}/${_builddir}"
-  go test -modcacherw ./...
+  /projects/.GO-VERSIONS/go/bin/go test -modcacherw ./...
 }
 
 package() {

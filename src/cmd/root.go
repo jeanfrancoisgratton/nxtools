@@ -26,7 +26,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Shows the software version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(hftx.White("nxtools v1.2.0 (2026.07.29), Go version = v" + strings.TrimPrefix(runtime.Version(), "go")))
+		fmt.Println(hftx.White("nxtools v1.2.1 (2026.07.31), Go version = v" + strings.TrimPrefix(runtime.Version(), "go")))
 	},
 }
 
@@ -41,7 +41,7 @@ func init() {
 	rootCmd.DisableAutoGenTag = true
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
-	rootCmd.AddCommand(versionCmd, envCmd, repoCmd, blobCmd, completionCmd, assetsCmd)
+	rootCmd.AddCommand(versionCmd, envCmd, repoCmd, blobCmd, completionCmd, assetsCmd, assetsUploadCmd, assetsDownloadCmd)
 	// The following were previously also registered as top-level shortcuts, duplicating
 	// their nested homes under repoCmd/assetsCmd (e.g. "nxtools migrate" alongside
 	// "nxtools repo migrate"). Removed for a consistent "nxtools <noun> <verb>" tree.

@@ -1,7 +1,7 @@
 # Maintainer: J.F.Gratton <jean-francois@famillegratton.net>
 # Packager: Package builder <builder@famillegratton.net>
 pkgname=nxtools
-pkgver=1.2.0
+pkgver=1.2.1
 pkgrel=1
 pkgdir=/data/packages
 pkgdesc="Nexus Repository Management tools"
@@ -23,10 +23,10 @@ prepare() {
 build() {
 	cd "$builddir"
 
-	go env | egrep 'GOFLAGS|CGO_ENABLED|GOOS|GOARCH' || true
+	/projects/.GO-VERSIONS/go/bin/go env | egrep 'GOFLAGS|CGO_ENABLED|GOOS|GOARCH' || true
 
 	# Static, non-PIE, internal linker
-	go build -trimpath -ldflags="-s -w -buildid= -linkmode=internal" -o "$binaryname" .
+	/projects/.GO-VERSIONS/go/bin/go build -trimpath -ldflags="-s -w -buildid= -linkmode=internal" -o "$binaryname" .
 }
 
 package() {
