@@ -56,6 +56,9 @@ install -Dpm 0755 %{_builddir}/%{name}-%{version}/%{_binaryname} %{buildroot}%{_
 
 
 %changelog
+* Sun Aug 16 2026 Binary package builder <builder@famillegratton.net> 1.2.1-2
+- RPMBUILDER: record the RPM changelog on develop instead of main
+
 * Fri Jul 31 2026 Binary package builder <builder@famillegratton.net> 1.2.1-1
 - changed hardcoded path for GO
 - hardcoded GO path, reverted first-class citizenship of assets upload and assets download
