@@ -54,6 +54,10 @@ install -Dpm 0755 %{_builddir}/%{name}-%{version}/%{_binaryname} %{buildroot}%{_
 
 
 %changelog
+* Tue Sep 15 2026 Binary package builder <builder@famillegratton.net> 1.3.1-1
+- enhancement: build fails on go vet/go test failure; dynamic version numbering change scheme
+- chore: another mislabeled version fix
+
 * Tue Sep 15 2026 Binary package builder <builder@famillegratton.net> 1.3.0-2
 - chore: another mislabeled version fix
 
