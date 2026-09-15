@@ -1,9 +1,9 @@
 // nxtools
 // Written by J.F. Gratton <jean-francois@famillegratton.net>
 // Original timestamp: 2026/03/24 21:55
-// Original filename: src/repositories/migrate.go
+// Original filename: src/migrate/migrate.go
 
-package assets
+package migrate
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	"path"
 	"strings"
 
+	"nxtools/assets"
 	"nxtools/repositories"
 	"nxtools/shared"
 
@@ -104,7 +105,7 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 	var nMovedAssets, nTotalAssets uint
 	quiet := shared.QuietOutput
 
-	items, me1 := ListAssets(oldrepo, false, false)
+	items, me1 := assets.ListAssets(oldrepo, false, false)
 	if me1 != nil {
 		return 0, 0, me1
 	}
@@ -124,7 +125,7 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 			fmt.Println(hftx.InProgressSign("Downloading " + hftx.Green(item.DownloadURL)))
 		}
 		shared.QuietOutput = false
-		if me2 := DownloadAsset(item.DownloadURL, targetFile); me2 != nil {
+		if me2 := assets.DownloadAsset(item.DownloadURL, targetFile); me2 != nil {
 			return nMovedAssets, nTotalAssets, me2
 		}
 
@@ -138,7 +139,7 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 			fmt.Println(hftx.InProgressSign("Uploading " + hftx.Green(targetFile)))
 		}
 		shared.QuietOutput = false
-		if me3 := UploadAsset(newrepo, targetFile, ""); me3 != nil {
+		if me3 := assets.UploadAsset(newrepo, targetFile, ""); me3 != nil {
 			return nMovedAssets, nTotalAssets, me3
 		}
 		shared.QuietOutput = quiet

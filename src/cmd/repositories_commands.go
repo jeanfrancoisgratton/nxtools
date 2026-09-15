@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"nxtools/assets"
+	"nxtools/migrate"
 
 	"nxtools/repositories"
 	"nxtools/tasks"
@@ -142,7 +143,7 @@ var repoMigrateCmd = &cobra.Command{
 	Short:   "Migrate OLD_REPO's contents to NEW_REPO",
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := assets.MigrateRepo(args[0], args[1]); err != nil {
+		if err := migrate.MigrateRepo(args[0], args[1]); err != nil {
 			fmt.Println(err.Error())
 		}
 	},
