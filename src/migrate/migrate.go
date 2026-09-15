@@ -58,10 +58,22 @@ func MigrateRepo(oldrepo, newrepo string) *cerr.CustomError {
 		return &cerr.CustomError{Fatality: cerr.Warning, Title: "Migration not allowed", Message: "Migrations are only allowed for hosted type repositories"}
 	}
 
-	// If the target repo does not exist, we have to create it, based on oldrepo's config
+	// Same restriction applies to a pre-existing target: proxy repos don't accept direct
+	// uploads and group repos are just read-only views over their members, so neither is a
+	// valid migration destination. A nonexistent target is fine — it gets created hosted below.
+	if newr.Name != "" && strings.ToLower(newr.Type) != "hosted" {
+		return &cerr.CustomError{Fatality: cerr.Warning, Title: "Migration not allowed",
+			Message: "Target repository " + newrepo + " exists but is of type " + newr.Type + "; migrations can only target hosted repositories"}
+	}
+
+	// If the target repo does not exist, we have to create it, based on oldrepo's config.
+	// CreateRepository branches on the repositories.RepoFormat global (normally populated by
+	// `repo create`'s --format flag), so it has to be set explicitly here from the source
+	// repo's actual format before calling it.
 	if newr.Name == "" {
 		newr = oldr // copying oldrepo config to newrepo
 		newr.Name = newrepo
+		repositories.RepoFormat = strings.ToLower(oldr.Format)
 		if ce = repositories.CreateRepository(newrepo, newr.Storage.BlobStoreName); ce != nil {
 			return ce
 		}
@@ -142,13 +154,21 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 			fmt.Println(hftx.EnabledSign("Downloaded "+hftx.Green(item.DownloadURL)) + " from " + hftx.Green(oldrepo))
 		}
 
-		// File has been downloaded, time to upload
+		// File has been downloaded, time to upload. The upload directory argument is only
+		// meaningful for the "raw" format (elsewhere it's either ignored or, for alpine,
+		// repurposed to mean version/repository coordinates rather than a path) — so only
+		// raw migrations carry the source asset's directory over; everything else keeps its
+		// existing per-format directory handling.
+		directory := ""
+		if repositories.RepoFormat == "raw" {
+			directory = path.Dir(item.Path)
+		}
 		displayName := path.Base(targetFile)
 		if !shared.QuietOutput {
 			fmt.Println(hftx.InProgressSign("Uploading " + hftx.Green(displayName)))
 		}
 		shared.QuietOutput = false
-		if me3 := assets.UploadAsset(newrepo, targetFile, ""); me3 != nil {
+		if me3 := assets.UploadAsset(newrepo, targetFile, directory); me3 != nil {
 			return nMovedAssets, nTotalAssets, me3
 		}
 		shared.QuietOutput = quiet
