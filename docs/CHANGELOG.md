@@ -1,5 +1,7 @@
 | Release | Date       | Comments                                                                                                                                                                             |
 |---------|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.2.1   | 2026.07.31 | Reverted change that demoted `assets upload` and `assets download` as second-class citizen functions; reverted them as first-class citizens                                          |
+| 1.2.0   | 2026.07.29 | Removed the `reindex` command, completed the `repo migrate` command                                                                                                                  |
 | 1.1.4   | 2026.07.24 | Raw format support could not properly sort various versions of a package as it lacks support for the `/service/rest/v1/search` endpoint                                              |
 | 1.1.3   | 2026.07.23 | Fixed private/public signing keypair generation for APK packages                                                                                                                     |
 | 1.1.2   | _n/a_      | First attempt at signing APK repo                                                                                                                                                    |

@@ -10,8 +10,9 @@ import (
 	"os"
 
 	"nxtools/assets"
-	"nxtools/tasks"
+	"nxtools/shared"
 
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"github.com/spf13/cobra"
 )
 
@@ -60,11 +61,8 @@ var assetsUploadCmd = &cobra.Command{
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
-		if assets.ReindexRepo {
-			if err := tasks.ReindexRepo(args[0]); err != nil {
-				fmt.Println(err.Error())
-				os.Exit(1)
-			}
+		if assets.ReindexRepo && !shared.QuietOutput {
+			fmt.Println(hftx.WarningSign("-r/--reindex no longer has any effect and will be removed in a future version"))
 		}
 	},
 }

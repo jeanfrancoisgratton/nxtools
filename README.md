@@ -4,7 +4,7 @@ ___
 This tool is a CLI-driven client to Nexus Repository Manager 3 servers.<br>It will allow:
 - authentication
 - blob store ops (list, delete, create)
-- repo ops (list, create, delete, reindex, migrate, query type/supported formats)
+- repo ops (list, create, delete, migrate, query type/supported formats)
 - asset ops (list, info, upload, download, fetch, delete)
 - more to come
 
@@ -185,8 +185,10 @@ If you need to list images and tags, use my other tool, [dtools2](https://github
 The syntax is: `nxtools assets upload REPO_NAME /PATH/TO/PACKAGE`
 
 A few notes worthy of attention :
-- The same package could be re-uploaded multiple times without triggering an error (ie: launching `nxtools upload MY_REPO MY_PACKAGE 3 successive times is OK)
+- The same package could be re-uploaded multiple times without triggering an error (ie: launching `nxtools assets upload MY_REPO MY_PACKAGE` 3 successive times is OK)
 - If you were trying to upload a package of a wrong format (say RPM) in the wrong repo (say DEB) the current error message would be an http response 500. This will be enhanced in future versions
+- `yum` and `apt` repositories do not rebuild their own metadata after a component upload (unlike `raw`, `alpine`, etc). `nxtools` now triggers that rebuild automatically right after a successful upload to those two formats — you no longer need to do anything extra. If the rebuild trigger itself fails, the upload is still reported as successful and a warning is printed instead (the asset did land in the repo; only the metadata refresh needs a retry, e.g. through the webUI, until NxRM exposes a proper REST endpoint for this)
+- The `-r, --reindex` flag on this command is deprecated and now a no-op (kept only so existing CI invocations that pass it don't break); a warning is printed unless `-q` is set. It will be removed in a future version
 
 ### Download an asset (package) from a repo
 All you need is the download url, from `ntxools assets ls REPO_NAME`, as shown below:
@@ -229,7 +231,7 @@ You first need to fetch the asset ID from `nxtools assets REPOSITORY_NAME`. This
 
 <a id="repos-ops"></a>
 ## Repositories operations
-The following operations are currently supported: list, create, delete, reindex, migrate, and querying a repo's type or the list of supported formats. Editing an existing repo is forthcoming.
+The following operations are currently supported: list, create, delete, migrate, and querying a repo's type or the list of supported formats. Editing an existing repo is forthcoming.
 <img src="./images/repos_-h.png" alt="repos -h">
 
 
@@ -263,16 +265,9 @@ Follows the usual pattern: `nxtools repo rm REPONAME`
 
 **Please be aware that this operation is irreversible, and *will* delete non-empty repos**
 
-### Reindex repos
-This goes this way: `nxtools [repos] reindex REPONAME`
-```bash
-[21:01:34|jfgratton@london:packages]: nxtools reindex aptLocal
-✅ Repository aptLocal was successfully reindexed
-```
+### Reindexing repos
+There is no longer a standalone `reindex` command. `yum` and `apt` repositories (the only formats that don't rebuild their own metadata) are now reindexed automatically by `nxtools assets upload` right after a successful upload — see [Upload an asset](#upload-an-asset-package-to-a-repo) above. All other formats (including Alpine, whose `APKINDEX` Nexus regenerates automatically on upload) never needed reindexing in the first place.
 
-You use this operation after having uploaded a package to the named repository or the reverse, having deleted an asset from a repo
 #### PRE-REQUISITES
-`nxtools` has not yet implemented tasks creation, and might never do so (unsure of that, yet), so it calls upon tasks that **have to already be present through the webUI**
-The task names have to follow this naming scheme: `_reindex_$REPONAME`, thus to reindex the repo `dnfLocal`, you would need to have a task named `_reindex_dnfLocal` already present
-
-*Note:* Alpine (APK) repositories are skipped — Nexus regenerates their `APKINDEX` metadata automatically on upload, so no reindex task is required.
+`nxtools` has not yet implemented tasks creation, and might never do so (unsure of that, yet), so the automatic reindex calls upon a task that **has to already be present through the webUI**.
+The task name has to follow this naming scheme: `_reindex_$REPONAME`, thus for the repo `dnfLocal`, you would need to have a task named `_reindex_dnfLocal` already present. If that task is missing, the upload still succeeds and a warning is printed instead.

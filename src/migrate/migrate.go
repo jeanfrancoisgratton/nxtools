@@ -48,14 +48,14 @@ func MigrateRepo(oldrepo, newrepo string) *cerr.CustomError {
 		}
 	}
 
-	// Sanity check : we do not allow migrations of proxied or grouped repos
-	if strings.ToLower(oldr.Type) != "hosted" {
-		return &cerr.CustomError{Fatality: cerr.Warning, Title: "Migration not allowed", Message: "Migrations are only allowed for hosted type repositories"}
-	}
-
 	// The source repo has not been found
 	if oldr.Name == "" {
 		return &cerr.CustomError{Title: "The source repository does not exist.", Message: "It might have been misspelled ?"}
+	}
+
+	// Sanity check : we do not allow migrations of proxied or grouped repos
+	if strings.ToLower(oldr.Type) != "hosted" {
+		return &cerr.CustomError{Fatality: cerr.Warning, Title: "Migration not allowed", Message: "Migrations are only allowed for hosted type repositories"}
 	}
 
 	// If the target repo does not exist, we have to create it, based on oldrepo's config
@@ -117,8 +117,16 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 
 	nTotalAssets = uint(len(items))
 
+	// Download/upload each asset through a scratch directory so we never clobber files in
+	// the caller's working directory and never leave stragglers behind if a transfer fails.
+	tmpDir, mkErr := os.MkdirTemp("", "nxtools-migrate-")
+	if mkErr != nil {
+		return nMovedAssets, nTotalAssets, &cerr.CustomError{Title: "Failed to create temporary directory", Message: mkErr.Error()}
+	}
+	defer os.RemoveAll(tmpDir)
+
 	for _, item := range items {
-		targetFile := path.Base(item.Path)
+		targetFile := path.Join(tmpDir, path.Base(item.Path))
 
 		// Get the file from the source repository
 		if !shared.QuietOutput {
@@ -135,8 +143,9 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 		}
 
 		// File has been downloaded, time to upload
+		displayName := path.Base(targetFile)
 		if !shared.QuietOutput {
-			fmt.Println(hftx.InProgressSign("Uploading " + hftx.Green(targetFile)))
+			fmt.Println(hftx.InProgressSign("Uploading " + hftx.Green(displayName)))
 		}
 		shared.QuietOutput = false
 		if me3 := assets.UploadAsset(newrepo, targetFile, ""); me3 != nil {
@@ -144,71 +153,99 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 		}
 		shared.QuietOutput = quiet
 		if !shared.QuietOutput {
-			fmt.Println(hftx.EnabledSign("Uploaded "+hftx.Green(targetFile)) + " to " + hftx.Green(newrepo))
+			fmt.Println(hftx.EnabledSign("Uploaded "+hftx.Green(displayName)) + " to " + hftx.Green(newrepo))
 		}
 
 		// Ok, everything went fine, erasing the file and incrementing the counter
 		if me4 := os.Remove(targetFile); me4 != nil {
-			return nMovedAssets, nTotalAssets, &cerr.CustomError{Title: "Failed to remove " + hftx.Red(targetFile), Message: me4.Error()}
+			return nMovedAssets, nTotalAssets, &cerr.CustomError{Title: "Failed to remove " + hftx.Red(displayName), Message: me4.Error()}
 		}
 		nMovedAssets++
+	}
 
-		// The following repo formats do not support grouped type repositories
-		if repositories.RepoFormat == "apt" || repositories.RepoFormat == "alpine" || repositories.RepoFormat == "gitlfs" || repositories.RepoFormat == "cocoapods" ||
-			repositories.RepoFormat == "composer" || repositories.RepoFormat == "helm" || repositories.RepoFormat == "hugginface" ||
-			repositories.RepoFormat == "p2" || repositories.RepoFormat == "swift" {
-			return nMovedAssets, nTotalAssets, nil
-		}
-		if me5 := updateGroups(oldrepo, newrepo, rformat); me5 != nil {
-			return nMovedAssets, nTotalAssets, me5
-		} else {
-			if !repositories.KeepSource {
-				if me6 := repositories.DeleteRepository(oldrepo); me6 != nil {
-					return nMovedAssets, nTotalAssets, me6
-				}
-			}
-		}
+	// All assets have been migrated. The following repo formats do not support grouped
+	// type repositories, so there are no group memberships to update for them.
+	if repositories.RepoFormat == "apt" || repositories.RepoFormat == "alpine" || repositories.RepoFormat == "gitlfs" || repositories.RepoFormat == "cocoapods" ||
+		repositories.RepoFormat == "composer" || repositories.RepoFormat == "helm" || repositories.RepoFormat == "huggingface" ||
+		repositories.RepoFormat == "p2" || repositories.RepoFormat == "swift" {
+		return nMovedAssets, nTotalAssets, nil
+	}
+	if me5 := updateGroups(oldrepo, newrepo, rformat); me5 != nil {
+		return nMovedAssets, nTotalAssets, me5
 	}
 	return nMovedAssets, nTotalAssets, nil
 }
 
-// This is where we remove oldrepo from all groups it belongs to, unless repositories.KeepSource is set
-// This is how it goes :
-//		1. we loop through all the repos
-//		2. is the repo of the "grouped" type ? no -> return to step 1
-//		3. is that grouped repo of the same format as old/new repo ? no -> return to step 1
-//		4. is that reponame "newrepo" ?
-//			yes -> add newrepo to members in that repo
-//		5. is that reponame "oldrepo" ? no -> return to step 1
-//			yes -> remove from member list if KeepSource is false
-//
-
-func updateGroups(old, new, rformat string) *cerr.CustomError {
+// updateGroups makes the migrated repository take the source repository's place in every
+// same-format group it belonged to. For each group repo of the matching format that lists
+// oldName as a member, we add newName (if not already present) and drop oldName unless the
+// source is being kept (repositories.KeepSource). Groups that never referenced oldName are
+// left untouched.
+func updateGroups(oldName, newName, rformat string) *cerr.CustomError {
 	repogrps, uge1 := repositories.ListRepositories(false)
 	if uge1 != nil {
 		return uge1
 	}
 
 	for _, repo := range repogrps {
-		if repo.Type != "group" {
+		if strings.ToLower(repo.Type) != "group" {
 			continue
 		}
-		if repo.Format != rformat {
+		if strings.ToLower(repo.Format) != strings.ToLower(rformat) {
 			continue
+		}
+
+		group, ge := repositories.GetGroupRepository(repo.Name, repo.Format)
+		if ge != nil {
+			return ge
+		}
+
+		// Only touch groups that actually referenced the source repository.
+		members := group.Group.MemberNames
+		oldIdx := -1
+		hasNew := false
+		for i, m := range members {
+			if m == oldName {
+				oldIdx = i
+			}
+			if m == newName {
+				hasNew = true
+			}
+		}
+		if oldIdx == -1 {
+			continue
+		}
+
+		changed := false
+		if !hasNew {
+			members = append(members, newName)
+			changed = true
+		}
+		if !repositories.KeepSource {
+			// oldName's index may have shifted if we appended, so locate it again.
+			out := members[:0]
+			for _, m := range members {
+				if m == oldName {
+					changed = true
+					continue
+				}
+				out = append(out, m)
+			}
+			members = out
+		}
+
+		if !changed {
+			continue
+		}
+
+		group.Group.MemberNames = members
+		if ue := repositories.UpdateGroupRepository(group, repo.Format); ue != nil {
+			return ue
+		}
+		if !shared.QuietOutput {
+			fmt.Println(hftx.EnabledSign("Updated group " + hftx.Green(repo.Name) + " membership"))
 		}
 	}
 
 	return nil
 }
-
-//
-//	if !repositories.KeepSource {
-//		for _, repo := range repogrps {
-//			if repo.Format == repositories.RepoFormat {
-//				if repo.Name == old {
-//					repo.
-//				}
-//			}
-//		}
-//	}
-//}
