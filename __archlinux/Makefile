@@ -1,4 +1,4 @@
-# nxtools — Arch Linux (pacman) packaging
+# vmman4 — Arch Linux (pacman) packaging
 #
 # Recipes:
 #   make build     -> makepkg (build the package into PKGDEST)

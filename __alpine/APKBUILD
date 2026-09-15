@@ -1,7 +1,7 @@
 # Maintainer: J.F.Gratton <jean-francois@famillegratton.net>
 # Packager: Package builder <builder@famillegratton.net>
 pkgname=nxtools
-pkgver=1.1.4
+pkgver=1.2.0
 pkgrel=1
 pkgdir=/data/packages
 pkgdesc="Nexus Repository Management tools"
@@ -9,7 +9,7 @@ url="https://git.famillegratton.net:3000/devops/nxtools"
 arch=x86_64
 license=GPL2
 #depends="gcompat"
-install="$pkgname.post-install $pkgname.post-deinstall"
+#install="$pkgname.post-install $pkgname.post-deinstall"
 #source="$pkgname-$pkgver-$pkgrel.tar.bz2::http://localhost/$pkgname-$pkgver-$pkgrel.tar.bz2"
 builddir="$startdir/src/BUILD"
 
