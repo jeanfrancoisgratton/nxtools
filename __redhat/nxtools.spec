@@ -2,7 +2,7 @@
 %define _build_id_links none
 %define _name nxtools
 %define _prefix /opt
-%define _version 1.2.0
+%define _version 1.3.1
 %define _rel 1
 %define _arch x86_64
 %define _binaryname nxtools
@@ -31,7 +31,12 @@ Nexus Repository Management tools
 %build
 cd src
 go mod download
-PATH=$PATH:/opt/go/bin CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -buildid=" -o %{_builddir}/%{name}-%{version}/%{_binaryname} .
+# rpmbuild runs %build under set -e, so both of these fast-fail the package
+# build; go test exits 0 for packages with no test files and only fails on
+# an actual test failure.
+PATH=$PATH:/opt/go/bin CGO_ENABLED=0 go vet ./...
+PATH=$PATH:/opt/go/bin CGO_ENABLED=0 go test ./...
+PATH=$PATH:/opt/go/bin CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -buildid= -X nxtools/cmd.buildVersion=%{_version} -X nxtools/cmd.buildDate=%(date +%%Y.%%m.%%d)" -o %{_builddir}/%{name}-%{version}/%{_binaryname} .
 
 %clean
 rm -rf $RPM_BUILD_ROOT
