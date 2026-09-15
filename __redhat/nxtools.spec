@@ -54,6 +54,15 @@ install -Dpm 0755 %{_builddir}/%{name}-%{version}/%{_binaryname} %{buildroot}%{_
 
 
 %changelog
+* Tue Sep 15 2026 Binary package builder <builder@famillegratton.net> 1.2.0-1
+- bug: fixed showstoppers that broke repos
+- builddeps update
+- Merge remote-tracking branch 'refs/remotes/origin/develop' into develop
+- chore: removed shell completion from packaging, GO version bump, builddeps update, prepping for software version bump
+- chore: moved repo migrate in its own package for further work
+- chore: update changelog for 1.2.1-2
+- RPMBUILDER: record the RPM changelog on develop instead of main
+
 * Fri Jul 24 2026 Binary package builder <builder@famillegratton.net> 1.1.4-1
 - added assets fetch support for raw-format repos
 
