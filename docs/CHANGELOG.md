@@ -1,5 +1,6 @@
 | Release | Date       | Comments                                                                                                                                                                             |
 |---------|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.3.1 | 2026.09.15 | Dynamic version numbering change is now scripted (`version-bump.sh`, `src/cmd/root.go`)<brNno build occurs on `go vet` or `go test` failure |
 | 1.3.0   | 2026.09.15 | Fixed `repo migrate` that was compiling, but broken |
 | 1.2.1   | 2026.07.31 | Reverted change that demoted `assets upload` and `assets download` as second-class citizen functions; reverted them as first-class citizens                                          |
 | 1.2.0   | 2026.07.29 | Removed the `reindex` command, completed the `repo migrate` command                                                                                                                  |
