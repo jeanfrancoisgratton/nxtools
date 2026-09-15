@@ -41,7 +41,7 @@ func init() {
 	rootCmd.DisableAutoGenTag = true
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
-	rootCmd.AddCommand(versionCmd, envCmd, repoCmd, blobCmd, completionCmd, assetsCmd, assetsUploadCmd, assetsDownloadCmd, assetsComponentInfoCmd, repoReindexCmd, repoMigrateCmd)
+	rootCmd.AddCommand(versionCmd, envCmd, repoCmd, blobCmd, completionCmd, assetsCmd, assetsUploadCmd, assetsDownloadCmd, assetsComponentInfoCmd, repoMigrateCmd)
 
 	rootCmd.Flags().BoolP("version", "V", false, "Show version and exit")
 	rootCmd.PersistentFlags().StringVarP(&shared.Envfile, "env", "e", "defaultEnv.json", "Environment file to load in from $HOME/.config/JFG/nxtools")
