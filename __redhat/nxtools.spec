@@ -59,6 +59,14 @@ install -Dpm 0755 %{_builddir}/%{name}-%{version}/%{_binaryname} %{buildroot}%{_
 
 
 %changelog
+* Wed Sep 16 2026 Binary package builder <builder@famillegratton.net> 1.3.3-1
+- version bump
+- completing merge
+- Merge branch 'task_management' into develop
+- feat(TASKS): Completed tasks create blob-compact
+- feature: stubbed a new task command
+- chore: update changelog for 1.3.2-1
+
 * Tue Sep 15 2026 Binary package builder <builder@famillegratton.net> 1.3.2-1
 - chore: package version bump, doc update
 - enhancement: apt repo creation/migration now supports automated signing key generation
