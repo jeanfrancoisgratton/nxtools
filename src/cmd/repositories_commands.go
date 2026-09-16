@@ -139,10 +139,12 @@ var repoListSupportedCmd = &cobra.Command{
 }
 
 var repoMigrateCmd = &cobra.Command{
-	Use:     "migrate",
-	Example: "nxtools repo migrate OLD_REPO NEW_REPO [-e defaultEnv.json] [-k]",
-	Short:   "Migrate OLD_REPO's contents to NEW_REPO",
-	Args:    cobra.ExactArgs(2),
+	Use: "migrate",
+	Example: "nxtools repo migrate OLD_REPO NEW_REPO [-e defaultEnv.json] [-k]\n" +
+		"  nxtools repo migrate --sign[=PATH] OLD_ALPINE_REPO NEW_ALPINE_REPO\n" +
+		"  nxtools repo migrate --keyfile PATH [--passphrase PASS] OLD_APT_REPO NEW_APT_REPO",
+	Short: "Migrate OLD_REPO's contents to NEW_REPO",
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := migrate.MigrateRepo(args[0], args[1]); err != nil {
 			fmt.Println(err.Error())
@@ -155,6 +157,14 @@ func init() {
 
 	repoListCmd.Flags().BoolVar(&repositories.RepoListJSONOutput, "json", false, "Output repository information as JSON")
 	repoMigrateCmd.Flags().BoolVarP(&repositories.KeepSource, "keep", "k", false, "Keep source repository assets")
+	// -k is already taken by --keep on this command, so the signing flags below don't reuse
+	// repoCreateCmd's shorthands. Only needed when the target repo doesn't exist yet and its
+	// format requires a signing key (Alpine, APT) — see the format switch in migrate.go.
+	repoMigrateCmd.Flags().StringVar(&repositories.RepoSigningFile, "keyfile", "", "APT only: private key location, required if the target repo does not exist yet")
+	repoMigrateCmd.Flags().StringVarP(&repositories.RepoSigningPassphrase, "passphrase", "p", "", "APT only: private key passphrase")
+	repoMigrateCmd.Flags().StringVar(&repositories.AlpineSignKeyDir, "sign", "",
+		"Alpine only: generate a signing keypair, register it with Nexus, and save both halves locally (optionally --sign=PATH to choose the save directory, default is the current directory); required if the target repo does not exist yet")
+	repoMigrateCmd.Flags().Lookup("sign").NoOptDefVal = "."
 	repoCreateCmd.Flags().StringVarP(&repositories.RepoFormat, "format", "f", "", "Repository format/recipe family (e.g. yum, apt, maven, docker)")
 	repoCreateCmd.Flags().StringVarP(&repositories.RepoType, "type", "t", "hosted", "Repository type (hosted, proxy, group)")
 	repoCreateCmd.Flags().StringVarP(&repositories.RepoSigningFile, "keyfile", "k", "", "Private key location")

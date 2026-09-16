@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -22,6 +23,9 @@ import (
 	"nxtools/env"
 	"nxtools/repositories"
 	"nxtools/shared"
+	"nxtools/tasks"
+
+	cerr "github.com/jeanfrancoisgratton/customError/v3"
 )
 
 // ---- fake Nexus server -----------------------------------------------------
@@ -40,10 +44,19 @@ type fakeRepo struct {
 	Assets    []fakeAsset
 }
 
+type fakeTask struct {
+	ID   string
+	Type string
+	Name string
+}
+
 type fakeNexus struct {
-	mu      sync.Mutex
-	repos   map[string]*fakeRepo
-	baseURL string
+	mu         sync.Mutex
+	repos      map[string]*fakeRepo
+	baseURL    string
+	tasks      []fakeTask
+	taskRuns   int
+	nextTaskID int
 }
 
 func newFakeNexus(t *testing.T) *fakeNexus {
@@ -53,6 +66,26 @@ func newFakeNexus(t *testing.T) *fakeNexus {
 	t.Cleanup(srv.Close)
 	fn.baseURL = srv.URL
 	return fn
+}
+
+// addReindexTask registers a fake "_reindex_$reponame" scheduled task of the
+// given type, mirroring the naming convention tasks.ReindexRepo looks up.
+func (fn *fakeNexus) addReindexTask(reponame, taskType string) {
+	fn.mu.Lock()
+	defer fn.mu.Unlock()
+	fn.nextTaskID++
+	fn.tasks = append(fn.tasks, fakeTask{
+		ID: "task-" + strconv.Itoa(fn.nextTaskID), Type: taskType, Name: "_reindex_" + reponame,
+	})
+}
+
+// taskRunCount reports how many times any task's /run endpoint was hit.
+// Tests only ever register one reindex task, so a total is enough to tell
+// "reindexed once" from "reindexed once per uploaded asset" apart.
+func (fn *fakeNexus) taskRunCount() int {
+	fn.mu.Lock()
+	defer fn.mu.Unlock()
+	return fn.taskRuns
 }
 
 func (fn *fakeNexus) addRepo(r *fakeRepo) {
@@ -83,6 +116,10 @@ func (fn *fakeNexus) handle(w http.ResponseWriter, r *http.Request) {
 		fn.uploadComponent(w, r)
 	case r.URL.Path == "/download" && r.Method == http.MethodGet:
 		fn.download(w, r)
+	case r.URL.Path == "/service/rest/v1/tasks" && r.Method == http.MethodGet:
+		fn.listTasks(w, r)
+	case strings.HasPrefix(r.URL.Path, "/service/rest/v1/tasks/") && strings.HasSuffix(r.URL.Path, "/run") && r.Method == http.MethodPost:
+		fn.runTask(w, r)
 	case strings.HasPrefix(r.URL.Path, "/service/rest/v1/repositories/"):
 		fn.repositoriesSubpath(w, r)
 	default:
@@ -259,9 +296,33 @@ func (fn *fakeNexus) download(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-// uploadComponent handles the raw-format multipart upload
-// (POST /service/rest/v1/components?repository=X, fields raw.directory /
-// raw.asset1.filename / raw.asset1) issued by assets.uploadRaw.
+func (fn *fakeNexus) listTasks(w http.ResponseWriter, r *http.Request) {
+	typeFilter := r.URL.Query().Get("type")
+
+	fn.mu.Lock()
+	var items []tasks.TaskSummary
+	for _, t := range fn.tasks {
+		if typeFilter != "" && t.Type != typeFilter {
+			continue
+		}
+		items = append(items, tasks.TaskSummary{ID: t.ID, Name: t.Name, Type: t.Type})
+	}
+	fn.mu.Unlock()
+
+	writeJSON(w, http.StatusOK, tasks.ListTasksResponse{Items: items})
+}
+
+func (fn *fakeNexus) runTask(w http.ResponseWriter, r *http.Request) {
+	fn.mu.Lock()
+	fn.taskRuns++
+	fn.mu.Unlock()
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// uploadComponent handles the raw- and yum-format multipart uploads (POST
+// /service/rest/v1/components?repository=X) issued by assets.uploadRaw and
+// assets.uploadYum respectively; which field set is present tells the two
+// apart.
 func (fn *fakeNexus) uploadComponent(w http.ResponseWriter, r *http.Request) {
 	repoName := r.URL.Query().Get("repository")
 
@@ -270,10 +331,22 @@ func (fn *fakeNexus) uploadComponent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	directory := strings.Trim(r.FormValue("raw.directory"), "/")
-	filename := r.FormValue("raw.asset1.filename")
+	var directory, filename, fileField string
+	switch {
+	case len(r.MultipartForm.File["raw.asset1"]) > 0:
+		directory = strings.Trim(r.FormValue("raw.directory"), "/")
+		filename = r.FormValue("raw.asset1.filename")
+		fileField = "raw.asset1"
+	case len(r.MultipartForm.File["yum.asset"]) > 0:
+		directory = strings.Trim(r.FormValue("yum.directory"), "/")
+		filename = r.FormValue("yum.asset.filename")
+		fileField = "yum.asset"
+	default:
+		http.Error(w, "unrecognized component upload fields", http.StatusBadRequest)
+		return
+	}
 
-	file, _, err := r.FormFile("raw.asset1")
+	file, _, err := r.FormFile(fileField)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -317,6 +390,9 @@ func resetRepoGlobals(t *testing.T) {
 	origWritePolicy := repositories.StorageWritePolicy
 	origQuiet := shared.QuietOutput
 	origEnvfile := shared.Envfile
+	origSigningFile := repositories.RepoSigningFile
+	origSigningPassphrase := repositories.RepoSigningPassphrase
+	origAlpineSignKeyDir := repositories.AlpineSignKeyDir
 
 	t.Cleanup(func() {
 		repositories.RepoFormat = origFormat
@@ -325,6 +401,9 @@ func resetRepoGlobals(t *testing.T) {
 		repositories.StorageWritePolicy = origWritePolicy
 		shared.QuietOutput = origQuiet
 		shared.Envfile = origEnvfile
+		repositories.RepoSigningFile = origSigningFile
+		repositories.RepoSigningPassphrase = origSigningPassphrase
+		repositories.AlpineSignKeyDir = origAlpineSignKeyDir
 	})
 }
 
@@ -530,5 +609,204 @@ func TestMigrateRepo_GroupMembershipRepointed(t *testing.T) {
 	}
 	if !memberSet["other-raw"] {
 		t.Error("unrelated group member was dropped")
+	}
+}
+
+// captureStdout redirects os.Stdout for the duration of fn and returns
+// everything written to it. Tests in this file run sequentially (no
+// t.Parallel), so swapping the process-global os.Stdout is safe.
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+	orig := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("failed to create pipe: %v", err)
+	}
+	os.Stdout = w
+
+	fn()
+
+	w.Close()
+	os.Stdout = orig
+	out, _ := io.ReadAll(r)
+	return string(out)
+}
+
+// TestMigrateRepo_AlpineTargetRequiresSignFlag locks in the fix for: auto-
+// creating a nonexistent Alpine target used to fail deep inside
+// CreateRepository (which explicitly refuses Alpine — it must go through
+// assets.CreateSignedAlpineRepo instead). MigrateRepo must now reject this
+// up front with an actionable message, before touching the source repo at
+// all, when --sign wasn't supplied.
+func TestMigrateRepo_AlpineTargetRequiresSignFlag(t *testing.T) {
+	fn := newMigrateTestFixture(t)
+	fn.addRepo(&fakeRepo{Name: "src-alpine", Format: "alpine", Type: "hosted", BlobStore: "blob1"})
+
+	ce := MigrateRepo("src-alpine", "dst-alpine")
+	if ce == nil {
+		t.Fatal("expected an error, got nil")
+	}
+	if !strings.Contains(ce.Message, "--sign") {
+		t.Errorf("Message = %q, want it to mention --sign", ce.Message)
+	}
+	if fn.getRepo("dst-alpine") != nil {
+		t.Error("target repo should not have been created without a signing key")
+	}
+	if fn.getRepo("src-alpine") == nil {
+		t.Error("source repo should be untouched when migration is rejected before any transfer")
+	}
+}
+
+// TestMigrateRepo_AptTargetRequiresKeyfile mirrors the Alpine case for APT:
+// createApt() needs an existing PGP private key file (RepoSigningFile), which
+// migrate never populated. MigrateRepo must reject this up front too.
+func TestMigrateRepo_AptTargetRequiresKeyfile(t *testing.T) {
+	fn := newMigrateTestFixture(t)
+	fn.addRepo(&fakeRepo{Name: "src-apt", Format: "apt", Type: "hosted", BlobStore: "blob1"})
+
+	ce := MigrateRepo("src-apt", "dst-apt")
+	if ce == nil {
+		t.Fatal("expected an error, got nil")
+	}
+	if !strings.Contains(ce.Message, "--keyfile") {
+		t.Errorf("Message = %q, want it to mention --keyfile", ce.Message)
+	}
+	if fn.getRepo("dst-apt") != nil {
+		t.Error("target repo should not have been created without a signing key")
+	}
+}
+
+// TestMigrateRepo_ReindexesOnceAfterBatch locks in the fix for: migrate used
+// to trigger a yum/apt metadata-rebuild reindex after every single uploaded
+// asset. It must now reindex exactly once, after the whole batch, regardless
+// of how many assets were migrated.
+func TestMigrateRepo_ReindexesOnceAfterBatch(t *testing.T) {
+	fn := newMigrateTestFixture(t)
+	fn.addRepo(&fakeRepo{
+		Name: "src-yum", Format: "yum", Type: "hosted", BlobStore: "blob1",
+		Assets: []fakeAsset{
+			{path: "pkg1.rpm", content: []byte("one")},
+			{path: "pkg2.rpm", content: []byte("two")},
+			{path: "pkg3.rpm", content: []byte("three")},
+		},
+	})
+	fn.addReindexTask("dst-yum", "repository.yum.rebuild.metadata")
+
+	ce := MigrateRepo("src-yum", "dst-yum")
+	if ce != nil {
+		t.Fatalf("MigrateRepo returned an error: %s: %s", ce.Title, ce.Message)
+	}
+
+	dst := fn.getRepo("dst-yum")
+	if dst == nil || len(dst.Assets) != 3 {
+		t.Fatalf("expected 3 assets migrated, got %+v", dst)
+	}
+	if got := fn.taskRunCount(); got != 1 {
+		t.Errorf("reindex task ran %d times, want exactly 1 (once per batch, not once per asset)", got)
+	}
+}
+
+// TestMigrateRepo_ReindexTaskMissingIsNonFatal locks in that a missing
+// reindex task (the common case for a target repo migrate just created,
+// since nothing auto-provisions the "_reindex_$REPONAME" scheduled task) is
+// a warning, not a migration failure.
+func TestMigrateRepo_ReindexTaskMissingIsNonFatal(t *testing.T) {
+	fn := newMigrateTestFixture(t)
+	fn.addRepo(&fakeRepo{
+		Name: "src-yum2", Format: "yum", Type: "hosted", BlobStore: "blob1",
+		Assets: []fakeAsset{{path: "pkg1.rpm", content: []byte("one")}},
+	})
+	// Deliberately no reindex task registered for dst-yum2.
+
+	ce := MigrateRepo("src-yum2", "dst-yum2")
+	if ce != nil {
+		t.Fatalf("MigrateRepo should succeed even when the reindex task is missing, got: %s: %s", ce.Title, ce.Message)
+	}
+	dst := fn.getRepo("dst-yum2")
+	if dst == nil || len(dst.Assets) != 1 {
+		t.Fatalf("expected the asset to be migrated despite the reindex failure, got %+v", dst)
+	}
+}
+
+// TestMigrateRepo_QuietModeSuppressesAllOutput locks in a fix for a real
+// behavioral bug, not just cosmetics: migrateAssets used to force
+// shared.QuietOutput = false around the per-file Download/UploadAsset calls,
+// which meant quiet mode (-q) did NOT actually suppress those calls' own
+// progress lines during a migration.
+func TestMigrateRepo_QuietModeSuppressesAllOutput(t *testing.T) {
+	fn := newMigrateTestFixture(t)
+	fn.addRepo(&fakeRepo{
+		Name: "src-raw-quiet", Format: "raw", Type: "hosted", BlobStore: "blob1",
+		Assets: []fakeAsset{{path: "file1.txt", content: []byte("hello")}},
+	})
+
+	shared.QuietOutput = true
+
+	var ce *cerr.CustomError
+	output := captureStdout(t, func() {
+		ce = MigrateRepo("src-raw-quiet", "dst-raw-quiet")
+	})
+
+	if ce != nil {
+		t.Fatalf("MigrateRepo returned an error: %s: %s", ce.Title, ce.Message)
+	}
+	if strings.TrimSpace(output) != "" {
+		t.Errorf("expected no output in quiet mode, got: %q", output)
+	}
+}
+
+// TestMigrateRepo_NoReindexAttemptForRawFormat locks in that the end-of-batch
+// reindex call is gated to yum/apt only. ReindexRepo itself has no notion of
+// any other format (it errors "unknown repository format" for anything but
+// yum/apt/alpine), so calling it unconditionally after every migration would
+// print a bogus reindex-failed warning for every raw/npm/docker/etc. migration.
+func TestMigrateRepo_NoReindexAttemptForRawFormat(t *testing.T) {
+	fn := newMigrateTestFixture(t)
+	fn.addRepo(&fakeRepo{
+		Name: "src-raw-plain", Format: "raw", Type: "hosted", BlobStore: "blob1",
+		Assets: []fakeAsset{{path: "file1.txt", content: []byte("hello")}},
+	})
+
+	var ce *cerr.CustomError
+	output := captureStdout(t, func() {
+		ce = MigrateRepo("src-raw-plain", "dst-raw-plain")
+	})
+
+	if ce != nil {
+		t.Fatalf("MigrateRepo returned an error: %s: %s", ce.Title, ce.Message)
+	}
+	if strings.Contains(output, "reindex") {
+		t.Errorf("raw-format migration should never attempt a reindex, got output: %s", output)
+	}
+	if got := fn.taskRunCount(); got != 0 {
+		t.Errorf("raw-format migration ran %d reindex tasks, want 0", got)
+	}
+}
+
+// TestMigrateRepo_NoDuplicateProgressLines locks in the fix for: every
+// download/upload used to be logged twice — once by migrate's own progress
+// lines, once by assets.DownloadAsset/UploadAsset's own internal prints,
+// which migrateAssets used to force on regardless of the caller's quiet
+// setting.
+func TestMigrateRepo_NoDuplicateProgressLines(t *testing.T) {
+	fn := newMigrateTestFixture(t)
+	fn.addRepo(&fakeRepo{
+		Name: "src-raw-dup", Format: "raw", Type: "hosted", BlobStore: "blob1",
+		Assets: []fakeAsset{{path: "file1.txt", content: []byte("hello")}},
+	})
+
+	var ce *cerr.CustomError
+	output := captureStdout(t, func() {
+		ce = MigrateRepo("src-raw-dup", "dst-raw-dup")
+	})
+
+	if ce != nil {
+		t.Fatalf("MigrateRepo returned an error: %s: %s", ce.Title, ce.Message)
+	}
+	if got := strings.Count(output, "Downloading"); got != 1 {
+		t.Errorf(`"Downloading" appeared %d times in output, want exactly 1: %s`, got, output)
+	}
+	if got := strings.Count(output, "Uploading"); got != 1 {
+		t.Errorf(`"Uploading" appeared %d times in output, want exactly 1: %s`, got, output)
 	}
 }

@@ -14,6 +14,7 @@ import (
 	"nxtools/assets"
 	"nxtools/repositories"
 	"nxtools/shared"
+	"nxtools/tasks"
 
 	cerr "github.com/jeanfrancoisgratton/customError/v3"
 	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
@@ -73,9 +74,33 @@ func MigrateRepo(oldrepo, newrepo string) *cerr.CustomError {
 	if newr.Name == "" {
 		newr = oldr // copying oldrepo config to newrepo
 		newr.Name = newrepo
-		repositories.RepoFormat = strings.ToLower(oldr.Format)
-		if ce = repositories.CreateRepository(newrepo, newr.Storage.BlobStoreName); ce != nil {
-			return ce
+		format := strings.ToLower(oldr.Format)
+		repositories.RepoFormat = format
+
+		switch format {
+		case "alpine", "apk":
+			// CreateRepository refuses Alpine outright: Nexus discards whatever key material
+			// it's handed and re-labels it under its own identifier, so the only supported
+			// path is CreateSignedAlpineRepo, which generates and registers a fresh keypair.
+			if repositories.AlpineSignKeyDir == "" {
+				return &cerr.CustomError{Title: "Signing key required", Message: "Target repository " + newrepo +
+					" does not exist; Alpine hosted repos need a signing keypair generated for them. Re-run with --sign[=PATH]"}
+			}
+			if ce = assets.CreateSignedAlpineRepo(newrepo, oldr.Storage.BlobStoreName, repositories.AlpineSignKeyDir); ce != nil {
+				return ce
+			}
+		case "apt":
+			if repositories.RepoSigningFile == "" {
+				return &cerr.CustomError{Title: "Signing key required", Message: "Target repository " + newrepo +
+					" does not exist; APT hosted repos need a PGP private key. Re-run with --keyfile PATH [--passphrase PASS]"}
+			}
+			if ce = repositories.CreateRepository(newrepo, newr.Storage.BlobStoreName); ce != nil {
+				return ce
+			}
+		default:
+			if ce = repositories.CreateRepository(newrepo, newr.Storage.BlobStoreName); ce != nil {
+				return ce
+			}
 		}
 	}
 
@@ -115,7 +140,7 @@ The reason that we download and immediately upload that file and then delete it 
 */
 func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomError) {
 	var nMovedAssets, nTotalAssets uint
-	quiet := shared.QuietOutput
+	outerQuiet := shared.QuietOutput
 
 	items, me1 := assets.ListAssets(oldrepo, false, false)
 	if me1 != nil {
@@ -140,17 +165,21 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 	for _, item := range items {
 		targetFile := path.Join(tmpDir, path.Base(item.Path))
 
-		// Get the file from the source repository
-		if !shared.QuietOutput {
+		// Get the file from the source repository. DownloadAsset/UploadAsset print their own
+		// progress lines when not quiet, so they're kept quiet here and migrate prints its own
+		// (more informative, migration-specific) lines instead — otherwise every transfer would
+		// be logged twice.
+		if !outerQuiet {
 			fmt.Println(hftx.InProgressSign("Downloading " + hftx.Green(item.DownloadURL)))
 		}
-		shared.QuietOutput = false
-		if me2 := assets.DownloadAsset(item.DownloadURL, targetFile); me2 != nil {
+		shared.QuietOutput = true
+		me2 := assets.DownloadAsset(item.DownloadURL, targetFile)
+		shared.QuietOutput = outerQuiet
+		if me2 != nil {
 			return nMovedAssets, nTotalAssets, me2
 		}
 
-		shared.QuietOutput = quiet
-		if !shared.QuietOutput {
+		if !outerQuiet {
 			fmt.Println(hftx.EnabledSign("Downloaded "+hftx.Green(item.DownloadURL)) + " from " + hftx.Green(oldrepo))
 		}
 
@@ -164,15 +193,18 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 			directory = path.Dir(item.Path)
 		}
 		displayName := path.Base(targetFile)
-		if !shared.QuietOutput {
+		if !outerQuiet {
 			fmt.Println(hftx.InProgressSign("Uploading " + hftx.Green(displayName)))
 		}
-		shared.QuietOutput = false
-		if me3 := assets.UploadAsset(newrepo, targetFile, directory); me3 != nil {
+		// UploadAssetBatch skips the per-file reindex that assets.UploadAsset would otherwise
+		// trigger after every single asset; migrateAssets reindexes once, after the whole batch.
+		shared.QuietOutput = true
+		me3 := assets.UploadAssetBatch(newrepo, targetFile, directory)
+		shared.QuietOutput = outerQuiet
+		if me3 != nil {
 			return nMovedAssets, nTotalAssets, me3
 		}
-		shared.QuietOutput = quiet
-		if !shared.QuietOutput {
+		if !outerQuiet {
 			fmt.Println(hftx.EnabledSign("Uploaded "+hftx.Green(displayName)) + " to " + hftx.Green(newrepo))
 		}
 
@@ -181,6 +213,18 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 			return nMovedAssets, nTotalAssets, &cerr.CustomError{Title: "Failed to remove " + hftx.Red(displayName), Message: me4.Error()}
 		}
 		nMovedAssets++
+	}
+
+	// Reindex once now that every asset has been uploaded, rather than after each individual
+	// upload. Only yum/apt expose a rebuild-metadata task at all (ReindexRepo itself has no
+	// notion of any other format, unlike assets.UploadAsset's per-file reindex, and would
+	// otherwise report a bogus "unknown repository format" for every other migration). A
+	// failure here does not undo the migration, so it's surfaced as a warning rather than an
+	// error.
+	if nMovedAssets > 0 && (repositories.RepoFormat == "yum" || repositories.RepoFormat == "apt") {
+		if re := tasks.ReindexRepo(newrepo); re != nil && !outerQuiet {
+			fmt.Println(hftx.WarningSign("Migration succeeded, but reindexing " + newrepo + " failed: " + re.Error()))
+		}
 	}
 
 	// All assets have been migrated. The following repo formats do not support grouped
