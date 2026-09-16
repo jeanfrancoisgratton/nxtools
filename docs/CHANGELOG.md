@@ -1,6 +1,6 @@
 | Release | Date       | Comments                                                                                                                                                                             |
 |---------|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1.3.2 | 2026.09.15 | APK and APT now support repo creation/migration with auto-generated signing keys |
+| 1.3.3 | 2026.09.16 | Added `task list/run/stop/create` and `blob compact`<br>Task creation currently only supports `blobstore.compact`, with full schedule support (manual/once/hourly/daily/weekly/monthly/cron)<br>Compact task lookups match by actual configured target (`properties.blobstoreName`), not by name |
 | 1.3.1 | 2026.09.15 | Dynamic version numbering change is now scripted (`version-bump.sh`, `src/cmd/root.go`)<brNno build occurs on `go vet` or `go test` failure |
 | 1.3.0   | 2026.09.15 | Fixed `repo migrate` that was compiling, but broken |
 | 1.2.1   | 2026.07.31 | Reverted change that demoted `assets upload` and `assets download` as second-class citizen functions; reverted them as first-class citizens                                          |

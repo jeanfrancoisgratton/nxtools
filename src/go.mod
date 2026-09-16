@@ -5,7 +5,7 @@ go 1.27.1
 require (
 	github.com/ProtonMail/go-crypto v1.4.1
 	github.com/jeanfrancoisgratton/customError/v3 v3.1.1
-	github.com/jeanfrancoisgratton/helperFunctions/v5 v5.5.0
+	github.com/jeanfrancoisgratton/helperFunctions/v5 v5.6.0
 	github.com/jedib0t/go-pretty/v6 v6.8.3
 	github.com/spf13/cobra v1.10.2
 )

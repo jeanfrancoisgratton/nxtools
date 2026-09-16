@@ -31,6 +31,8 @@ github.com/jeanfrancoisgratton/customError/v3 v3.1.1 h1:EyKS/iFu7gdPgmNxibvZcVFS
 github.com/jeanfrancoisgratton/customError/v3 v3.1.1/go.mod h1:3EEwWepKbVvYVQ0x+py3FM8QTzheS/svMwhfiZR/y24=
 github.com/jeanfrancoisgratton/helperFunctions/v5 v5.5.0 h1:fSUsuNpOxehh6HeDygwFZi9rLJRnkQpuJDJ+iqpBgW4=
 github.com/jeanfrancoisgratton/helperFunctions/v5 v5.5.0/go.mod h1:H2he15bx/MCVNtfWsaY2W9xV+R/rkZWi+8UdJLEwTxk=
+github.com/jeanfrancoisgratton/helperFunctions/v5 v5.6.0 h1:qT01AU5ou5FsOAG3wuf2dylqSXgGDi8YrwGKmQvKknw=
+github.com/jeanfrancoisgratton/helperFunctions/v5 v5.6.0/go.mod h1:H2he15bx/MCVNtfWsaY2W9xV+R/rkZWi+8UdJLEwTxk=
 github.com/jedib0t/go-pretty/v6 v6.8.3 h1:yVSk5aemoYHCvcrtqyXklwqcgHQIQzmy/oUzFlmffSQ=
 github.com/jedib0t/go-pretty/v6 v6.8.3/go.mod h1:YwC5CE4fJ1HFUDeivSV1r//AmANFHyqczZk+U6BDALU=
 github.com/jwalton/gchalk v1.3.0 h1:uTfAaNexN8r0I9bioRTksuT8VGjrPs9YIXR1PQbtX/Q=
