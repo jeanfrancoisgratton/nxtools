@@ -3,7 +3,7 @@
 %define _name nxtools
 %define _prefix /opt
 %define _version 1.3.3
-%define _rel 2
+%define _rel 3
 %define _arch x86_64
 %define _binaryname nxtools
 

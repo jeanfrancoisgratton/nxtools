@@ -3,7 +3,7 @@
 
 pkgname=nxtools
 pkgver=1.3.3
-pkgrel=2
+pkgrel=3
 pkgdesc="Nexus Repository Management tools"
 arch=('x86_64')
 url="{{ URL }}"
