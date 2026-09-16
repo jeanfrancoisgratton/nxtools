@@ -59,6 +59,9 @@ install -Dpm 0755 %{_builddir}/%{name}-%{version}/%{_binaryname} %{buildroot}%{_
 
 
 %changelog
+* Wed Sep 16 2026 Binary package builder <builder@famillegratton.net> 1.3.3-2
+- chore: version bump
+
 * Wed Sep 16 2026 Binary package builder <builder@famillegratton.net> 1.3.3-1
 - version bump
 - completing merge
