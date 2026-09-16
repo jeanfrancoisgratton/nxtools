@@ -5,6 +5,10 @@
 
 package tasks
 
+// maxNameLength caps the Name column width so the table stays readable in a
+// standard 80/120-column terminal; longer names are truncated with "...".
+const maxNameLength = 70
+
 type ListTasksResponse struct {
 	Items             []TaskSummary `json:"items"`
 	ContinuationToken *string       `json:"continuationToken"`
