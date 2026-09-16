@@ -82,20 +82,49 @@ func MigrateRepo(oldrepo, newrepo string) *cerr.CustomError {
 			// CreateRepository refuses Alpine outright: Nexus discards whatever key material
 			// it's handed and re-labels it under its own identifier, so the only supported
 			// path is CreateSignedAlpineRepo, which generates and registers a fresh keypair.
-			if repositories.AlpineSignKeyDir == "" {
+			if repositories.RepoSignKeyDir == "" {
 				return &cerr.CustomError{Title: "Signing key required", Message: "Target repository " + newrepo +
 					" does not exist; Alpine hosted repos need a signing keypair generated for them. Re-run with --sign[=PATH]"}
 			}
-			if ce = assets.CreateSignedAlpineRepo(newrepo, oldr.Storage.BlobStoreName, repositories.AlpineSignKeyDir); ce != nil {
+			if ce = assets.CreateSignedAlpineRepo(newrepo, oldr.Storage.BlobStoreName, repositories.RepoSignKeyDir); ce != nil {
 				return ce
 			}
 		case "apt":
-			if repositories.RepoSigningFile == "" {
-				return &cerr.CustomError{Title: "Signing key required", Message: "Target repository " + newrepo +
-					" does not exist; APT hosted repos need a PGP private key. Re-run with --keyfile PATH [--passphrase PASS]"}
+			// Unlike Alpine, Nexus takes an APT signing key as-is (no relabeling), so both a
+			// caller-supplied key (--keyfile) and a freshly generated one (--sign) are valid;
+			// exactly one is required when the target doesn't exist yet.
+			if repositories.RepoSignKeyDir != "" && repositories.RepoSigningFile != "" {
+				return &cerr.CustomError{Title: "Conflicting signing options",
+					Message: "--sign and --keyfile are mutually exclusive; pass one or the other"}
 			}
-			if ce = repositories.CreateRepository(newrepo, newr.Storage.BlobStoreName); ce != nil {
-				return ce
+			if repositories.RepoSignKeyDir == "" && repositories.RepoSigningFile == "" {
+				return &cerr.CustomError{Title: "Signing key required", Message: "Target repository " + newrepo +
+					" does not exist; APT hosted repos need a PGP private key. Re-run with --sign[=PATH] to generate " +
+					"one, or --keyfile PATH [--passphrase PASS] to use an existing one"}
+			}
+
+			// Carry the source repo's actual distribution over instead of silently falling back
+			// to --distro's default; a lookup failure is non-fatal (falls back to the default)
+			// since it shouldn't block the whole migration.
+			distro := repositories.RepoAptDistro
+			if srcApt, ge := repositories.GetAptHostedRepository(oldrepo); ge != nil {
+				if !shared.QuietOutput {
+					fmt.Println(hftx.WarningSign("Could not determine " + oldrepo + "'s APT distribution (" + ge.Error() +
+						"); using " + distro + " for " + newrepo))
+				}
+			} else if strings.TrimSpace(srcApt.Apt.Distribution) != "" {
+				distro = srcApt.Apt.Distribution
+			}
+
+			if repositories.RepoSignKeyDir != "" {
+				if ce = assets.CreateSignedAptRepo(newrepo, oldr.Storage.BlobStoreName, distro, repositories.RepoSignKeyDir); ce != nil {
+					return ce
+				}
+			} else {
+				repositories.RepoAptDistro = distro
+				if ce = repositories.CreateRepository(newrepo, newr.Storage.BlobStoreName); ce != nil {
+					return ce
+				}
 			}
 		default:
 			if ce = repositories.CreateRepository(newrepo, newr.Storage.BlobStoreName); ce != nil {

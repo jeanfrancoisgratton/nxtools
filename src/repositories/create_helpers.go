@@ -44,6 +44,51 @@ func createApt(reponame, blobname string) ([]byte, *cerr.CustomError) {
 	return pload, nil
 }
 
+// createAptWithKeypair builds the same payload as createApt, but takes an
+// already-generated keypair (and its own distro) directly instead of reading
+// RepoSigningFile/RepoAptDistro — used by the --sign auto-generate path
+// (assets.CreateSignedAptRepo), where there is no keyfile on disk to read
+// and the distro may have been resolved from a migration source rather than
+// the --distro flag's default.
+func createAptWithKeypair(reponame, blobname, distro, keypair, passphrase string) ([]byte, *cerr.CustomError) {
+	payload := AptRepoSettingsStruct{
+		HostedRepoCommonAttributesStruct: HostedRepoCommonAttributesStruct{
+			Name:   reponame,
+			Online: true,
+			Storage: StorageAttributesStruct{
+				BlobStoreName:               blobname,
+				StrictContentTypeValidation: StorageStrictContentValidation,
+				WritePolicy:                 StorageWritePolicy,
+			},
+		},
+		AptSigning: RepoSigningStruct{
+			Keypair:    keypair,
+			Passphrase: passphrase,
+		},
+	}
+	payload.Apt.Distribution = distro
+
+	pload, e2 := json.MarshalIndent(payload, "", "  ")
+	if e2 != nil {
+		return nil, &cerr.CustomError{Title: "failed to marshal APT repo payload", Message: e2.Error()}
+	}
+	return pload, nil
+}
+
+// CreateSignedAptHostedRepo creates the Nexus-side APT hosted repository
+// given an already-generated ASCII-armored PGP keypair. It only performs the
+// create call; key generation and local save are handled by
+// assets.CreateSignedAptRepo, the entry point for the --sign flag on this
+// format.
+func CreateSignedAptHostedRepo(reponame, blobname, distro, keypairArmored, passphrase string) *cerr.CustomError {
+	RepoFormat = "apt"
+	payload, err := createAptWithKeypair(reponame, blobname, distro, keypairArmored, passphrase)
+	if err != nil {
+		return err
+	}
+	return sendPayload(reponame, blobname, payload)
+}
+
 // createAlpine builds the Alpine hosted-repo creation payload from an
 // already-in-hand keypair. Unlike the other formats, Alpine signing keys are
 // never read from a user-supplied file (see CreateAlpineHostedRepo) — Nexus

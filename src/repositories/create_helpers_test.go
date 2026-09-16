@@ -83,6 +83,36 @@ func TestCreateApt_MissingKeyFile(t *testing.T) {
 	}
 }
 
+func TestCreateAptWithKeypair(t *testing.T) {
+	// Unlike createApt, createAptWithKeypair takes the keypair, distro and passphrase directly
+	// rather than reading RepoSigningFile/RepoAptDistro/RepoSigningPassphrase — used by the
+	// --sign auto-generate path (assets.CreateSignedAptRepo), which has no keyfile on disk.
+	swap(t, &StorageWritePolicy, "ALLOW")
+	swapBool(t, &StorageStrictContentValidation, true)
+
+	payload, err := createAptWithKeypair("aptrepo", "aptblob", "bookworm", "ARMORED-PGP-KEY", "pp")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var out AptRepoSettingsStruct
+	if e := json.Unmarshal(payload, &out); e != nil {
+		t.Fatalf("payload not valid JSON: %v", e)
+	}
+	if out.Name != "aptrepo" || !out.Online {
+		t.Errorf("name/online = %q / %v", out.Name, out.Online)
+	}
+	if out.Storage.BlobStoreName != "aptblob" || out.Storage.WritePolicy != "ALLOW" {
+		t.Errorf("storage = %+v", out.Storage)
+	}
+	if out.Apt.Distribution != "bookworm" {
+		t.Errorf("distribution = %q", out.Apt.Distribution)
+	}
+	if out.AptSigning.Keypair != "ARMORED-PGP-KEY" || out.AptSigning.Passphrase != "pp" {
+		t.Errorf("aptSigning = %+v", out.AptSigning)
+	}
+}
+
 func TestCreateAlpine(t *testing.T) {
 	// Unlike APT, Alpine's payload builder takes the keypair directly rather
 	// than reading RepoSigningFile: Nexus re-labels whatever key it's given

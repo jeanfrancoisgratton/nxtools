@@ -45,6 +45,22 @@ type YumHostedRepository struct {
 	Yum    YumHostedAttributes `json:"yum"`
 }
 
+// AptHostedRepository contains the fields needed when auto-creating a
+// migration target so it can carry the source repo's actual distribution
+// over, rather than falling back to the --distro flag's default.
+type AptHostedRepository struct {
+	Name   string              `json:"name"`
+	Format string              `json:"format"`
+	Type   string              `json:"type"`
+	Apt    AptHostedAttributes `json:"apt"`
+}
+
+// AptHostedAttributes contains the APT-specific hosted settings returned by
+// GET /service/rest/v1/repositories/apt/hosted/{repositoryName}.
+type AptHostedAttributes struct {
+	Distribution string `json:"distribution"`
+}
+
 // YumHostedAttributes contains the Yum-specific hosted settings returned by
 // GET /service/rest/v1/repositories/yum/hosted/{repositoryName}.
 type YumHostedAttributes struct {

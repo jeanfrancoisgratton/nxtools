@@ -55,11 +55,6 @@ var repoCreateCmd = &cobra.Command{
 		} else {
 			repositories.StorageWritePolicy = strings.ToUpper(writepol)
 		}
-		if strings.ToLower(repositories.RepoFormat) == "apt" && repositories.RepoSigningFile == "" {
-			hftx.ErrorSign("You need to provide a PGP private key file (flag -k) when using the APT format")
-			os.Exit(1)
-		}
-
 		// Alpine hosted repos are handled by an entirely separate path: Nexus
 		// re-labels whatever signing key it's given under its own internal
 		// identifier, so there's no point accepting a caller-supplied keyfile
@@ -75,10 +70,30 @@ var repoCreateCmd = &cobra.Command{
 				hftx.ErrorSign("You need to pass --sign (optionally --sign=PATH) when using the Alpine format")
 				os.Exit(1)
 			}
-			if err := assets.CreateSignedAlpineRepo(args[0], args[1], repositories.AlpineSignKeyDir); err != nil {
+			if err := assets.CreateSignedAlpineRepo(args[0], args[1], repositories.RepoSignKeyDir); err != nil {
 				fmt.Println(err.Error())
 			}
 			return
+		}
+
+		// APT accepts either a caller-supplied key (-k/--keyfile, an existing PGP private key
+		// Nexus is handed as-is — unlike Alpine, it's not relabeled) or --sign to have nxtools
+		// generate one. Exactly one of the two is required.
+		if strings.ToLower(repositories.RepoFormat) == "apt" {
+			if cmd.Flags().Changed("sign") && repositories.RepoSigningFile != "" {
+				hftx.ErrorSign("--sign and -k/--keyfile are mutually exclusive; pass one or the other")
+				os.Exit(1)
+			}
+			if cmd.Flags().Changed("sign") {
+				if err := assets.CreateSignedAptRepo(args[0], args[1], repositories.RepoAptDistro, repositories.RepoSignKeyDir); err != nil {
+					fmt.Println(err.Error())
+				}
+				return
+			}
+			if repositories.RepoSigningFile == "" {
+				hftx.ErrorSign("You need to provide a PGP private key file (-k/--keyfile) or pass --sign to generate one when using the APT format")
+				os.Exit(1)
+			}
 		}
 
 		// ok, let's go
@@ -142,6 +157,7 @@ var repoMigrateCmd = &cobra.Command{
 	Use: "migrate",
 	Example: "nxtools repo migrate OLD_REPO NEW_REPO [-e defaultEnv.json] [-k]\n" +
 		"  nxtools repo migrate --sign[=PATH] OLD_ALPINE_REPO NEW_ALPINE_REPO\n" +
+		"  nxtools repo migrate --sign[=PATH] OLD_APT_REPO NEW_APT_REPO\n" +
 		"  nxtools repo migrate --keyfile PATH [--passphrase PASS] OLD_APT_REPO NEW_APT_REPO",
 	Short: "Migrate OLD_REPO's contents to NEW_REPO",
 	Args:  cobra.ExactArgs(2),
@@ -160,10 +176,10 @@ func init() {
 	// -k is already taken by --keep on this command, so the signing flags below don't reuse
 	// repoCreateCmd's shorthands. Only needed when the target repo doesn't exist yet and its
 	// format requires a signing key (Alpine, APT) — see the format switch in migrate.go.
-	repoMigrateCmd.Flags().StringVar(&repositories.RepoSigningFile, "keyfile", "", "APT only: private key location, required if the target repo does not exist yet")
+	repoMigrateCmd.Flags().StringVar(&repositories.RepoSigningFile, "keyfile", "", "APT only: existing private key location, required if the target repo does not exist yet and --sign wasn't given")
 	repoMigrateCmd.Flags().StringVarP(&repositories.RepoSigningPassphrase, "passphrase", "p", "", "APT only: private key passphrase")
-	repoMigrateCmd.Flags().StringVar(&repositories.AlpineSignKeyDir, "sign", "",
-		"Alpine only: generate a signing keypair, register it with Nexus, and save both halves locally (optionally --sign=PATH to choose the save directory, default is the current directory); required if the target repo does not exist yet")
+	repoMigrateCmd.Flags().StringVar(&repositories.RepoSignKeyDir, "sign", "",
+		"Alpine/APT only: generate a signing keypair, register it with Nexus, and save both halves locally (optionally --sign=PATH to choose the save directory, default is the current directory); required if the target repo does not exist yet and (APT only) --keyfile wasn't given")
 	repoMigrateCmd.Flags().Lookup("sign").NoOptDefVal = "."
 	repoCreateCmd.Flags().StringVarP(&repositories.RepoFormat, "format", "f", "", "Repository format/recipe family (e.g. yum, apt, maven, docker)")
 	repoCreateCmd.Flags().StringVarP(&repositories.RepoType, "type", "t", "hosted", "Repository type (hosted, proxy, group)")
@@ -183,12 +199,12 @@ func init() {
 	repoCreateCmd.Flags().UintVar(&repositories.DockerHttpsPort, "https", 0, "HTTP port the registry listens on")
 	repoCreateCmd.Flags().StringVarP(&repositories.DockerSubdomain, "subdomain", "S", "", "Subdomain to route registry to")
 	repoCreateCmd.Flags().BoolVarP(&repositories.DockerPathEnabled, "path", "P", false, "Path enabled")
-	// Alpine only. No shorthand: -S is already taken by --subdomain on this
-	// same command. Bare --sign saves the generated keypair in the current
-	// directory; --sign=PATH (note the required "=" — see NoOptDefVal below)
-	// saves it under PATH instead, creating it if absent.
-	repoCreateCmd.Flags().StringVar(&repositories.AlpineSignKeyDir, "sign", "",
-		"Alpine only: generate a signing keypair, register it with Nexus, and save both halves locally under the name Nexus assigns (optionally --sign=PATH to choose the save directory, default is the current directory)")
+	// Alpine and APT only. No shorthand: -S is already taken by --subdomain on
+	// this same command. Bare --sign saves the generated keypair in the
+	// current directory; --sign=PATH (note the required "=" — see
+	// NoOptDefVal below) saves it under PATH instead, creating it if absent.
+	repoCreateCmd.Flags().StringVar(&repositories.RepoSignKeyDir, "sign", "",
+		"Alpine/APT only: generate a signing keypair, register it with Nexus, and save both halves locally (optionally --sign=PATH to choose the save directory, default is the current directory)")
 	repoCreateCmd.Flags().Lookup("sign").NoOptDefVal = "."
 
 	// Mark "a" and "b" as mutually exclusive

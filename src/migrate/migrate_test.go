@@ -36,12 +36,14 @@ type fakeAsset struct {
 }
 
 type fakeRepo struct {
-	Name      string
-	Format    string
-	Type      string
-	BlobStore string
-	Members   []string
-	Assets    []fakeAsset
+	Name       string
+	Format     string
+	Type       string
+	BlobStore  string
+	Members    []string
+	Assets     []fakeAsset
+	Distro     string // APT only
+	AptKeypair string // APT only: aptSigning.keypair as received at creation time
 }
 
 type fakeTask struct {
@@ -196,19 +198,46 @@ func (fn *fakeNexus) deleteRepository(w http.ResponseWriter, name string) {
 }
 
 func (fn *fakeNexus) createRepository(w http.ResponseWriter, r *http.Request, format, kind string) {
+	raw, readErr := io.ReadAll(r.Body)
+	if readErr != nil {
+		http.Error(w, readErr.Error(), http.StatusBadRequest)
+		return
+	}
+
 	var body repositories.HostedRepoCommonAttributesStruct
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := json.Unmarshal(raw, &body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	fn.addRepo(&fakeRepo{Name: body.Name, Format: format, Type: kind, BlobStore: body.Storage.BlobStoreName})
+	newRepo := &fakeRepo{Name: body.Name, Format: format, Type: kind, BlobStore: body.Storage.BlobStoreName}
+
+	if format == "apt" {
+		var aptBody repositories.AptRepoSettingsStruct
+		if err := json.Unmarshal(raw, &aptBody); err == nil {
+			newRepo.Distro = aptBody.Apt.Distribution
+			newRepo.AptKeypair = aptBody.AptSigning.Keypair
+		}
+	}
+
+	fn.addRepo(newRepo)
 	w.WriteHeader(http.StatusCreated)
 }
 
-func (fn *fakeNexus) getHostedDetail(w http.ResponseWriter, _ string, name string) {
+func (fn *fakeNexus) getHostedDetail(w http.ResponseWriter, format, name string) {
 	rp := fn.getRepo(name)
 	if rp == nil {
 		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	if format == "apt" {
+		// Mirrors the real GET apt/hosted/{name} response shape (AptRepoSettingsStruct): it's
+		// the same endpoint ListRepositories' getStorageSpecs uses to fill in Storage, and the
+		// one GetAptHostedRepository uses to fill in Apt.Distribution, so both need to be here.
+		var out repositories.AptRepoSettingsStruct
+		out.Name, out.Format, out.Type = rp.Name, rp.Format, rp.Type
+		out.Storage = repositories.StorageAttributesStruct{BlobStoreName: rp.BlobStore}
+		out.Apt.Distribution = rp.Distro
+		writeJSON(w, http.StatusOK, out)
 		return
 	}
 	writeJSON(w, http.StatusOK, repositories.HostedRepoCommonAttributesStruct{
@@ -341,17 +370,24 @@ func (fn *fakeNexus) uploadComponent(w http.ResponseWriter, r *http.Request) {
 		directory = strings.Trim(r.FormValue("yum.directory"), "/")
 		filename = r.FormValue("yum.asset.filename")
 		fileField = "yum.asset"
+	case len(r.MultipartForm.File["apt.asset"]) > 0:
+		// apt (and every other singleAssetComponentUploadSpecs format) has no directory field
+		// and no explicit filename field; the filename comes from the multipart part itself.
+		fileField = "apt.asset"
 	default:
 		http.Error(w, "unrecognized component upload fields", http.StatusBadRequest)
 		return
 	}
 
-	file, _, err := r.FormFile(fileField)
+	file, header, err := r.FormFile(fileField)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
+	if filename == "" {
+		filename = header.Filename
+	}
 
 	content, err := io.ReadAll(file)
 	if err != nil {
@@ -392,7 +428,8 @@ func resetRepoGlobals(t *testing.T) {
 	origEnvfile := shared.Envfile
 	origSigningFile := repositories.RepoSigningFile
 	origSigningPassphrase := repositories.RepoSigningPassphrase
-	origAlpineSignKeyDir := repositories.AlpineSignKeyDir
+	origRepoSignKeyDir := repositories.RepoSignKeyDir
+	origAptDistro := repositories.RepoAptDistro
 
 	t.Cleanup(func() {
 		repositories.RepoFormat = origFormat
@@ -403,7 +440,8 @@ func resetRepoGlobals(t *testing.T) {
 		shared.Envfile = origEnvfile
 		repositories.RepoSigningFile = origSigningFile
 		repositories.RepoSigningPassphrase = origSigningPassphrase
-		repositories.AlpineSignKeyDir = origAlpineSignKeyDir
+		repositories.RepoSignKeyDir = origRepoSignKeyDir
+		repositories.RepoAptDistro = origAptDistro
 	})
 }
 
@@ -673,6 +711,105 @@ func TestMigrateRepo_AptTargetRequiresKeyfile(t *testing.T) {
 	}
 	if fn.getRepo("dst-apt") != nil {
 		t.Error("target repo should not have been created without a signing key")
+	}
+}
+
+// TestMigrateRepo_AptSignAndKeyfileMutuallyExclusive locks in that passing
+// both --sign and --keyfile is rejected up front rather than silently
+// preferring one over the other.
+func TestMigrateRepo_AptSignAndKeyfileMutuallyExclusive(t *testing.T) {
+	fn := newMigrateTestFixture(t)
+	fn.addRepo(&fakeRepo{Name: "src-apt-both", Format: "apt", Type: "hosted", BlobStore: "blob1"})
+
+	repositories.RepoSignKeyDir = t.TempDir()
+	repositories.RepoSigningFile = filepath.Join(t.TempDir(), "key.asc")
+	if err := os.WriteFile(repositories.RepoSigningFile, []byte("KEY"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	ce := MigrateRepo("src-apt-both", "dst-apt-both")
+	if ce == nil {
+		t.Fatal("expected an error, got nil")
+	}
+	if !strings.Contains(ce.Message, "mutually exclusive") {
+		t.Errorf("Message = %q, want it to mention mutual exclusivity", ce.Message)
+	}
+	if fn.getRepo("dst-apt-both") != nil {
+		t.Error("target repo should not have been created when signing options conflict")
+	}
+}
+
+// TestMigrateRepo_AptTargetCreatedWithGeneratedKey exercises the --sign path
+// end to end: migrate should generate a PGP keypair, send it to Nexus as the
+// new repo's aptSigning key, save both halves under the given directory, and
+// carry the source repo's actual distribution over instead of defaulting to
+// --distro's "nexus".
+func TestMigrateRepo_AptTargetCreatedWithGeneratedKey(t *testing.T) {
+	fn := newMigrateTestFixture(t)
+	fn.addRepo(&fakeRepo{
+		Name: "src-apt-gen", Format: "apt", Type: "hosted", BlobStore: "blob1", Distro: "bullseye",
+		Assets: []fakeAsset{{path: "pkg1.deb", content: []byte("one")}},
+	})
+
+	keyDir := t.TempDir()
+	repositories.RepoSignKeyDir = keyDir
+
+	ce := MigrateRepo("src-apt-gen", "dst-apt-gen")
+	if ce != nil {
+		t.Fatalf("MigrateRepo returned an error: %s: %s", ce.Title, ce.Message)
+	}
+
+	dst := fn.getRepo("dst-apt-gen")
+	if dst == nil {
+		t.Fatal("target repo was not created")
+	}
+	if dst.Distro != "bullseye" {
+		t.Errorf("target distro = %q, want %q (source repo's actual distribution should be preserved)", dst.Distro, "bullseye")
+	}
+	if !strings.Contains(dst.AptKeypair, "BEGIN PGP PRIVATE KEY BLOCK") {
+		t.Errorf("target aptSigning.keypair does not look like an armored PGP private key: %q", dst.AptKeypair)
+	}
+
+	privPath := filepath.Join(keyDir, "dst-apt-gen.private.asc")
+	pubPath := filepath.Join(keyDir, "dst-apt-gen.public.asc")
+	if _, err := os.Stat(privPath); err != nil {
+		t.Errorf("private key was not saved to %s: %v", privPath, err)
+	}
+	if _, err := os.Stat(pubPath); err != nil {
+		t.Errorf("public key was not saved to %s: %v", pubPath, err)
+	}
+}
+
+// TestMigrateRepo_AptTargetCreatedWithKeyfilePreservesDistro exercises the
+// bring-your-own-key path (--keyfile) and checks it too now carries the
+// source's actual distribution over, not just the --sign path.
+func TestMigrateRepo_AptTargetCreatedWithKeyfilePreservesDistro(t *testing.T) {
+	fn := newMigrateTestFixture(t)
+	fn.addRepo(&fakeRepo{
+		Name: "src-apt-kf", Format: "apt", Type: "hosted", BlobStore: "blob1", Distro: "focal",
+		Assets: []fakeAsset{{path: "pkg1.deb", content: []byte("one")}},
+	})
+
+	keyFile := filepath.Join(t.TempDir(), "key.asc")
+	if err := os.WriteFile(keyFile, []byte("EXISTING-PGP-KEY"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	repositories.RepoSigningFile = keyFile
+
+	ce := MigrateRepo("src-apt-kf", "dst-apt-kf")
+	if ce != nil {
+		t.Fatalf("MigrateRepo returned an error: %s: %s", ce.Title, ce.Message)
+	}
+
+	dst := fn.getRepo("dst-apt-kf")
+	if dst == nil {
+		t.Fatal("target repo was not created")
+	}
+	if dst.Distro != "focal" {
+		t.Errorf("target distro = %q, want %q (source repo's actual distribution should be preserved)", dst.Distro, "focal")
+	}
+	if dst.AptKeypair != "EXISTING-PGP-KEY" {
+		t.Errorf("target aptSigning.keypair = %q, want the supplied keyfile's contents", dst.AptKeypair)
 	}
 }
 

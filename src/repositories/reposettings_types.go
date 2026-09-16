@@ -11,7 +11,11 @@ var RepoType = "hosted"
 var RepoSigningFile string
 var RepoAptDistro = "nexus"
 var RepoSigningPassphrase = ""
-var AlpineSignKeyDir string
+
+// RepoSignKeyDir is the save directory for a --sign-generated keypair. Shared
+// across every format that supports self-generated signing keys (Alpine,
+// APT); default (empty) means the current working directory.
+var RepoSignKeyDir string
 var RepoContentDisposition = "INLINE"
 var StorageWritePolicy = "ALLOW"
 var StorageStrictContentValidation = true
