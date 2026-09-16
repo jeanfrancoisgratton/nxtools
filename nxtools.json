@@ -3,7 +3,7 @@
   "binaryname": "nxtools",
   "goversion": "1.27.1",
   "versionnumber": "1.3.3",
-  "defaultreleasenumber": "1",
+  "defaultreleasenumber": "2",
   "description": "Nexus Repository Management tools",
   "maintainer": "J.F.Gratton \u003cjean-francois@famillegratton.net\u003e",
   "packager": "Package builder \u003cbuilder@famillegratton.net\u003e",
