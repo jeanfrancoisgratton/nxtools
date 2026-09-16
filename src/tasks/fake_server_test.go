@@ -101,6 +101,21 @@ func (fn *fakeNexus) handle(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, ListTasksResponse{Items: items})
 
+	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/service/rest/v1/tasks/"):
+		id := strings.TrimPrefix(r.URL.Path, "/service/rest/v1/tasks/")
+		var found *fakeTask
+		for i, t := range fn.tasks {
+			if t.ID == id {
+				found = &fn.tasks[i]
+				break
+			}
+		}
+		if found == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		writeJSON(w, http.StatusOK, fn.toSummary(*found))
+
 	case r.Method == http.MethodGet && r.URL.Path == "/service/rest/v1/blobstores":
 		var blobs []blobstores.BlobStoreSummary
 		for _, b := range fn.blobstores {
