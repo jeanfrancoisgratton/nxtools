@@ -25,7 +25,7 @@ nxtools version 1.0.0 (2026.07.18), Go version = v1.26.5
 - [x] conan
 - [ ] cocoapods
 - [ ] huggingface
-- [ ] go
+- [x] go
 - [ ] composer
 - [ ] p2
 - [x] r

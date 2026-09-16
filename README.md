@@ -251,7 +251,9 @@ The most useful flags:
 - `-f, --format` : recipe family (e.g. `yum`, `apt`, `maven`, `docker`, `alpine`, `npm`, ...) — mandatory
 - `-t, --type` : `hosted` (default), `proxy` or `group`
 - `-w, --writepolicy` : `ALLOW` (default), `ALLOW_ONCE` or `DENY`
-- `-k, --keyfile` : PGP/RSA private key file — **mandatory** for the `apt` and `alpine` formats
+- `-k, --keyfile` : existing PGP private key file — required for the `apt` format, unless `--sign` is used instead (ignored, with a warning, for `alpine`)
+- `--sign[=PATH]` : generate a signing keypair instead of supplying one, register it with Nexus, and save both halves under `PATH` (default: current directory) — **mandatory** for `alpine` (Nexus never trusts a caller-supplied Alpine key, so there's no `-k` alternative for that format); optional alternative to `-k` for `apt`. `--sign` and `-k, --keyfile` are mutually exclusive
+- `-p, --passphrase` : passphrase to protect the private key (supplied or `--sign`-generated)
 - format-specific flags are also available (Maven version/layout policy, Yum repodata depth, Docker ports/subdomain, etc.); run `nxtools repo create -h` for the full list
 
 ### Query a repo's type
@@ -259,6 +261,8 @@ The most useful flags:
 
 ### Migrate a repo
 `nxtools repo migrate OLD_REPO NEW_REPO` copies the contents of `OLD_REPO` into `NEW_REPO`. By default the source assets are removed after a successful migration; pass `-k, --keep` to keep them.
+
+If `NEW_REPO` doesn't exist yet, it's created automatically from `OLD_REPO`'s configuration. For `alpine` and `apt` sources, that auto-created target needs a signing key, using the same `--sign[=PATH]` / `--keyfile PATH [--passphrase PASS]` flags (and the same rules) as `repo create` above — note `-k` means `--keep` on this command, not `--keyfile`. For `apt`, the source repo's actual distribution is also carried over to the new repo automatically.
 
 ### Remove repos
 Follows the usual pattern: `nxtools repo rm REPONAME`
