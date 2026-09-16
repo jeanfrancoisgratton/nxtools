@@ -15,6 +15,7 @@ import (
 
 	"nxtools/repositories"
 
+	cerr "github.com/jeanfrancoisgratton/customError/v3"
 	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"github.com/spf13/cobra"
 )
@@ -48,13 +49,13 @@ var repoCreateCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		// some sanity checks before going ahead
-		writepol := strings.ToLower(repositories.StorageWritePolicy)
-		if writepol != "allow" && writepol != "deny" && writepol != "allow_once" {
-			hftx.ErrorSign("Supported policies are ALLOW, ALLOW_ONCE and DENY; you selected " + repositories.StorageWritePolicy)
+		normalizedPolicy, ce := normalizeWritePolicy(repositories.StorageWritePolicy)
+		if ce != nil {
+			fmt.Println(ce.Error())
 			os.Exit(1)
-		} else {
-			repositories.StorageWritePolicy = strings.ToUpper(writepol)
 		}
+		repositories.StorageWritePolicy = normalizedPolicy
+
 		// Alpine hosted repos are handled by an entirely separate path: Nexus
 		// re-labels whatever signing key it's given under its own internal
 		// identifier, so there's no point accepting a caller-supplied keyfile
@@ -62,12 +63,13 @@ var repoCreateCmd = &cobra.Command{
 		// key apk-tools ends up trusting. --sign generates a fresh keypair,
 		// registers it, learns Nexus's identifier for it, and saves both
 		// halves locally under that name.
-		if fmtLower := strings.ToLower(repositories.RepoFormat); fmtLower == "alpine" || fmtLower == "apk" {
-			if repositories.RepoSigningFile != "" {
-				fmt.Println(hftx.WarningSign("-k/--keyfile is ignored for the Alpine format; use --sign instead"))
+		if isAlpineFormat(repositories.RepoFormat) {
+			warning, ce := checkAlpineSigningRequirement(repositories.RepoSigningFile, cmd.Flags().Changed("sign"))
+			if warning != "" {
+				fmt.Println(hftx.WarningSign(warning))
 			}
-			if !cmd.Flags().Changed("sign") {
-				hftx.ErrorSign("You need to pass --sign (optionally --sign=PATH) when using the Alpine format")
+			if ce != nil {
+				fmt.Println(ce.Error())
 				os.Exit(1)
 			}
 			if err := assets.CreateSignedAlpineRepo(args[0], args[1], repositories.RepoSignKeyDir); err != nil {
@@ -79,20 +81,17 @@ var repoCreateCmd = &cobra.Command{
 		// APT accepts either a caller-supplied key (-k/--keyfile, an existing PGP private key
 		// Nexus is handed as-is — unlike Alpine, it's not relabeled) or --sign to have nxtools
 		// generate one. Exactly one of the two is required.
-		if strings.ToLower(repositories.RepoFormat) == "apt" {
-			if cmd.Flags().Changed("sign") && repositories.RepoSigningFile != "" {
-				hftx.ErrorSign("--sign and -k/--keyfile are mutually exclusive; pass one or the other")
+		if isAptFormat(repositories.RepoFormat) {
+			mode, ce := checkAptSigningRequirement(repositories.RepoSigningFile, cmd.Flags().Changed("sign"))
+			if ce != nil {
+				fmt.Println(ce.Error())
 				os.Exit(1)
 			}
-			if cmd.Flags().Changed("sign") {
+			if mode == aptSignGenerate {
 				if err := assets.CreateSignedAptRepo(args[0], args[1], repositories.RepoAptDistro, repositories.RepoSignKeyDir); err != nil {
 					fmt.Println(err.Error())
 				}
 				return
-			}
-			if repositories.RepoSigningFile == "" {
-				hftx.ErrorSign("You need to provide a PGP private key file (-k/--keyfile) or pass --sign to generate one when using the APT format")
-				os.Exit(1)
 			}
 		}
 
@@ -101,6 +100,71 @@ var repoCreateCmd = &cobra.Command{
 			fmt.Println(err.Error())
 		}
 	},
+}
+
+// normalizeWritePolicy validates the --writepolicy value and returns its
+// canonical uppercase form ("ALLOW", "ALLOW_ONCE" or "DENY").
+func normalizeWritePolicy(policy string) (string, *cerr.CustomError) {
+	lower := strings.ToLower(policy)
+	if lower != "allow" && lower != "deny" && lower != "allow_once" {
+		return "", &cerr.CustomError{Title: "Invalid --writepolicy value",
+			Message: "Supported policies are ALLOW, ALLOW_ONCE and DENY; you selected " + policy}
+	}
+	return strings.ToUpper(lower), nil
+}
+
+// isAlpineFormat reports whether format refers to the Alpine/APK repo format,
+// which nxtools accepts under either spelling.
+func isAlpineFormat(format string) bool {
+	f := strings.ToLower(format)
+	return f == "alpine" || f == "apk"
+}
+
+// isAptFormat reports whether format refers to the apt repo format.
+func isAptFormat(format string) bool {
+	return strings.ToLower(format) == "apt"
+}
+
+// checkAlpineSigningRequirement enforces that --sign was passed when creating
+// an Alpine-format repo (its signing keypair is generated and registered by
+// nxtools, not supplied via --keyfile like other formats), and returns a
+// warning when --keyfile was also set (since it's ignored for this format).
+func checkAlpineSigningRequirement(signingFile string, signFlagChanged bool) (warning string, err *cerr.CustomError) {
+	if signingFile != "" {
+		warning = "-k/--keyfile is ignored for the Alpine format; use --sign instead"
+	}
+	if !signFlagChanged {
+		err = &cerr.CustomError{Title: "Missing --sign",
+			Message: "You need to pass --sign (optionally --sign=PATH) when using the Alpine format"}
+	}
+	return warning, err
+}
+
+// aptSigningMode is which of --sign / -k, --keyfile a `repo create --format
+// apt` invocation should use to obtain its signing key.
+type aptSigningMode int
+
+const (
+	aptSignKeyfile  aptSigningMode = iota // -k/--keyfile: an existing key is handed to Nexus as-is
+	aptSignGenerate                       // --sign: nxtools generates and registers a fresh key
+)
+
+// checkAptSigningRequirement validates --sign/-k usage for `repo create
+// --format apt` and reports which mode to use. Exactly one of --sign or
+// -k/--keyfile is required; passing both is rejected as ambiguous.
+func checkAptSigningRequirement(signingFile string, signFlagChanged bool) (aptSigningMode, *cerr.CustomError) {
+	if signFlagChanged && signingFile != "" {
+		return 0, &cerr.CustomError{Title: "Conflicting signing flags",
+			Message: "--sign and -k/--keyfile are mutually exclusive; pass one or the other"}
+	}
+	if signFlagChanged {
+		return aptSignGenerate, nil
+	}
+	if signingFile == "" {
+		return 0, &cerr.CustomError{Title: "Missing signing key",
+			Message: "You need to provide a PGP private key file (-k/--keyfile) or pass --sign to generate one when using the APT format"}
+	}
+	return aptSignKeyfile, nil
 }
 
 var repoDeleteCmd = &cobra.Command{

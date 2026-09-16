@@ -23,7 +23,7 @@ var taskCmd = &cobra.Command{
 	Aliases: []string{"tasks"},
 	Short:   "Task-related sub-command",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Valid subcommands are: { list | run | stop | create }")
+		fmt.Println("Valid subcommands are: { list | run | stop | delete | create }")
 	},
 }
 
@@ -63,6 +63,20 @@ var taskStopCmd = &cobra.Command{
 	Short:   "Stops one or more running tasks",
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := tasks.StopTasks(args); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+	},
+}
+
+var taskDeleteCmd = &cobra.Command{
+	Use:     "delete TASK_ID [TASK_ID2 ...]",
+	Aliases: []string{"rm", "remove", "del"},
+	Example: "nxtools task delete [-e defaultEnv.json] TASK_ID [TASK_ID2 ...]",
+	Args:    cobra.MinimumNArgs(1),
+	Short:   "Deletes one or more tasks",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := tasks.DeleteTasks(args); err != nil {
 			fmt.Println(err.Error())
 			os.Exit(1)
 		}
@@ -234,7 +248,7 @@ func normalizeNotifyCondition(s string) (string, *cerr.CustomError) {
 }
 
 func init() {
-	taskCmd.AddCommand(taskListCmd, taskRunCmd, taskStopCmd, taskCreateCmd)
+	taskCmd.AddCommand(taskListCmd, taskRunCmd, taskStopCmd, taskDeleteCmd, taskCreateCmd)
 	taskCreateCmd.AddCommand(taskCreateBlobCompactCmd)
 
 	taskListCmd.Flags().BoolVarP(&taskListRunningOnly, "running", "r", false, "Only list tasks that are currently running")
