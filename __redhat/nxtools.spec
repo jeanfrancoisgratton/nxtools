@@ -59,6 +59,16 @@ install -Dpm 0755 %{_builddir}/%{name}-%{version}/%{_binaryname} %{buildroot}%{_
 
 
 %changelog
+* Wed Sep 16 2026 Binary package builder <builder@famillegratton.net> 1.3.3-3
+- release bump
+- Merge branch 'task_management' into develop
+- enhancement(task create): blob-compact fixes
+- Merge branch 'task_management' into develop
+- Added unit tests
+- chore: update changelog for 1.3.3-2
+- chore: version bump
+- chore: update changelog for 1.3.3-1
+
 * Wed Sep 16 2026 Binary package builder <builder@famillegratton.net> 1.3.3-2
 - chore: version bump
 
