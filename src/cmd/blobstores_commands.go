@@ -7,9 +7,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"nxtools/blobstores"
+	"nxtools/tasks"
 )
 
 var blobCmd = &cobra.Command{
@@ -17,7 +19,7 @@ var blobCmd = &cobra.Command{
 	Aliases: []string{"blobs", "blobstore", "blobstores"},
 	Short:   "Blobstore-related sub-command",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Valid subcommands are: { list | create | delete }")
+		fmt.Println("Valid subcommands are: { list | create | delete | compact }")
 	},
 }
 
@@ -62,8 +64,21 @@ var blobAddCmd = &cobra.Command{
 	},
 }
 
+var blobCompactCmd = &cobra.Command{
+	Use:     "compact BLOBSTORE_NAME",
+	Example: "nxtools blob compact [-e defaultEnv.json] pypiLocal",
+	Args:    cobra.ExactArgs(1),
+	Short:   "Runs the pre-existing compact task for a blob store",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := tasks.CompactBlobStore(args[0]); err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+	},
+}
+
 func init() {
-	blobCmd.AddCommand(blobListCmd, blobRemoveCmd, blobAddCmd)
+	blobCmd.AddCommand(blobListCmd, blobRemoveCmd, blobAddCmd, blobCompactCmd)
 
 	blobAddCmd.Flags().StringVar(&blobstores.Blobtype, "type", "file", "Blob type (file, gcp, amazon, azure, group)")
 	blobAddCmd.Flags().StringVar(&blobstores.FileBlobPath, "path", "", "File blob path")

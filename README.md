@@ -3,9 +3,10 @@ ___
 
 This tool is a CLI-driven client to Nexus Repository Manager 3 servers.<br>It will allow:
 - authentication
-- blob store ops (list, delete, create)
+- blob store ops (list, delete, create, compact)
 - repo ops (list, create, delete, migrate, query type/supported formats)
 - asset ops (list, info, upload, download, fetch, delete)
+- task ops (list, run, stop, create)
 - more to come
 
 **TABLE OF CONTENTS**<br>
@@ -20,6 +21,7 @@ This tool is a CLI-driven client to Nexus Repository Manager 3 servers.<br>It wi
 - [Blobs operations](#blobs-ops)
 - [Assets operations](#assets-ops)
 - [Repositories operations](#repos-ops)
+- [Tasks operations](#tasks-ops)
 
 <a id="concepts"></a>
 # Basic Nexus Concepts
@@ -40,7 +42,7 @@ This is what everything in NxRM revolves around. Each repo uses its own specific
 The basic block in NxRM. Every single piece (binary package, file, metadata, etc) that gets into a repo is an asset.
 
 ## Tasks
-Tasks are executed on-demand or through an internal scheduler. `nxtools` currently offers limited support for tasks, but it will get expanded over time
+Tasks are executed on-demand or through an internal scheduler. `nxtools` can list, run and stop any task, and can create `blobstore.compact` ("Compact blob store") tasks directly; creation of other task types (e.g. repo reindexing) isn't implemented yet — see [Tasks operations](#tasks-ops)
 
 ## Roles and privileges
 Roles are the basic access control items in NxRM and are heavily granularized. Privileges is a collection of roles grouped together for convenience.
@@ -115,7 +117,7 @@ The tool will eventually support environment variables such as NEXUS_HOST, NEXUS
 
 <a id="blobs-ops"></a>
 ## Blob operations
-We support add, remove and list operations; update operations are not yet implemented. The current blob subcommands are:
+We support add, remove, list and compact operations; update operations are not yet implemented. The current blob subcommands are:
 <img src="./images/blobs_-h.png" alt="nxtools blobs -h"/>
 
 ### List blobs
@@ -162,6 +164,29 @@ A few notes, here:
 1. Even though only the file-based type is currently supported, the --type flag is mandatory (so here, it'd be: `--type file`)
 2. If you set `--sqlimit` and/or `--sqtype` are set but `--softquota` is not, those two parameters will be ignored
 3. if `--path` is unset, the blob path will be the `$DATA_DIR/blobs/$blobstore_name`; the path can be absolute, or relative to `$DATA_DIR/blobs`
+
+### Compact a blob store
+`nxtools blob compact BLOBSTORE_NAME` runs the pre-existing "Compact blob store" task for that blob store now. Since a blob store has no format (a blob is a blob, regardless of what repo formats write to it), this command needs nothing beyond the blob store's name.
+
+```bash
+$ nxtools blob compact -h
+Runs the pre-existing compact task for a blob store
+
+Usage:
+  nxtools blob compact BLOBSTORE_NAME [flags]
+
+Examples:
+nxtools blob compact [-e defaultEnv.json] pypiLocal
+
+Flags:
+  -h, --help   help for compact
+
+Global Flags:
+  -e, --env string   Environment file to load in from $HOME/.config/JFG/nxtools (default "defaultEnv.json")
+  -q, --quiet        Output will be as quiet as possible
+```
+
+It hard-fails (rather than silently no-op'ing or queuing) if the blob store doesn't exist, if no compact task targets it yet (see [Create a task](#tasks-ops) below), or if that task is already running. The lookup matches the task by its actual configured target (`properties.blobstoreName`), not by name, so it works regardless of what the task happens to be called — including ones created by hand through the webUI.
 
 <a id="assets-ops"></a>
 ## Assets operations
@@ -269,5 +294,64 @@ Follows the usual pattern: `nxtools repo rm REPONAME`
 There is no longer a standalone `reindex` command. `yum` and `apt` repositories (the only formats that don't rebuild their own metadata) are now reindexed automatically by `nxtools assets upload` right after a successful upload — see [Upload an asset](#upload-an-asset-package-to-a-repo) above. All other formats (including Alpine, whose `APKINDEX` Nexus regenerates automatically on upload) never needed reindexing in the first place.
 
 #### PRE-REQUISITES
-`nxtools` has not yet implemented tasks creation, and might never do so (unsure of that, yet), so the automatic reindex calls upon a task that **has to already be present through the webUI**.
+`nxtools` does not yet create reindex tasks (unlike blob-compact tasks — see [Tasks operations](#tasks-ops)), so the automatic reindex calls upon a task that **has to already be present through the webUI**.
 The task name has to follow this naming scheme: `_reindex_$REPONAME`, thus for the repo `dnfLocal`, you would need to have a task named `_reindex_dnfLocal` already present. If that task is missing, the upload still succeeds and a warning is printed instead.
+
+<a id="tasks-ops"></a>
+## Tasks operations
+`nxtools` can list, run and stop any scheduled task on the server, and can create `blobstore.compact` tasks directly (other task types still need to be created through the webUI, as described above).
+
+```bash
+$ nxtools task -h
+Task-related sub-command
+
+Usage:
+  nxtools task [flags]
+  nxtools task [command]
+
+Aliases:
+  task, tasks
+
+Available Commands:
+  create      Create a new scheduled task
+  list        Lists all tasks defined on the server
+  run         Runs one or more tasks now
+  stop        Stops one or more running tasks
+```
+
+### List tasks
+`nxtools task list [--running]` lists every task defined on the server (ID, name, type, state, schedule, last/next run, last result). Pass `-r, --running` to only show tasks currently in the `RUNNING` state.
+
+### Run / stop tasks
+`nxtools task run TASK_ID [TASK_ID2 ...]` and `nxtools task stop TASK_ID [TASK_ID2 ...]` act on one or more tasks by ID (as shown by `task list`). Both continue past individual failures — one bad ID doesn't block the rest — and report every ID that failed at the end.
+
+### Create a task
+Only `blob-compact` is currently supported: `nxtools task create blob-compact TASK_NAME BLOBSTORE_NAME`.
+
+```bash
+$ nxtools task create blob-compact -h
+Creates a "Compact blob store" task
+
+Usage:
+  nxtools task create blob-compact TASK_NAME BLOBSTORE_NAME [flags]
+
+Examples:
+nxtools task create blob-compact [-e defaultEnv.json] MyCompactTask pypiLocal --schedule weekly --start-date 2026-09-20T02:00 --days 1,4
+
+Flags:
+      --cron string         Cron expression; required when --schedule=cron
+      --days ints           Recurring days: 1-7 for weekly (1=Sunday), 1-31 or 999 (last day) for monthly
+      --disabled            Create the task in a disabled state
+  -m, --email string        E-mail address for task notifications
+  -h, --help                help for blob-compact
+  -n, --notify string       When to notify: failure, success+failure (no effect without --email) (default "failure")
+  -o, --older int           Only compact blobs older than this many days
+  -s, --schedule string     Schedule type: manual, once, hourly, daily, weekly, monthly, cron (default "manual")
+      --start-date string   Start date/time (2006-01-02, "2006-01-02 15:04" or 2006-01-02T15:04); required unless --schedule=manual
+      --tz string           Timezone offset, e.g. -05:00 (defaults to the local machine's current offset)
+```
+
+Notes:
+- `-m, --email`, not `-e` (that shorthand is already taken by the global `--env` flag)
+- `--schedule` accepts every schedule shape Nexus itself supports; each requires its own subset of flags — `once`/`hourly`/`daily` need `--start-date`, `weekly`/`monthly` also need `--days`, and `cron` needs `--cron` instead of a start date. Flags that don't apply to the chosen schedule are ignored with a warning rather than rejected outright
+- creation hard-fails if the blob store doesn't exist, or if a `blobstore.compact` task already targets it — nxtools checks the *actual configured target* of every existing compact task (not just ones matching a naming convention), so it won't let you create a silent duplicate even if the pre-existing task was made by hand through the webUI under an unrelated name

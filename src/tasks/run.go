@@ -11,10 +11,11 @@ import (
 	"net/http"
 	"strings"
 
-	cerr "github.com/jeanfrancoisgratton/customError/v3"
-	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 	"nxtools/rest"
 	"nxtools/shared"
+
+	cerr "github.com/jeanfrancoisgratton/customError/v3"
+	hftx "github.com/jeanfrancoisgratton/helperFunctions/v5/terminalfx"
 )
 
 // RunTasks runs each task in ids now. It continues past individual failures
@@ -26,17 +27,6 @@ import (
 //	POST /v1/tasks/{id}/run
 func RunTasks(ids []string) *cerr.CustomError {
 	return applyToTasks(ids, "run", "was successfully started")
-}
-
-// StopTasks stops each running task in ids. It continues past individual
-// failures so one bad ID doesn't block the rest, and returns an aggregate
-// error naming every ID that failed.
-//
-// Endpoint (per ID):
-//
-//	POST /v1/tasks/{id}/stop
-func StopTasks(ids []string) *cerr.CustomError {
-	return applyToTasks(ids, "stop", "was successfully stopped")
 }
 
 func applyToTasks(ids []string, action, successMsg string) *cerr.CustomError {

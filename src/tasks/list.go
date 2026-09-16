@@ -62,6 +62,12 @@ func ListTasks(displayOut bool, runningOnly bool) ([]TaskSummary, *cerr.CustomEr
 
 // fetchAllTasks walks every page of GET /v1/tasks and returns the combined item list.
 func fetchAllTasks() ([]TaskSummary, *cerr.CustomError) {
+	return fetchTasks("")
+}
+
+// fetchTasks walks every page of GET /v1/tasks, optionally filtered server-side
+// by type, and returns the combined item list.
+func fetchTasks(taskType string) ([]TaskSummary, *cerr.CustomError) {
 	c, err := rest.NewClientFromEnvFile(shared.Envfile)
 	if err != nil {
 		return nil, err
@@ -72,6 +78,9 @@ func fetchAllTasks() ([]TaskSummary, *cerr.CustomError) {
 
 	for {
 		q := url.Values{}
+		if taskType != "" {
+			q.Set("type", taskType)
+		}
 		if continuationToken != "" {
 			q.Set("continuationToken", continuationToken)
 		}
