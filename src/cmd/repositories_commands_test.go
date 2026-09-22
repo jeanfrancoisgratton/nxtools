@@ -6,7 +6,10 @@
 
 package cmd
 
-import "testing"
+import (
+	"nxtools/repositories"
+	"testing"
+)
 
 func TestNormalizeWritePolicy(t *testing.T) {
 	cases := map[string]string{
@@ -17,7 +20,7 @@ func TestNormalizeWritePolicy(t *testing.T) {
 		"DENY":       "DENY",
 	}
 	for in, want := range cases {
-		got, err := normalizeWritePolicy(in)
+		got, err := repositories.NormalizeWritePolicy(in)
 		if err != nil {
 			t.Fatalf("normalizeWritePolicy(%q): unexpected error: %v", in, err)
 		}
@@ -28,19 +31,19 @@ func TestNormalizeWritePolicy(t *testing.T) {
 }
 
 func TestNormalizeWritePolicy_Invalid(t *testing.T) {
-	if _, err := normalizeWritePolicy("bogus"); err == nil {
+	if _, err := repositories.NormalizeWritePolicy("bogus"); err == nil {
 		t.Fatal("expected an error for an unsupported write policy")
 	}
 }
 
 func TestIsAlpineFormat(t *testing.T) {
 	for _, f := range []string{"alpine", "Alpine", "ALPINE", "apk", "APK"} {
-		if !isAlpineFormat(f) {
+		if !repositories.IsAlpineFormat(f) {
 			t.Errorf("isAlpineFormat(%q) = false, want true", f)
 		}
 	}
 	for _, f := range []string{"yum", "apt", "docker", ""} {
-		if isAlpineFormat(f) {
+		if repositories.IsAlpineFormat(f) {
 			t.Errorf("isAlpineFormat(%q) = true, want false", f)
 		}
 	}
@@ -48,12 +51,12 @@ func TestIsAlpineFormat(t *testing.T) {
 
 func TestIsAptFormat(t *testing.T) {
 	for _, f := range []string{"apt", "APT", "Apt"} {
-		if !isAptFormat(f) {
+		if !repositories.IsAptFormat(f) {
 			t.Errorf("isAptFormat(%q) = false, want true", f)
 		}
 	}
 	for _, f := range []string{"yum", "alpine", ""} {
-		if isAptFormat(f) {
+		if repositories.IsAptFormat(f) {
 			t.Errorf("isAptFormat(%q) = true, want false", f)
 		}
 	}
@@ -61,7 +64,7 @@ func TestIsAptFormat(t *testing.T) {
 
 func TestCheckAlpineSigningRequirement(t *testing.T) {
 	t.Run("sign passed, no keyfile: clean pass", func(t *testing.T) {
-		warning, err := checkAlpineSigningRequirement("", true)
+		warning, err := repositories.CheckAlpineSigningRequirement("", true)
 		if warning != "" {
 			t.Errorf("expected no warning, got %q", warning)
 		}
@@ -71,7 +74,7 @@ func TestCheckAlpineSigningRequirement(t *testing.T) {
 	})
 
 	t.Run("sign passed, keyfile also set: warns but doesn't fail", func(t *testing.T) {
-		warning, err := checkAlpineSigningRequirement("/path/to/key", true)
+		warning, err := repositories.CheckAlpineSigningRequirement("/path/to/key", true)
 		if warning == "" {
 			t.Error("expected a warning about --keyfile being ignored")
 		}
@@ -81,14 +84,14 @@ func TestCheckAlpineSigningRequirement(t *testing.T) {
 	})
 
 	t.Run("sign not passed: hard error", func(t *testing.T) {
-		_, err := checkAlpineSigningRequirement("", false)
+		_, err := repositories.CheckAlpineSigningRequirement("", false)
 		if err == nil {
 			t.Fatal("expected an error when --sign wasn't passed")
 		}
 	})
 
 	t.Run("sign not passed and keyfile set: both warning and error", func(t *testing.T) {
-		warning, err := checkAlpineSigningRequirement("/path/to/key", false)
+		warning, err := repositories.CheckAlpineSigningRequirement("/path/to/key", false)
 		if warning == "" {
 			t.Error("expected a warning about --keyfile being ignored")
 		}
@@ -100,33 +103,33 @@ func TestCheckAlpineSigningRequirement(t *testing.T) {
 
 func TestCheckAptSigningRequirement(t *testing.T) {
 	t.Run("sign only: generate mode", func(t *testing.T) {
-		mode, err := checkAptSigningRequirement("", true)
+		mode, err := repositories.CheckAptSigningRequirement("", true)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if mode != aptSignGenerate {
+		if mode != repositories.AptSignGenerate {
 			t.Errorf("mode = %v, want aptSignGenerate", mode)
 		}
 	})
 
 	t.Run("keyfile only: keyfile mode", func(t *testing.T) {
-		mode, err := checkAptSigningRequirement("/path/to/key", false)
+		mode, err := repositories.CheckAptSigningRequirement("/path/to/key", false)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if mode != aptSignKeyfile {
+		if mode != repositories.AptSignKeyfile {
 			t.Errorf("mode = %v, want aptSignKeyfile", mode)
 		}
 	})
 
 	t.Run("both sign and keyfile: rejected as ambiguous", func(t *testing.T) {
-		if _, err := checkAptSigningRequirement("/path/to/key", true); err == nil {
+		if _, err := repositories.CheckAptSigningRequirement("/path/to/key", true); err == nil {
 			t.Fatal("expected an error when both --sign and -k/--keyfile are given")
 		}
 	})
 
 	t.Run("neither sign nor keyfile: rejected as missing", func(t *testing.T) {
-		if _, err := checkAptSigningRequirement("", false); err == nil {
+		if _, err := repositories.CheckAptSigningRequirement("", false); err == nil {
 			t.Fatal("expected an error when neither --sign nor -k/--keyfile is given")
 		}
 	})
