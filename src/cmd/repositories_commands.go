@@ -20,7 +20,13 @@ import (
 var repoCmd = &cobra.Command{
 	Use:     "repo",
 	Aliases: []string{"repos", "repositories"},
-	Short:   "Repository-related sub-command",
+	Example: "nxtools repo list\n" +
+		"  nxtools repo create --format apt myAptRepo myBlobStore\n" +
+		"  nxtools repo type myAptRepo\n" +
+		"  nxtools repo supported\n" +
+		"  nxtools repo migrate oldRepo newRepo\n" +
+		"  nxtools repo delete myAptRepo",
+	Short: "Repository-related sub-command",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Valid subcommands are: { list | create | delete | type | supported | migrate }")
 	},

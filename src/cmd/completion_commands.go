@@ -13,8 +13,9 @@ import (
 )
 
 var completionCmd = &cobra.Command{
-	Use:   "completion",
-	Short: "Generate shell completion scripts",
+	Use:     "completion",
+	Example: "nxtools completion bash\n  nxtools completion zsh",
+	Short:   "Generate shell completion scripts",
 	Long: `Generate completion scripts for your shell.
 
 Bash:
@@ -32,8 +33,9 @@ Zsh:
 }
 
 var completionBashCmd = &cobra.Command{
-	Use:   "bash",
-	Short: "Generate a Bash completion script",
+	Use:     "bash",
+	Example: "source <(nxtools completion bash)",
+	Short:   "Generate a Bash completion script",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// V2 is recommended; writes to stdout
 		return rootCmd.GenBashCompletionV2(os.Stdout, true)
@@ -41,8 +43,9 @@ var completionBashCmd = &cobra.Command{
 }
 
 var completionZshCmd = &cobra.Command{
-	Use:   "zsh",
-	Short: "Generate a Zsh completion script",
+	Use:     "zsh",
+	Example: "source <(nxtools completion zsh)",
+	Short:   "Generate a Zsh completion script",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Ensure the script is zsh-compatible
 		return rootCmd.GenZshCompletion(os.Stdout)

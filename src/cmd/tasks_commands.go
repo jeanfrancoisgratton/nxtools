@@ -21,7 +21,12 @@ import (
 var taskCmd = &cobra.Command{
 	Use:     "task",
 	Aliases: []string{"tasks"},
-	Short:   "Task-related sub-command",
+	Example: "nxtools task list [--running]\n" +
+		"  nxtools task run TASK_ID [TASK_ID2 ...]\n" +
+		"  nxtools task stop TASK_ID [TASK_ID2 ...]\n" +
+		"  nxtools task delete TASK_ID [TASK_ID2 ...]\n" +
+		"  nxtools task create blob-compact MyCompactTask pypiLocal --schedule weekly --start-date 2026-09-20T02:00 --days 1,4",
+	Short: "Task-related sub-command",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Valid subcommands are: { list | run | stop | delete | create }")
 	},
@@ -84,8 +89,9 @@ var taskDeleteCmd = &cobra.Command{
 }
 
 var taskCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new scheduled task",
+	Use:     "create",
+	Example: "nxtools task create blob-compact MyCompactTask pypiLocal --schedule weekly --start-date 2026-09-20T02:00 --days 1,4",
+	Short:   "Create a new scheduled task",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Valid subcommands are: { blob-compact }")
 	},

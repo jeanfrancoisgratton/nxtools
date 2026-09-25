@@ -13,7 +13,11 @@ import (
 )
 
 var envCmd = &cobra.Command{
-	Use:   "env",
+	Use: "env",
+	Example: "nxtools env list\n" +
+		"  nxtools env add myEnv.json\n" +
+		"  nxtools env info myEnv.json\n" +
+		"  nxtools env rm myEnv.json",
 	Short: "Environment sub-command",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Valid subcommands are: { list | add | remove }")

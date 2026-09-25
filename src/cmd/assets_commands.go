@@ -19,7 +19,14 @@ import (
 var assetsCmd = &cobra.Command{
 	Use:     "assets",
 	Aliases: []string{"asset"},
-	Short:   "Asset-related sub-command",
+	Example: "nxtools assets list myRepo\n" +
+		"  nxtools assets upload myRepo /path/to/package.deb\n" +
+		"  nxtools assets download ASSET_URL /path/to/dest\n" +
+		"  nxtools assets latest myRepo myPackage\n" +
+		"  nxtools assets info ASSET_ID\n" +
+		"  nxtools assets pkginfo myRepo myPackage\n" +
+		"  nxtools assets delete ASSET_ID [ASSET_ID2 ...]",
+	Short: "Asset-related sub-command",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Valid subcommands are: { list | info | upload }")
 	},

@@ -17,7 +17,11 @@ import (
 var blobCmd = &cobra.Command{
 	Use:     "blob",
 	Aliases: []string{"blobs", "blobstore", "blobstores"},
-	Short:   "Blobstore-related sub-command",
+	Example: "nxtools blob list\n" +
+		"  nxtools blob add --type file myBlobStore\n" +
+		"  nxtools blob compact myBlobStore\n" +
+		"  nxtools blob rm myBlobStore",
+	Short: "Blobstore-related sub-command",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Valid subcommands are: { list | create | delete | compact }")
 	},

@@ -20,6 +20,9 @@ var rootCmd = &cobra.Command{
 	Use:   "nxtools",
 	Short: "Nexus Repository Manager 3 CLI tool",
 	Long:  `This tools allows you to manage many actions on an NxRM server`,
+	Example: "nxtools -e defaultEnv.json repo list\n" +
+		"  nxtools -q assets upload myRepo /path/to/package.deb\n" +
+		"  nxtools version",
 }
 
 // buildVersion and buildDate are set via -ldflags -X at package-build time.
@@ -32,8 +35,9 @@ var buildVersion = "dev"
 var buildDate = "unknown"
 
 var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Shows the software version",
+	Use:     "version",
+	Example: "nxtools version",
+	Short:   "Shows the software version",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println(hftx.White("nxtools v" + buildVersion + " (" + buildDate + "), Go version = v" + strings.TrimPrefix(runtime.Version(), "go") + " (" + runtime.GOARCH + ")"))
 	},
