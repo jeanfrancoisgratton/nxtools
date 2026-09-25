@@ -171,7 +171,7 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 	var nMovedAssets, nTotalAssets uint
 	outerQuiet := shared.QuietOutput
 
-	items, me1 := assets.ListAssets(oldrepo, false, false)
+	items, me1 := assets.ListAssets(oldrepo, assets.LatestAssetsOnly, false)
 	if me1 != nil {
 		return 0, 0, me1
 	}

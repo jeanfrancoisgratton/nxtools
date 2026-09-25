@@ -287,6 +287,8 @@ The most useful flags:
 ### Migrate a repo
 `nxtools repo migrate OLD_REPO NEW_REPO` copies the contents of `OLD_REPO` into `NEW_REPO`. By default the source assets are removed after a successful migration; pass `-k, --keep` to keep them.
 
+Pass `-l, --latest` to only migrate the newest version of each package, skipping older ones — the same latest-version resolution used by `assets ls -l` and `assets latest`.
+
 If `NEW_REPO` doesn't exist yet, it's created automatically from `OLD_REPO`'s configuration. For `alpine` and `apt` sources, that auto-created target needs a signing key, using the same `--sign[=PATH]` / `--keyfile PATH [--passphrase PASS]` flags (and the same rules) as `repo create` above — note `-k` means `--keep` on this command, not `--keyfile`. For `apt`, the source repo's actual distribution is also carried over to the new repo automatically.
 
 ### Remove repos

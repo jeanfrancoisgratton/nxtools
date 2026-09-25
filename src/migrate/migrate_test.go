@@ -20,6 +20,7 @@ import (
 	"sync"
 	"testing"
 
+	"nxtools/assets"
 	"nxtools/env"
 	"nxtools/repositories"
 	"nxtools/shared"
@@ -33,6 +34,10 @@ import (
 type fakeAsset struct {
 	path    string
 	content []byte
+	// name/version are only used by the /search endpoint (the --latest path);
+	// the plain /assets endpoint ignores them.
+	name    string
+	version string
 }
 
 type fakeRepo struct {
@@ -114,6 +119,8 @@ func (fn *fakeNexus) handle(w http.ResponseWriter, r *http.Request) {
 		fn.listRepositories(w)
 	case r.URL.Path == "/service/rest/v1/assets" && r.Method == http.MethodGet:
 		fn.listAssets(w, r)
+	case r.URL.Path == "/service/rest/v1/search" && r.Method == http.MethodGet:
+		fn.searchComponents(w, r)
 	case r.URL.Path == "/service/rest/v1/components" && r.Method == http.MethodPost:
 		fn.uploadComponent(w, r)
 	case r.URL.Path == "/download" && r.Method == http.MethodGet:
@@ -304,6 +311,41 @@ func (fn *fakeNexus) listAssets(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, shared.ListAssetResponse{Items: items, ContinuationToken: nil})
 }
 
+// searchComponents backs /service/rest/v1/search, used by the --latest path
+// (assets.LatestAssetsOnly). It returns one component per fakeAsset, letting
+// tests control latest-vs-older ordering via fakeAsset.name/version and the
+// order assets were added in (the client picks the first-seen component per
+// name, mirroring how the real search endpoint sorts newest-first).
+func (fn *fakeNexus) searchComponents(w http.ResponseWriter, r *http.Request) {
+	repoName := r.URL.Query().Get("repository")
+	rp := fn.getRepo(repoName)
+
+	var items []assets.ComponentSummary
+	if rp != nil {
+		fn.mu.Lock()
+		for _, a := range rp.Assets {
+			q := url.Values{}
+			q.Set("repo", repoName)
+			q.Set("path", a.path)
+			items = append(items, assets.ComponentSummary{
+				Repository: repoName,
+				Format:     rp.Format,
+				Name:       a.name,
+				Version:    a.version,
+				Assets: []shared.AssetSummary{{
+					Path:        a.path,
+					DownloadURL: fn.baseURL + "/download?" + q.Encode(),
+					Format:      rp.Format,
+					Repository:  repoName,
+					FileSize:    int64(len(a.content)),
+				}},
+			})
+		}
+		fn.mu.Unlock()
+	}
+	writeJSON(w, http.StatusOK, assets.ListComponentResponse{Items: items})
+}
+
 func (fn *fakeNexus) download(w http.ResponseWriter, r *http.Request) {
 	repoName := r.URL.Query().Get("repo")
 	assetPath := r.URL.Query().Get("path")
@@ -430,6 +472,7 @@ func resetRepoGlobals(t *testing.T) {
 	origSigningPassphrase := repositories.RepoSigningPassphrase
 	origRepoSignKeyDir := repositories.RepoSignKeyDir
 	origAptDistro := repositories.RepoAptDistro
+	origLatestOnly := assets.LatestAssetsOnly
 
 	t.Cleanup(func() {
 		repositories.RepoFormat = origFormat
@@ -442,6 +485,7 @@ func resetRepoGlobals(t *testing.T) {
 		repositories.RepoSigningPassphrase = origSigningPassphrase
 		repositories.RepoSignKeyDir = origRepoSignKeyDir
 		repositories.RepoAptDistro = origAptDistro
+		assets.LatestAssetsOnly = origLatestOnly
 	})
 }
 
@@ -608,6 +652,39 @@ func TestMigrateRepo_KeepSourceOption(t *testing.T) {
 
 	if fn.getRepo("src-raw") == nil {
 		t.Error("source repo should still exist when KeepSource is set")
+	}
+}
+
+// TestMigrateRepo_LatestOnlyOption locks in the -l/--latest flag: it reuses
+// assets.LatestAssetsOnly (the same switch as `assets list --latest`), so
+// migrateAssets must route through the /search endpoint and only carry over
+// the newest version of a package, skipping any older ones.
+func TestMigrateRepo_LatestOnlyOption(t *testing.T) {
+	fn := newMigrateTestFixture(t)
+	fn.addRepo(&fakeRepo{
+		Name: "src-raw", Format: "raw", Type: "hosted", BlobStore: "blob1",
+		Assets: []fakeAsset{
+			{path: "pkgA-2.0.0.tgz", content: []byte("v2"), name: "pkgA", version: "2.0.0"},
+			{path: "pkgA-1.0.0.tgz", content: []byte("v1"), name: "pkgA", version: "1.0.0"},
+		},
+	})
+
+	assets.LatestAssetsOnly = true
+
+	ce := MigrateRepo("src-raw", "dst-raw")
+	if ce != nil {
+		t.Fatalf("MigrateRepo returned an error: %s: %s", ce.Title, ce.Message)
+	}
+
+	dst := fn.getRepo("dst-raw")
+	if dst == nil {
+		t.Fatal("target repo was not created")
+	}
+	if len(dst.Assets) != 1 {
+		t.Fatalf("target repo has %d assets, want 1 (--latest should skip older versions)", len(dst.Assets))
+	}
+	if dst.Assets[0].path != "pkgA-2.0.0.tgz" {
+		t.Errorf("migrated asset = %q, want %q (the latest version)", dst.Assets[0].path, "pkgA-2.0.0.tgz")
 	}
 }
 

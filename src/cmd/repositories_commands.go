@@ -151,7 +151,7 @@ var repoListSupportedCmd = &cobra.Command{
 
 var repoMigrateCmd = &cobra.Command{
 	Use: "migrate",
-	Example: "nxtools repo migrate OLD_REPO NEW_REPO [-e defaultEnv.json] [-k]\n" +
+	Example: "nxtools repo migrate OLD_REPO NEW_REPO [-e defaultEnv.json] [-k] [-l]\n" +
 		"  nxtools repo migrate --sign[=PATH] OLD_ALPINE_REPO NEW_ALPINE_REPO\n" +
 		"  nxtools repo migrate --sign[=PATH] OLD_APT_REPO NEW_APT_REPO\n" +
 		"  nxtools repo migrate --keyfile PATH [--passphrase PASS] OLD_APT_REPO NEW_APT_REPO",
@@ -169,6 +169,11 @@ func init() {
 
 	repoListCmd.Flags().BoolVar(&repositories.RepoListJSONOutput, "json", false, "Output repository information as JSON")
 	repoMigrateCmd.Flags().BoolVarP(&repositories.KeepSource, "keep", "k", false, "Keep source repository assets")
+	// Reuses the same flag var as `assets list --latest`/`assets latest`, rather than
+	// introducing a second "latest-only" switch: migrateAssets feeds it straight into
+	// assets.ListAssets, the exact mechanism those commands already use to resolve the
+	// latest version of a package.
+	repoMigrateCmd.Flags().BoolVarP(&assets.LatestAssetsOnly, "latest", "l", false, "Only migrate the latest version of each package")
 	// -k is already taken by --keep on this command, so the signing flags below don't reuse
 	// repoCreateCmd's shorthands. Only needed when the target repo doesn't exist yet and its
 	// format requires a signing key (Alpine, APT) — see the format switch in migrate.go.

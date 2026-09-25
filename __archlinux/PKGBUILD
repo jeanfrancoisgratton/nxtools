@@ -2,8 +2,8 @@
 # Packager: Package builder <builder@famillegratton.net>
 
 pkgname=nxtools
-pkgver=1.3.3
-pkgrel=3
+pkgver=1.4.0
+pkgrel=1
 pkgdesc="Nexus Repository Management tools"
 arch=('x86_64')
 url="{{ URL }}"
