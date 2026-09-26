@@ -59,6 +59,10 @@ install -Dpm 0755 %{_builddir}/%{name}-%{version}/%{_binaryname} %{buildroot}%{_
 
 
 %changelog
+* Fri Sep 25 2026 Binary package builder <builder@famillegratton.net> 1.5.0-1
+- feature: repo create --format apt --sign now also dumps the gpg dearmored public key
+- chore: update changelog for 1.4.1-1
+
 * Fri Sep 25 2026 Binary package builder <builder@famillegratton.net> 1.4.1-1
 - enhancement: more explicit usage demo of all commands
 - chore: update changelog for 1.4.0-1
