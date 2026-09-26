@@ -213,13 +213,18 @@ func migrateAssets(oldrepo, newrepo, rformat string) (uint, uint, *cerr.CustomEr
 		}
 
 		// File has been downloaded, time to upload. The upload directory argument is only
-		// meaningful for the "raw" format (elsewhere it's either ignored or, for alpine,
-		// repurposed to mean version/repository coordinates rather than a path) — so only
-		// raw migrations carry the source asset's directory over; everything else keeps its
+		// meaningful for the "raw" format and for alpine, where it is repurposed to mean
+		// version/repository coordinates rather than a path; everything else keeps its
 		// existing per-format directory handling.
 		directory := ""
-		if repositories.RepoFormat == "raw" {
+		switch repositories.RepoFormat {
+		case "raw":
 			directory = path.Dir(item.Path)
+		case "alpine", "apk":
+			// Alpine assets live at <version>/<repository>/<arch>/<file>, and the upload
+			// has no default coordinates, so carry the source asset's own over: the
+			// migrated repo keeps the layout its clients are already pointed at.
+			directory = alpineCoordinatesFromPath(item.Path)
 		}
 		displayName := path.Base(targetFile)
 		if !outerQuiet {
@@ -341,4 +346,16 @@ func updateGroups(oldName, newName, rformat string) *cerr.CustomError {
 	}
 
 	return nil
+}
+
+// alpineCoordinatesFromPath returns the "<version>/<repository>" prefix of an
+// Alpine asset path such as "/edge/main/x86_64/foo-1.0-r0.apk". A path too
+// short to carry both coordinates yields "", which the upload then rejects
+// with its own missing-coordinates error rather than guessing.
+func alpineCoordinatesFromPath(assetPath string) string {
+	segments := strings.Split(strings.Trim(assetPath, "/"), "/")
+	if len(segments) < 4 {
+		return ""
+	}
+	return segments[0] + "/" + segments[1]
 }

@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"nxtools/repositories"
@@ -282,17 +283,14 @@ func uploadAlpine(repoName, filePath, directory string) *cerr.CustomError {
 	return nil
 }
 
-const (
-	defaultAlpineVersion    = "nexus"
-	defaultAlpineRepository = "home"
-)
-
 // parseAlpineCoordinates splits the -d/--directory value into the Alpine
 // version and repository section. It expects exactly two non-empty path
-// segments, e.g. "edge/main" or "v3.21/community". When -d is omitted (the
-// flag's "/" default) or empty, it falls back to nexus/home so existing
-// tooling that never passed -d keeps working. A value with the wrong number
-// of segments (e.g. a single "community") is rejected rather than guessed.
+// segments, e.g. "edge/main" or "v3.21/community". There is deliberately no
+// default: the coordinates decide where the package lands in the repo (and so
+// which URL clients must point at), and a silent fallback once scattered a
+// whole migration into a location nobody had asked for. Omitting -d (the
+// flag's "/" default), or a value with the wrong number of segments (e.g. a
+// single "community"), is rejected rather than guessed.
 func parseAlpineCoordinates(directory string) (string, string, *cerr.CustomError) {
 	cleaned := strings.ReplaceAll(strings.TrimSpace(directory), "\\", "/")
 
@@ -304,13 +302,16 @@ func parseAlpineCoordinates(directory string) (string, string, *cerr.CustomError
 	}
 
 	if len(segments) == 0 {
-		return defaultAlpineVersion, defaultAlpineRepository, nil
+		return "", "", &cerr.CustomError{
+			Title:   "Missing Alpine coordinates",
+			Message: "alpine uploads require -d <version>/<repository> (e.g. -d edge/main or -d v3.21/community)",
+		}
 	}
 
 	if len(segments) != 2 {
 		return "", "", &cerr.CustomError{
 			Title:   "Invalid Alpine coordinates",
-			Message: "alpine uploads expect -d <version>/<repository> (e.g. -d edge/main or -d v3.21/community); omit -d to default to nexus/home",
+			Message: "alpine uploads expect -d <version>/<repository> (e.g. -d edge/main or -d v3.21/community), got " + strconv.Quote(directory),
 		}
 	}
 

@@ -214,6 +214,7 @@ A few notes worthy of attention :
 - If you were trying to upload a package of a wrong format (say RPM) in the wrong repo (say DEB) the current error message would be an http response 500. This will be enhanced in future versions
 - `yum` and `apt` repositories do not rebuild their own metadata after a component upload (unlike `raw`, `alpine`, etc). `nxtools` now triggers that rebuild automatically right after a successful upload to those two formats — you no longer need to do anything extra. If the rebuild trigger itself fails, the upload is still reported as successful and a warning is printed instead (the asset did land in the repo; only the metadata refresh needs a retry, e.g. through the webUI, until NxRM exposes a proper REST endpoint for this)
 - The `-r, --reindex` flag on this command is deprecated and now a no-op (kept only so existing CI invocations that pass it don't break); a warning is printed unless `-q` is set. It will be removed in a future version
+- For the `alpine` format, `-d, --directory` is **mandatory** and must be `<version>/<repository>` (e.g. `-d edge/main` or `-d v3.21/community`) — it picks the coordinates Alpine clients will need to point at, so there is no longer a default; omitting it, or passing a value that doesn't split into exactly two segments, is rejected rather than guessed
 
 ### Download an asset (package) from a repo
 All you need is the download url, from `ntxools assets ls REPO_NAME`, as shown below:
@@ -289,7 +290,7 @@ The most useful flags:
 
 Pass `-l, --latest` to only migrate the newest version of each package, skipping older ones — the same latest-version resolution used by `assets ls -l` and `assets latest`.
 
-If `NEW_REPO` doesn't exist yet, it's created automatically from `OLD_REPO`'s configuration. For `alpine` and `apt` sources, that auto-created target needs a signing key, using the same `--sign[=PATH]` / `--keyfile PATH [--passphrase PASS]` flags (and the same rules) as `repo create` above — note `-k` means `--keep` on this command, not `--keyfile`. For `apt`, the source repo's actual distribution is also carried over to the new repo automatically.
+If `NEW_REPO` doesn't exist yet, it's created automatically from `OLD_REPO`'s configuration. For `alpine` and `apt` sources, that auto-created target needs a signing key, using the same `--sign[=PATH]` / `--keyfile PATH [--passphrase PASS]` flags (and the same rules) as `repo create` above — note `-k` means `--keep` on this command, not `--keyfile`. For `apt`, the source repo's actual distribution is also carried over to the new repo automatically. For `alpine`, since uploads now require explicit `<version>/<repository>` coordinates (see [Upload an asset](#upload-an-asset-package-to-a-repo) above), each migrated asset's own coordinates are read from its source path and carried over automatically — you don't need to (and can't) pass `-d` to `repo migrate`.
 
 ### Remove repos
 Follows the usual pattern: `nxtools repo rm REPONAME`

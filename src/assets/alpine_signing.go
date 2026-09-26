@@ -135,6 +135,15 @@ func generateAlpineSigningKeypair() (privPEM, pubPEM string, err *cerr.CustomErr
 // (just a .PKGINFO stub — Nexus 400s on anything that doesn't parse as one,
 // but doesn't require real content), download the index it triggers, parse
 // the identifier out, then remove the placeholder.
+// Where the placeholder is uploaded, and so where its index is polled. Any
+// coordinates would do — the signing key is per repo, not per directory, and
+// the placeholder is deleted again before the repo is handed back — so these
+// are not a default for real uploads, which must always name their own.
+const (
+	placeholderAlpineVersion    = "nexus"
+	placeholderAlpineRepository = "home"
+)
+
 func discoverAlpineSigningIdentifier(reponame string) (string, *cerr.CustomError) {
 	placeholderPath, err := writePlaceholderApk()
 	if err != nil {
@@ -142,7 +151,7 @@ func discoverAlpineSigningIdentifier(reponame string) (string, *cerr.CustomError
 	}
 	defer os.Remove(placeholderPath)
 
-	if err = uploadAlpine(reponame, placeholderPath, defaultAlpineVersion+"/"+defaultAlpineRepository); err != nil {
+	if err = uploadAlpine(reponame, placeholderPath, placeholderAlpineVersion+"/"+placeholderAlpineRepository); err != nil {
 		return "", err
 	}
 
@@ -251,7 +260,7 @@ func fetchAlpineSigningIdentifierOnce(reponame string) (identifier string, notFo
 		return "", false, cerr2
 	}
 
-	indexPath := "/repository/" + reponame + "/" + defaultAlpineVersion + "/" + defaultAlpineRepository + "/x86_64/APKINDEX.tar.gz"
+	indexPath := "/repository/" + reponame + "/" + placeholderAlpineVersion + "/" + placeholderAlpineRepository + "/x86_64/APKINDEX.tar.gz"
 	resp, e2 := c.Do(context.Background(), http.MethodGet, indexPath, nil, nil, nil)
 	if e2 != nil {
 		return "", false, e2
@@ -304,7 +313,7 @@ func waitForPlaceholderGone(reponame string) *cerr.CustomError {
 	if err != nil {
 		return err
 	}
-	indexPath := "/repository/" + reponame + "/" + defaultAlpineVersion + "/" + defaultAlpineRepository + "/x86_64/APKINDEX.tar.gz"
+	indexPath := "/repository/" + reponame + "/" + placeholderAlpineVersion + "/" + placeholderAlpineRepository + "/x86_64/APKINDEX.tar.gz"
 
 	for attempt := 0; attempt < alpineIndexPollAttempts; attempt++ {
 		if attempt > 0 {

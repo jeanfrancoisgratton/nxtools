@@ -13,22 +13,22 @@ import (
 
 func TestNormalizeUploadFormat(t *testing.T) {
 	cases := map[string]string{
-		"apk":     "alpine",
-		"APK":     "alpine",
-		"  apk  ": "alpine",
-		"ruby":    "rubygems",
-		"gem":     "rubygems",
-		"gems":    "rubygems",
-		"rubygem": "rubygems",
-		"python":  "pypi",
-		"golang":  "go",
-		"git-lfs": "gitlfs",
-		"gitlfs":  "gitlfs",
-		"conan":   "conan",
-		"Apt":     "apt",
-		"  yum ":  "yum",
+		"apk":        "alpine",
+		"APK":        "alpine",
+		"  apk  ":    "alpine",
+		"ruby":       "rubygems",
+		"gem":        "rubygems",
+		"gems":       "rubygems",
+		"rubygem":    "rubygems",
+		"python":     "pypi",
+		"golang":     "go",
+		"git-lfs":    "gitlfs",
+		"gitlfs":     "gitlfs",
+		"conan":      "conan",
+		"Apt":        "apt",
+		"  yum ":     "yum",
 		"some_thing": "something",
-		"raw":     "raw",
+		"raw":        "raw",
 	}
 	for in, want := range cases {
 		if got := normalizeUploadFormat(in); got != want {
@@ -81,13 +81,13 @@ func TestNormalizeRPMArchitectureSegment(t *testing.T) {
 
 func TestReadRPMArchitectureFromFilename(t *testing.T) {
 	cases := map[string]string{
-		"foo-1.0-1.x86_64.rpm": "x86_64",
+		"foo-1.0-1.x86_64.rpm":  "x86_64",
 		"foo-1.0-1.aarch64.rpm": "aarch64",
-		"foo-1.0-1.noarch.rpm": "noarch",
-		"bar.src.rpm":          "SRPMS",
-		"bar.nosrc.rpm":        "SRPMS",
-		"baz.weirdarch.rpm":    "", // not an accepted arch
-		"notanrpm.txt":         "", // not an rpm at all
+		"foo-1.0-1.noarch.rpm":  "noarch",
+		"bar.src.rpm":           "SRPMS",
+		"bar.nosrc.rpm":         "SRPMS",
+		"baz.weirdarch.rpm":     "", // not an accepted arch
+		"notanrpm.txt":          "", // not an rpm at all
 	}
 	for in, want := range cases {
 		if got := readRPMArchitectureFromFilename(in); got != want {
@@ -172,5 +172,28 @@ func TestInferRPMArchitecture(t *testing.T) {
 	}
 	if got := inferRPMArchitecture(plain); got != rpmAutoDirPrefix {
 		t.Fatalf("inferRPMArchitecture (fallback) = %q, want %q", got, rpmAutoDirPrefix)
+	}
+}
+
+// TestParseAlpineCoordinates locks in that alpine uploads have no default
+// coordinates: omitting -d (its "/" default) must fail instead of silently
+// landing the package somewhere the caller never named.
+func TestParseAlpineCoordinates(t *testing.T) {
+	ok := map[string][2]string{
+		"nexus/main":      {"nexus", "main"},
+		"/nexus/main/":    {"nexus", "main"},
+		" edge / main ":   {"edge", "main"},
+		`v3.21\community`: {"v3.21", "community"},
+	}
+	for in, want := range ok {
+		v, r, err := parseAlpineCoordinates(in)
+		if err != nil || v != want[0] || r != want[1] {
+			t.Errorf("parseAlpineCoordinates(%q) = %q, %q, %v; want %q, %q, nil", in, v, r, err, want[0], want[1])
+		}
+	}
+	for _, in := range []string{"", "/", "  ", "main", "nexus/main/x86_64"} {
+		if v, r, err := parseAlpineCoordinates(in); err == nil {
+			t.Errorf("parseAlpineCoordinates(%q) = %q, %q, nil; want an error", in, v, r)
+		}
 	}
 }

@@ -120,6 +120,13 @@ func getStorageSpecs(c *rest.Client, repos []RepositorySummary) ([]RepositorySum
 		}
 
 		switch strings.ToLower(repos[i].Format) {
+		case "alpine", "apk":
+			var repoSettings AlpineRepoSettingsStruct
+			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
+				_ = resp.Body.Close()
+				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
+			}
+			repos[i].Storage = repoSettings.Storage
 		case "apt":
 			var repoSettings AptRepoSettingsStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
@@ -148,7 +155,7 @@ func getStorageSpecs(c *rest.Client, repos []RepositorySummary) ([]RepositorySum
 				return nil, &cerr.CustomError{Title: "Unable to parse server response", Message: err.Error()}
 			}
 			repos[i].Storage = repoSettings.Storage
-		case "raw", "helm", "cargo", "npm", "nuget", "pypi", "terraform", "swift":
+		case "raw", "helm", "cargo", "npm", "nuget", "pypi", "terraform", "swift", "gitlfs", "rubygems", "conan", "r":
 			var repoSettings HostedRepoCommonAttributesStruct
 			if err := json.NewDecoder(resp.Body).Decode(&repoSettings); err != nil {
 				_ = resp.Body.Close()

@@ -1024,3 +1024,19 @@ func TestMigrateRepo_NoDuplicateProgressLines(t *testing.T) {
 		t.Errorf(`"Uploading" appeared %d times in output, want exactly 1: %s`, got, output)
 	}
 }
+
+// TestAlpineCoordinatesFromPath: alpine migrations carry each asset's own
+// <version>/<repository> over, since the upload no longer has a default.
+func TestAlpineCoordinatesFromPath(t *testing.T) {
+	cases := map[string]string{
+		"/nexus/home/x86_64/foo-1.0-r0.apk": "nexus/home",
+		"edge/main/aarch64/bar-2.1-r3.apk":  "edge/main",
+		"/x86_64/foo-1.0-r0.apk":            "",
+		"foo-1.0-r0.apk":                    "",
+	}
+	for in, want := range cases {
+		if got := alpineCoordinatesFromPath(in); got != want {
+			t.Errorf("alpineCoordinatesFromPath(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

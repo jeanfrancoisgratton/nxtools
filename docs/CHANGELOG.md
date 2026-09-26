@@ -1,5 +1,6 @@
 | Release | Date       | Comments                                                                                                                                                                             |
 |---------|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.6.0 | 2026.09.26 | New Nexus URLs for all repos.<br>(APK) repos enforce the `-d` flag when uploading<br>(APK) Blobstore now properly reported in `repo ls` | 
 | 1.5.0 | 2026.09.25 | (APT) Writing the dearmored gpg public key when creating an apt-format repo |
 | 1.4.0 | 2026.09.25 | Added `-l, --latest` to `repo migrate`: only the newest version of each package is migrated, reusing the same latest-version resolution as `assets ls -l`/`assets latest` |
 | 1.3.3 | 2026.09.16 | Added `task list/run/stop/create` and `blob compact`<br>Task creation currently only supports `blobstore.compact`, with full schedule support (manual/once/hourly/daily/weekly/monthly/cron)<br>Compact task lookups match by actual configured target (`properties.blobstoreName`), not by name |
