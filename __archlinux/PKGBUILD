@@ -2,7 +2,7 @@
 # Packager: Package builder <builder@famillegratton.net>
 
 pkgname=nxtools
-pkgver=1.4.1
+pkgver=1.5.0
 pkgrel=1
 pkgdesc="Nexus Repository Management tools"
 arch=('x86_64')

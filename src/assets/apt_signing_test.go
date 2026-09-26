@@ -6,6 +6,7 @@
 package assets
 
 import (
+	"bytes"
 	"crypto/rsa"
 	"strings"
 	"testing"
@@ -14,7 +15,7 @@ import (
 )
 
 func TestGenerateAptSigningKeypair_NoPassphrase(t *testing.T) {
-	priv, pub, err := generateAptSigningKeypair("test-apt-repo", "")
+	priv, pub, pubBinary, err := generateAptSigningKeypair("test-apt-repo", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -24,6 +25,23 @@ func TestGenerateAptSigningKeypair_NoPassphrase(t *testing.T) {
 	}
 	if !strings.Contains(pub, "BEGIN PGP PUBLIC KEY BLOCK") {
 		t.Errorf("public key is not armored as expected: %q", pub[:min(60, len(pub))])
+	}
+
+	// pubBinary must be the same key material as pub, just without ASCII armor —
+	// i.e. exactly what `gpg --dearmor` would produce from it.
+	binEl, e := openpgp.ReadKeyRing(bytes.NewReader(pubBinary))
+	if e != nil {
+		t.Fatalf("pubBinary does not parse as a raw OpenPGP keyring: %v", e)
+	}
+	if len(binEl) != 1 {
+		t.Fatalf("expected exactly one entity in pubBinary, got %d", len(binEl))
+	}
+	armoredEl, e := openpgp.ReadArmoredKeyRing(strings.NewReader(pub))
+	if e != nil {
+		t.Fatalf("pub does not parse as a valid OpenPGP keyring: %v", e)
+	}
+	if binEl[0].PrimaryKey.KeyId != armoredEl[0].PrimaryKey.KeyId {
+		t.Error("pubBinary's key does not match pub's key")
 	}
 
 	el, e := openpgp.ReadArmoredKeyRing(strings.NewReader(priv))
@@ -67,7 +85,7 @@ func TestGenerateAptSigningKeypair_NoPassphrase(t *testing.T) {
 }
 
 func TestGenerateAptSigningKeypair_WithPassphrase(t *testing.T) {
-	priv, _, err := generateAptSigningKeypair("test-apt-repo", "correct-horse")
+	priv, _, _, err := generateAptSigningKeypair("test-apt-repo", "correct-horse")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

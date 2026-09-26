@@ -43,7 +43,7 @@ func CreateSignedAptRepo(reponame, blobname, distro, saveDir string) *cerr.Custo
 	if !shared.QuietOutput {
 		fmt.Println(hftx.InProgressSign(fmt.Sprintf("Generating RSA-%d PGP signing keypair", aptSignKeyBits)))
 	}
-	privArmored, pubArmored, err := generateAptSigningKeypair(reponame, repositories.RepoSigningPassphrase)
+	privArmored, pubArmored, pubBinary, err := generateAptSigningKeypair(reponame, repositories.RepoSigningPassphrase)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func CreateSignedAptRepo(reponame, blobname, distro, saveDir string) *cerr.Custo
 		return err
 	}
 
-	if err = saveAptSigningKeypair(saveDir, reponame, privArmored, pubArmored); err != nil {
+	if err = saveAptSigningKeypair(saveDir, reponame, privArmored, pubArmored, pubBinary); err != nil {
 		return &cerr.CustomError{
 			Title: "Repository created but signing key could not be saved",
 			Message: reponame + " was created and signed, but nxtools could not save the generated keypair to disk: " +
@@ -69,13 +69,17 @@ func CreateSignedAptRepo(reponame, blobname, distro, saveDir string) *cerr.Custo
 	return nil
 }
 
-// generateAptSigningKeypair returns a fresh RSA-4096 OpenPGP keypair,
-// ASCII-armored, as the format Nexus's aptSigning.keypair field expects (an
+// generateAptSigningKeypair returns a fresh RSA-4096 OpenPGP keypair. privArmored
+// is ASCII-armored, as the format Nexus's aptSigning.keypair field expects (an
 // exported PGP private key block — this is real GPG signing, unlike
 // Alpine's homegrown raw-RSA scheme). If passphrase is non-empty, the
 // exported private key material is actually encrypted with it, matching
-// what the aptSigning.passphrase field tells Nexus to expect.
-func generateAptSigningKeypair(reponame, passphrase string) (privArmored, pubArmored string, cErr *cerr.CustomError) {
+// what the aptSigning.passphrase field tells Nexus to expect. pubArmored and
+// pubBinary are the same public key exported two ways: ASCII-armored, and as
+// the raw packet stream (equivalent to `gpg --dearmor`'ing pubArmored) that
+// apt's Signed-By: keyring path and famillegratton.net's src/nexus-public.key.gpg
+// both expect.
+func generateAptSigningKeypair(reponame, passphrase string) (privArmored, pubArmored string, pubBinary []byte, cErr *cerr.CustomError) {
 	config := &packet.Config{RSABits: aptSignKeyBits}
 
 	// NewEntity assembles these into "name (comment) <email>" and rejects '(', ')', '<', '>'
@@ -83,19 +87,19 @@ func generateAptSigningKeypair(reponame, passphrase string) (privArmored, pubArm
 	// the comment has to carry the descriptive text rather than the name.
 	entity, err := openpgp.NewEntity(reponame, "nxtools-generated APT signing key", "", config)
 	if err != nil {
-		return "", "", &cerr.CustomError{Title: "Failed to generate PGP key", Message: err.Error()}
+		return "", "", nil, &cerr.CustomError{Title: "Failed to generate PGP key", Message: err.Error()}
 	}
 
 	if passphrase != "" {
 		if err = entity.PrivateKey.Encrypt([]byte(passphrase)); err != nil {
-			return "", "", &cerr.CustomError{Title: "Failed to encrypt private key", Message: err.Error()}
+			return "", "", nil, &cerr.CustomError{Title: "Failed to encrypt private key", Message: err.Error()}
 		}
 		for _, sub := range entity.Subkeys {
 			if sub.PrivateKey == nil {
 				continue
 			}
 			if err = sub.PrivateKey.Encrypt([]byte(passphrase)); err != nil {
-				return "", "", &cerr.CustomError{Title: "Failed to encrypt subkey", Message: err.Error()}
+				return "", "", nil, &cerr.CustomError{Title: "Failed to encrypt subkey", Message: err.Error()}
 			}
 		}
 	}
@@ -103,40 +107,51 @@ func generateAptSigningKeypair(reponame, passphrase string) (privArmored, pubArm
 	var privBuf bytes.Buffer
 	privWriter, err := armor.Encode(&privBuf, openpgp.PrivateKeyType, nil)
 	if err != nil {
-		return "", "", &cerr.CustomError{Title: "Failed to armor-encode private key", Message: err.Error()}
+		return "", "", nil, &cerr.CustomError{Title: "Failed to armor-encode private key", Message: err.Error()}
 	}
 	// SerializePrivate (not WithoutSigning) re-signs identities using the primary key as a
 	// signer, which requires it to still be decrypted — fine before Encrypt() above, but not
 	// after. The self-signatures NewEntity already produced are valid and don't need redoing.
 	if err = entity.SerializePrivateWithoutSigning(privWriter, nil); err != nil {
-		return "", "", &cerr.CustomError{Title: "Failed to serialize private key", Message: err.Error()}
+		return "", "", nil, &cerr.CustomError{Title: "Failed to serialize private key", Message: err.Error()}
 	}
 	if err = privWriter.Close(); err != nil {
-		return "", "", &cerr.CustomError{Title: "Failed to finalize private key", Message: err.Error()}
+		return "", "", nil, &cerr.CustomError{Title: "Failed to finalize private key", Message: err.Error()}
 	}
+
+	// Serialize once to raw packets, then armor those same bytes, so pubBinary and pubArmored
+	// are guaranteed to describe the same key material rather than two independent exports.
+	var pubRaw bytes.Buffer
+	if err = entity.Serialize(&pubRaw); err != nil {
+		return "", "", nil, &cerr.CustomError{Title: "Failed to serialize public key", Message: err.Error()}
+	}
+	pubBinary = pubRaw.Bytes()
 
 	var pubBuf bytes.Buffer
 	pubWriter, err := armor.Encode(&pubBuf, openpgp.PublicKeyType, nil)
 	if err != nil {
-		return "", "", &cerr.CustomError{Title: "Failed to armor-encode public key", Message: err.Error()}
+		return "", "", nil, &cerr.CustomError{Title: "Failed to armor-encode public key", Message: err.Error()}
 	}
-	if err = entity.Serialize(pubWriter); err != nil {
-		return "", "", &cerr.CustomError{Title: "Failed to serialize public key", Message: err.Error()}
+	if _, err = pubWriter.Write(pubBinary); err != nil {
+		return "", "", nil, &cerr.CustomError{Title: "Failed to armor-encode public key", Message: err.Error()}
 	}
 	if err = pubWriter.Close(); err != nil {
-		return "", "", &cerr.CustomError{Title: "Failed to finalize public key", Message: err.Error()}
+		return "", "", nil, &cerr.CustomError{Title: "Failed to finalize public key", Message: err.Error()}
 	}
 
-	return privBuf.String(), pubBuf.String(), nil
+	return privBuf.String(), pubBuf.String(), pubBinary, nil
 }
 
-// saveAptSigningKeypair writes both halves of the keypair to disk under the
-// repo's name: <reponame>.private.asc (0600) and <reponame>.public.asc
-// (0644). Unlike Alpine, APT/dpkg trust doesn't require any particular
-// filename convention — sources.list's signed-by= just points at whatever
-// path the public key lives at — so the names are chosen for operator
-// clarity rather than being load-bearing.
-func saveAptSigningKeypair(dir, reponame, privArmored, pubArmored string) *cerr.CustomError {
+// saveAptSigningKeypair writes the keypair to disk under the repo's name:
+// <reponame>.private.asc (0600), <reponame>.public.asc (0644), and
+// <reponame>.public.gpg (0644, the same dearmored/binary OpenPGP packet
+// stream `gpg --dearmor` would produce from the .asc — the format apt's
+// Signed-By: keyring path expects, e.g. famillegratton.net's
+// src/nexus-public.key.gpg). Unlike Alpine, APT/dpkg trust doesn't require
+// any particular filename convention — sources.list's signed-by= just points
+// at whatever path the public key lives at — so the names are chosen for
+// operator clarity rather than being load-bearing.
+func saveAptSigningKeypair(dir, reponame, privArmored, pubArmored string, pubBinary []byte) *cerr.CustomError {
 	if strings.TrimSpace(dir) == "" {
 		dir = "."
 	}
@@ -146,6 +161,7 @@ func saveAptSigningKeypair(dir, reponame, privArmored, pubArmored string) *cerr.
 
 	privPath := filepath.Join(dir, reponame+".private.asc")
 	pubPath := filepath.Join(dir, reponame+".public.asc")
+	pubBinPath := filepath.Join(dir, reponame+".public.gpg")
 
 	if e := os.WriteFile(privPath, []byte(privArmored), 0600); e != nil {
 		return &cerr.CustomError{Title: "Unable to save private key", Message: e.Error()}
@@ -153,9 +169,12 @@ func saveAptSigningKeypair(dir, reponame, privArmored, pubArmored string) *cerr.
 	if e := os.WriteFile(pubPath, []byte(pubArmored), 0644); e != nil {
 		return &cerr.CustomError{Title: "Unable to save public key", Message: e.Error()}
 	}
+	if e := os.WriteFile(pubBinPath, pubBinary, 0644); e != nil {
+		return &cerr.CustomError{Title: "Unable to save dearmored public key", Message: e.Error()}
+	}
 
 	if !shared.QuietOutput {
-		fmt.Println(hftx.EnabledSign("Saved signing keypair to " + hftx.Green(privPath) + " and " + hftx.Green(pubPath)))
+		fmt.Println(hftx.EnabledSign("Saved signing keypair to " + hftx.Green(privPath) + ", " + hftx.Green(pubPath) + " and " + hftx.Green(pubBinPath)))
 	}
 	return nil
 }
